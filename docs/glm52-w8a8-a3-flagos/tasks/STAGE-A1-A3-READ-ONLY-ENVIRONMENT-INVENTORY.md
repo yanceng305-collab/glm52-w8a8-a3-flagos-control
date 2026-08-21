@@ -13,279 +13,252 @@ Parent：`Stage A — Clean Provenance`
 
 第一次接触A3服务器只冻结现场事实，为后续`R0-clean` exact tuple设计提供输入。不得安装、卸载、启动模型、创建容器、修改系统或自行决定环境版本。
 
-## 唯一允许的写入
+## Evidence目录
 
-本任务原则上只读。为满足证据留存要求，唯一允许写入是新建一个此前不存在的专用证据目录：
+任务启动时首先冻结当前工作目录：
 
 ```text
-$HOME/a3-readonly-inventory-<hostname>-<UTC timestamp>/
+WORKDIR="$(pwd -P)"
 ```
 
-目录内只允许保存本任务的raw logs、`commands.tsv`、`REPORT.md`和`SHA256SUMS`。不得覆盖、删除或修改目录外任何文件；若`$HOME`不可写，改用新建的`/tmp/a3-readonly-inventory-...`并在报告标明。
+Evidence目录必须新建在该目录下：
 
-## 允许采集范围
+```text
+$WORKDIR/a3-readonly-inventory-<hostname>-<UTC timestamp>/
+```
 
-- OS、kernel、architecture、hostname；
-- CPU与系统内存基本信息；
-- `npu-smi info`、NPU数量/型号、每device HBM、logical presentation、占用进程；
-- 现有Python环境安全可导入时的`torch.npu.device_count()`及只读device properties；
-- Driver、Firmware、CANN版本与安装路径；
-- Python、torch、torch-npu、Docker版本；
-- 本机已有Docker images和containers清单；
-- 当前pip/distribution/module中是否存在vLLM、vllm-ascend、vllm-plugin-FL、FlagGems、FlagCX、FlagTree、Triton/triton-ascend；
-- 当前PATH/PYTHONPATH/LD_LIBRARY_PATH及显式Ascend/HCCL/FlagOS相关变量；
-- HCCL/NPU网络基础信息；
-- 磁盘空间；
-- 指定常见模型根目录中是否存在GLM-5.2-W8A8或Qwen canary权重。
+如果`WORKDIR`不可写，立即停止并报告`blocked`；不得自行切换到`$HOME`、`/tmp`或其他目录。
 
-## 明确禁止
+唯一允许的写入是新建上述Evidence目录，并在其中保存本任务产生的raw logs、命令清单、`REPORT.md`和校验清单。不得覆盖已有目录，不得修改目录外任何文件。
 
-- `pip/uv/conda install|uninstall`；
-- `apt/yum/dnf/rpm`安装、卸载或修改；
-- `docker pull/build/run/create/rm/rmi`；
+## 必查字段
+
+### Host与基础资源
+
+- OS、发行版、kernel、architecture；
+- hostname；
+- CPU型号、socket/core/NUMA基本信息；
+- 系统内存；
+- mount与可用磁盘空间。
+
+### Ascend硬件与占用
+
+- `npu-smi info`或系统中可用的等价只读信息；
+- NPU数量、型号、health/status；
+- 每个device HBM容量与当前使用量；
+- physical package与logical device presentation；
+- `/dev/davinci*`等device节点；
+- 当前占用NPU的进程；不得输出无关进程的完整argv或可能含credential的参数。
+
+### PyTorch NPU视图
+
+- 仅在现有Python环境已经安装torch与torch-npu、且普通import可安全执行时，记录：
+  - torch版本；
+  - torch-npu版本；
+  - `torch.npu.is_available()`；
+  - `torch.npu.device_count()`；
+  - 可安全读取的device properties。
+- 不得创建venv、安装package、set device、分配测试tensor、执行kernel或触发编译。
+- 无法安全执行时标记Unknown并说明原因。
+
+### Driver、Firmware与CANN
+
+- Driver版本与可读版本文件；
+- Firmware版本；
+- CANN toolkit版本、安装路径、`latest`等symlink实际指向；
+- NNAL/ATB/HCCL相关安装路径与可读取版本；
+- 当前系统package manager中已有的Ascend/CANN/HCCL/ATB条目；只查询，不修改。
+
+### Python与软件包污染现状
+
+- Python executable与版本；
+- pip executable与版本；
+- 当前Python distribution和module可见性中是否存在：
+  - `vllm`；
+  - `vllm-ascend` / `vllm_ascend`；
+  - `vllm-plugin-FL` / `vllm_fl`；
+  - FlagGems / `flag_gems`；
+  - FlagCX；
+  - FlagTree；
+  - Triton / triton-ascend；
+  - torch / torch-npu。
+- 对存在项记录version和origin/location；不得import不必要的业务module。
+
+### 环境变量
+
+- 当前登录shell的`PATH`、`PYTHONPATH`、`LD_LIBRARY_PATH`；
+- 显式Ascend、CANN、HCCL、NPU、VLLM、FlagOS、Triton相关变量；
+- 不得dump完整environment或任何token、password、credential变量；
+- 不得source新的`set_env.sh`后把结果冒充当前状态。
+
+### Docker现状
+
+- Docker client/server版本与基本runtime信息；
+- 本机已有Docker images：repository、tag、digest、image ID、创建时间/大小（系统能安全提供多少就记录多少）；
+- 当前container的ID、image、状态、名称和网络等非敏感字段；
+- 识别是否已有可能的neutral CANN/torch-npu base image；仅凭名称或tag不能确认合规，必要信息不足写Unknown；
+- 没有candidate image时只记录，不下载。
+
+### HCCL与NPU网络
+
+- 网络接口、地址、路由、link基本信息；
+- HCCN工具是否存在；
+- 每个可见NPU的只读HCCN/IP信息；
+- 可读的HCCN/HCCL配置路径与基础内容；
+- 不修改IP、路由、link或任何网络配置。
+
+### 模型目录
+
+- 在当前mount和执行上下文已知/常见模型根目录中，检查是否存在：
+  - GLM-5.2-W8A8；
+  - Qwen3.6-27B canary；
+  - 其他明确相关Qwen canary。
+- 只记录目录、总体大小和`config.json`、`quant_model_description.json`、safetensors index等metadata文件是否存在；
+- 不遍历整个根文件系统，不读取大权重内容，不计算全量权重hash。
+
+## 严格只读边界
+
+禁止：
+
+- pip、uv、conda install/uninstall；
+- apt、yum、dnf、rpm安装、卸载或修改；
+- docker pull/build/run/create/rm/rmi；
 - 创建或启动container；
-- 修改或持久化环境变量；不得`source`新的CANN/Driver环境脚本后再把结果冒充当前状态；
-- 修改Driver、Firmware、CANN、网络、路由、HCCL配置；
-- 删除/移动/覆盖文件；
-- `kill/pkill/killall`或改变任何进程；
+- 修改或持久化环境变量；
+- 修改Driver、Firmware、CANN、HCCL、网络、路由或device配置；
+- 删除、移动、覆盖Evidence目录外文件；
+- kill、pkill、killall或改变进程；
 - clone、commit、push或修改Git仓库；
 - 启动Qwen、GLM、vLLM或任何模型服务；
-- 使用`sudo`绕过读取权限；权限不足记为Unknown；
 - 下载image、wheel、模型、源码或外部资料；
-- 自行选择R0-clean版本组合、搭建环境或进入下一Stage。
+- 访问第二台服务器；
+- 自行选择R0-clean tuple、搭建环境或进入下一Stage。
 
-## 原始证据要求
+命令或工具不存在时，DeepSeek可以选择其他只读方法；不得通过安装工具解决。需要提权才能读取时记录Unknown/Permission denied，不得自行扩大权限。
 
-每条命令必须保存：完整命令、UTC时间、stdout、stderr和exit code。失败命令不能隐藏；以独立raw log保留。报告中的每个Confirmed结论必须链接到raw log文件。
+## Raw evidence要求
 
-## 结构化报告
+- DeepSeek自行选择适合实际系统的只读命令，不要求使用固定shell函数或固定命令编号；
+- 每次查询必须保存：实际命令或查询方法、UTC时间、stdout、stderr、exit code；
+- 每项raw evidence独立可定位，失败和权限不足同样保留；
+- `REPORT.md`中的每个Confirmed结论必须指向对应raw evidence；
+- Evidence目录中保存命令清单和文件校验清单；
+- 不在raw logs中故意采集完整env、完整进程argv、Docker credential/proxy配置或秘密。
 
-`REPORT.md`必须包含：
+## `REPORT.md`格式
 
-1. Executive summary；
+报告必须包含：
+
+1. Executive Summary；
 2. Inventory表：字段、观测值、状态、raw evidence；
 3. `Confirmed`；
 4. `Unknown`；
 5. `Conflict`；
-6. `Potential blocker`；
-7. 五个特别问题的直接回答；
-8. 命令失败/权限不足；
+6. `Potential Blocker`；
+7. 五个必须回答的问题；
+8. 命令缺失、失败、权限不足及替代只读方法；
 9. 未执行事项声明。
 
-特别问题：
+不得把推测写成Confirmed；不同来源不一致时写Conflict；缺少决定R0-clean所需的事实时写Potential Blocker。
 
-- 真实A3向PyTorch暴露多少NPU device？
-- 官方物理规格`8×128GB`与现场logical presentation是什么关系？
-- 当前Driver/CANN是否有足够证据支撑拟议clean FlagOS stack；证据不足必须写Unknown/Potential blocker，不得自行冻结tuple；
-- Host/current Python/Docker image中是否存在vllm-ascend痕迹；存在只表示现场事实，不自动判定未来R0-clean违规；
-- 本机是否已经存在合适的neutral CANN/torch-npu base image；没有则只记录，不下载。
+## 五个必须回答的问题
+
+1. 真实A3到底向PyTorch暴露多少个NPU device？
+2. 官方物理规格`8×128GB`与现场logical device presentation是什么关系？
+3. 当前Driver/CANN是否有足够证据支撑拟议clean FlagOS stack？证据不足时必须写Unknown/Potential Blocker，不得自行冻结tuple。
+4. Host、当前Python环境或现有Docker images中是否存在vllm-ascend痕迹？必须说明：当前/历史存在不等于未来R0-clean违规；正式R0-clean仍要求从零构建且从未安装vllm-ascend。
+5. 本机是否已有合适的neutral CANN/torch-npu base image？没有则只记录，不下载；仅凭image名称不能宣布合规。
 
 ## DeepSeek完整执行提示词
 
 ```text
 你正在执行项目任务A3-CP-A1：A3 Read-only Environment Inventory。
 
-这是第一次接触第一台Ascend A3/910C服务器。任务唯一目标是采集现有事实并保存证据。不要安装、卸载、启动模型、创建容器、修改系统或选择R0-clean版本。
+目标：第一次接触第一台Ascend A3/910C服务器时，只采集并冻结真实环境事实，为Codex后续设计R0-clean exact tuple提供输入。不要搭建环境，不要启动模型，不要做版本决策。
 
-【控制边界】
-1. 只执行读取/查询命令。
-2. 唯一允许写入：新建一个专用证据目录，并在其中保存raw logs、commands.tsv、REPORT.md、SHA256SUMS。
-3. 不得使用sudo绕过权限；Permission denied记为Unknown。
-4. 不得source任何新的CANN/Driver set_env.sh；必须记录登录shell的真实当前环境。
-5. 不得执行pip/uv/conda install或uninstall；不得apt/yum/dnf修改；不得docker pull/build/run/create/rm/rmi；不得修改网络、Driver、Firmware、CANN；不得kill进程；不得clone/push代码；不得启动模型。
-6. 不得访问第二台服务器。
-7. 不得自行决定R0-clean版本tuple或开始环境搭建。
-8. 不得dump完整env、进程完整argv、Docker credential/proxy配置或任何token/password；只采集本提示词列出的限定字段。
+任务启动时立即执行并冻结：
 
-【证据目录】
-在当前用户HOME下创建全新目录：
+WORKDIR="$(pwd -P)"
 
-  OUT="$HOME/a3-readonly-inventory-$(hostname)-$(date -u +%Y%m%dT%H%M%SZ)"
-  umask 077
-  mkdir -p "$OUT/raw"
+Evidence目录必须新建为：
 
-如果HOME不可写，改用/tmp下的全新同名目录，并在REPORT.md说明。不得覆盖已有目录。
+$WORKDIR/a3-readonly-inventory-<hostname>-<UTC timestamp>/
 
-在shell中定义以下只用于记录的函数：
+如果WORKDIR不可写，立即停止，状态报告为blocked；不要改用$HOME、/tmp或其他目录。
 
-  run() {
-    label="$1"; shift
-    logfile="$OUT/raw/${label}.log"
-    start="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    {
-      echo "__START_UTC__=$start"
-      printf '__COMMAND__='; printf ' %q' "$@"; echo
-      "$@"
-      rc=$?
-      echo "__EXIT_CODE__=$rc"
-      echo "__END_UTC__=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    } >"$logfile" 2>&1
-    rc=$(grep '^__EXIT_CODE__=' "$logfile" | tail -1 | cut -d= -f2)
-    printf '%s\t%s\t%s\n' "$label" "${rc:-unknown}" "$logfile" >>"$OUT/commands.tsv"
-    return 0
-  }
+唯一允许的写入是新建该Evidence目录，并在其中保存raw logs、命令/查询清单、REPORT.md和校验清单。不得覆盖已有目录或修改目录外文件。
 
-  run_sh() {
-    label="$1"; shift
-    cmd="$*"
-    logfile="$OUT/raw/${label}.log"
-    {
-      echo "__START_UTC__=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-      echo "__SHELL_COMMAND__=$cmd"
-      bash -o pipefail -c "$cmd"
-      rc=$?
-      echo "__EXIT_CODE__=$rc"
-      echo "__END_UTC__=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    } >"$logfile" 2>&1
-    rc=$(grep '^__EXIT_CODE__=' "$logfile" | tail -1 | cut -d= -f2)
-    printf '%s\t%s\t%s\n' "$label" "${rc:-unknown}" "$logfile" >>"$OUT/commands.tsv"
-    return 0
-  }
+你可以根据实际A3操作系统、已安装工具和权限自行选择合适的只读命令。某命令不存在时，可以换用其他只读方法；不得安装工具、修改环境或扩大权限。
 
-先写入任务元数据：
+必须采集：
 
-  printf 'task_id\tA3-CP-A1\nstarted_utc\t%s\nhostname\t%s\nuser\t%s\npwd\t%s\n' \
-    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(hostname)" "$(id -un)" "$PWD" \
-    >"$OUT/task-metadata.tsv"
+1. OS、发行版、kernel、architecture、hostname。
+2. CPU、NUMA、系统内存、mount和可用磁盘空间。
+3. NPU数量、型号、health/status、每device HBM容量/使用量、physical与logical presentation、device节点、当前NPU占用进程。
+4. 如果当前Python已经安全具备torch和torch-npu：torch/torch-npu版本、torch.npu.is_available()、torch.npu.device_count()及安全可读device properties。不得安装、set device、分配tensor、执行kernel或触发编译；不能安全执行则写Unknown。
+5. Driver、Firmware、CANN toolkit、NNAL/ATB/HCCL的版本、安装路径、symlink实际指向和现有系统package记录。
+6. Python/pip版本，以及当前distribution/module中vllm、vllm-ascend/vllm_ascend、vllm-plugin-FL/vllm_fl、FlagGems、FlagCX、FlagTree、Triton/triton-ascend、torch、torch-npu是否存在；对存在项记录version和origin/location。
+7. 当前登录shell的PATH、PYTHONPATH、LD_LIBRARY_PATH及显式Ascend/CANN/HCCL/NPU/VLLM/FlagOS/Triton变量。不得dump完整env或credential变量，不得source新的set_env.sh。
+8. Docker client/server版本和基本runtime信息；本机已有images及非敏感container状态；是否存在candidate neutral CANN/torch-npu image。没有则记录，不pull；仅凭名称不能确认合规。
+9. 网络接口、地址、路由、link、HCCN工具、每个可见NPU的只读HCCN/IP信息，以及可读HCCN/HCCL配置。不得修改网络。
+10. 在当前mount和已知/常见模型根目录中检查GLM-5.2-W8A8、Qwen3.6-27B及相关Qwen canary是否存在。只记录目录、总体大小和config/quant description/safetensors index等metadata；不要遍历整个根文件系统、读取大权重内容或计算全量权重hash。
 
-【必须执行的只读采集】
+严格禁止：
 
-基础系统：
+- install/uninstall任何package；
+- apt/yum/dnf/rpm修改；
+- docker pull/build/run/create/rm/rmi；
+- 创建或启动container；
+- 修改或持久化环境变量；
+- 修改Driver、Firmware、CANN、HCCL、网络、路由或device配置；
+- 删除、移动、覆盖Evidence目录外文件；
+- kill或改变任何进程；
+- clone、commit、push或修改Git仓库；
+- 启动Qwen、GLM、vLLM或任何模型服务；
+- 下载image、wheel、模型、源码或外部资料；
+- 访问第二台服务器；
+- 自行决定R0-clean版本组合、搭环境或进入下一Stage。
 
-  run 001-uname uname -a
-  run 002-os-release cat /etc/os-release
-  run 003-hostname hostname
-  run_sh 004-hostnamectl 'command -v hostnamectl >/dev/null && timeout 15s hostnamectl || true'
-  run 005-architecture uname -m
-  run 006-long-bit getconf LONG_BIT
-  run 007-id id
-  run 008-lscpu lscpu
-  run 009-free free -h
-  run 010-meminfo cat /proc/meminfo
-  run_sh 011-numa 'command -v numactl >/dev/null && numactl --hardware || true'
-  run 012-mounts cat /proc/mounts
-  run 013-disk df -hT
-  run 014-inodes df -ih
+需要提权才能读取的字段记录为Unknown/Permission denied，不要自行使用提权绕过。
 
-NPU与进程：
+Raw evidence要求：
 
-  run_sh 020-npu-smi-path 'command -v npu-smi || true; ls -l /usr/local/bin/npu-smi 2>/dev/null || true'
-  run_sh 021-npu-smi-help 'command -v npu-smi >/dev/null && npu-smi -h || true'
-  run_sh 022-npu-smi-info 'command -v npu-smi >/dev/null && npu-smi info || true'
-  run_sh 023-npu-devices 'find /dev -maxdepth 1 \( -name "davinci*" -o -name "devmm_svm" -o -name "hisi_hdc" \) -printf "%f\t%y\t%M\t%u:%g\n" 2>/dev/null | sort'
-  run_sh 024-ascend-pci 'command -v lspci >/dev/null && lspci -nn | grep -Ei "Huawei|Ascend|Davinci" || true'
-  run_sh 025-npu-processes 'ps -eo pid,ppid,user,lstart,etime,pcpu,pmem,comm --sort=pid | grep -Ei "vllm|torchrun|ray|mindie|python|ascend|npu" | grep -v grep || true'
+- 每次查询保存实际命令或方法、UTC时间、stdout、stderr和exit code；
+- 失败、命令缺失和权限不足必须保留；
+- REPORT.md中的Confirmed必须链接到raw evidence；
+- Evidence目录内生成命令清单和文件校验清单；
+- 不采集完整进程argv、完整env、Docker credential/proxy信息、token或password。
 
-Driver、Firmware、CANN：
+REPORT.md必须严格包含：
 
-  run_sh 030-ascend-root 'ls -la /usr/local/Ascend 2>/dev/null || true; find /usr/local/Ascend -maxdepth 3 -type l -printf "%p -> %l\n" 2>/dev/null | sort'
-  run_sh 031-driver-files 'for f in /usr/local/Ascend/driver/version.info /usr/local/Ascend/driver/version.cfg /etc/ascend_install.info; do echo "===== $f ====="; [ -r "$f" ] && cat "$f" || echo UNREADABLE_OR_ABSENT; done'
-  run_sh 032-cann-paths 'for p in /usr/local/Ascend/ascend-toolkit/latest /usr/local/Ascend/nnal/atb/latest /usr/local/Ascend/latest; do echo "===== $p ====="; [ -e "$p" ] && readlink -f "$p" || echo ABSENT; done'
-  run_sh 033-version-files 'find /usr/local/Ascend -maxdepth 5 -type f \( -name "version.info" -o -name "version.cfg" -o -name "ascend_toolkit_install.info" \) -print 2>/dev/null | sort | while read -r f; do echo "===== $f ====="; sed -n "1,160p" "$f" 2>&1; done'
-  run_sh 034-packages-deb-rpm 'if command -v dpkg-query >/dev/null; then dpkg-query -W 2>/dev/null | grep -Ei "ascend|cann|torch|hccl|atb" || true; fi; if command -v rpm >/dev/null; then rpm -qa | grep -Ei "ascend|cann|torch|hccl|atb" || true; fi'
+- Executive Summary；
+- Inventory表（字段、观测值、状态、raw evidence）；
+- Confirmed；
+- Unknown；
+- Conflict；
+- Potential Blocker；
+- 命令缺失/失败/权限不足及替代方法；
+- 未执行事项声明。
 
-Python与现有packages：
+必须直接回答：
 
-  run_sh 040-python-paths 'command -v python3 || true; command -v python || true; command -v pip3 || true; command -v pip || true'
-  run_sh 041-python-version 'python3 --version 2>&1 || python --version 2>&1 || true'
-  run_sh 042-pip-version 'python3 -m pip --version 2>&1 || true'
-  run_sh 043-pip-list 'python3 -m pip list --format=freeze 2>&1 || true'
+1. 真实A3向PyTorch暴露多少个NPU device？
+2. 8×128GB官方物理规格与现场logical presentation是什么关系？
+3. 当前Driver/CANN是否有足够证据支撑拟议clean FlagOS stack？证据不足必须写Unknown/Potential Blocker，不得决定tuple。
+4. Host、当前Python或已有Docker image中是否存在vllm-ascend痕迹？明确说明当前/历史存在不等于未来R0-clean违规。
+5. 本机是否已有合适的neutral CANN/torch-npu base image？没有则只记录，不下载；信息不足时写Unknown。
 
-使用下面heredoc在证据目录创建`$OUT/package_inventory.py`，然后通过`run`记录执行。该脚本只读取distribution metadata和module spec，不安装或修改package：
+最终返回：任务状态、WORKDIR绝对路径、Evidence目录绝对路径、REPORT.md完整内容、raw evidence清单、命令失败/权限不足、Potential Blocker和需要Codex决策的事项。
 
-cat >"$OUT/package_inventory.py" <<'PY'
-from importlib import metadata, util
-import json, platform, sys
-targets = {
-    "vllm", "vllm-ascend", "vllm-plugin-fl", "flag-gems", "flag_gems",
-    "flagcx", "flagtree", "triton", "triton-ascend", "torch", "torch-npu"
-}
-def norm(s): return s.lower().replace("_", "-").replace(".", "-")
-rows = []
-for d in metadata.distributions():
-    name = d.metadata.get("Name", "")
-    if norm(name) in {norm(x) for x in targets}:
-        rows.append({"name": name, "version": d.version, "root": str(d.locate_file(""))})
-modules = {}
-for name in ["vllm", "vllm_ascend", "vllm_fl", "flag_gems", "flagcx", "flagtree", "triton", "torch", "torch_npu"]:
-    try:
-        spec = util.find_spec(name)
-        modules[name] = None if spec is None else {"origin": spec.origin, "locations": list(spec.submodule_search_locations or [])}
-    except Exception as e:
-        modules[name] = {"error": repr(e)}
-print(json.dumps({"python": sys.version, "executable": sys.executable, "platform": platform.platform(), "distributions": sorted(rows, key=lambda x: x["name"].lower()), "modules": modules}, indent=2, ensure_ascii=False))
-PY
-run 044-package-inventory env PYTHONDONTWRITEBYTECODE=1 python3 "$OUT/package_inventory.py"
-
-如果且仅如果044结果表明torch与torch_npu均已存在，并且普通import不会触发安装、编译或写入，再创建并运行下面只读probe；不得set_device、分配tensor或执行kernel。若import出现写入/编译迹象立即停止probe并记Unknown。否则创建raw/045-torch-npu-probe.log并写明SKIPPED及原因：
-
-cat >"$OUT/torch_npu_probe.py" <<'PY'
-import json
-import torch
-import torch_npu
-out = {
-    "torch": getattr(torch, "__version__", "unknown"),
-    "torch_npu": getattr(torch_npu, "__version__", "unknown"),
-    "npu_is_available": bool(torch.npu.is_available()),
-    "npu_device_count": int(torch.npu.device_count()),
-    "properties": [],
-}
-for i in range(out["npu_device_count"]):
-    try:
-        out["properties"].append({"index": i, "repr": repr(torch.npu.get_device_properties(i))})
-    except Exception as e:
-        out["properties"].append({"index": i, "error": repr(e)})
-print(json.dumps(out, indent=2, ensure_ascii=False))
-PY
-run 045-torch-npu-probe env PYTHONDONTWRITEBYTECODE=1 python3 "$OUT/torch_npu_probe.py"
-
-环境变量：只采集下列显式变量，不得dump完整env或任何credential变量。
-
-  run_sh 050-selected-env 'for v in PATH PYTHONPATH LD_LIBRARY_PATH ASCEND_HOME_PATH ASCEND_OPP_PATH ASCEND_AICPU_PATH TOOLCHAIN_HOME HCCL_IF_IP HCCL_SOCKET_IFNAME HCCL_BUFFSIZE SOC_VERSION ASCEND_RT_VISIBLE_DEVICES NPU_VISIBLE_DEVICES VLLM_PLUGINS VLLM_FL_PLATFORM VLLM_VENDOR TRITON_ALL_BLOCKS_PARALLEL FLAGCX_PATH; do eval "val=\${$v-}"; printf "%s=%s\n" "$v" "$val"; done'
-
-Docker现状（只列出，不pull/run/inspect外部registry）：
-
-  run_sh 060-docker-path-version 'command -v docker || true; docker version 2>&1 || true'
-  run_sh 061-docker-info 'docker info --format "ServerVersion={{.ServerVersion}}\nStorageDriver={{.Driver}}\nOSType={{.OSType}}\nOperatingSystem={{.OperatingSystem}}\nArchitecture={{.Architecture}}\nKernelVersion={{.KernelVersion}}\nDockerRootDir={{.DockerRootDir}}\nCgroupDriver={{.CgroupDriver}}\nCgroupVersion={{.CgroupVersion}}\nNCPU={{.NCPU}}\nMemTotal={{.MemTotal}}" 2>&1 || true'
-  run_sh 062-docker-images 'docker images --digests --no-trunc 2>&1 || true'
-  run_sh 063-docker-containers 'docker ps -a --no-trunc --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}\t{{.Networks}}" 2>&1 || true'
-
-网络与HCCL基础信息：
-
-  run_sh 070-ip-address 'command -v ip >/dev/null && ip -brief address || true'
-  run_sh 071-ip-route 'command -v ip >/dev/null && ip route show table all || true'
-  run_sh 072-ip-link 'command -v ip >/dev/null && ip -details link show || true'
-  run_sh 073-hccn-tool 'command -v hccn_tool || true; ls -l /usr/local/Ascend/driver/tools/hccn_tool 2>/dev/null || true'
-  run_sh 074-hccn-ip 'tool=$(command -v hccn_tool 2>/dev/null || true); [ -z "$tool" ] && tool=/usr/local/Ascend/driver/tools/hccn_tool; if [ -x "$tool" ]; then for dev in /dev/davinci[0-9]*; do [ -e "$dev" ] || continue; i=${dev##*davinci}; echo "===== device $i ====="; "$tool" -i "$i" -ip -g 2>&1; done; else echo HCCN_TOOL_ABSENT; fi'
-  run_sh 075-hccn-config 'for f in /etc/hccn.conf /etc/ascend_hccn.conf; do echo "===== $f ====="; [ -r "$f" ] && cat "$f" || echo UNREADABLE_OR_ABSENT; done'
-
-模型与磁盘：不要遍历整个根文件系统，不要读取大权重内容，不要计算权重hash。只检查常见根目录，限制深度和时间：
-
-  run_sh 080-model-roots 'for d in /data /models /model /mnt/models "$HOME/.cache/modelscope/hub" "$HOME/.cache/huggingface/hub" /root/.cache/modelscope/hub /root/.cache/huggingface/hub; do if [ -d "$d" ]; then printf "PRESENT\t%s\n" "$d"; timeout 30s du -sh "$d" 2>&1 || true; else printf "ABSENT\t%s\n" "$d"; fi; done'
-  run_sh 081-model-candidates 'for d in /data /models /model /mnt/models "$HOME/.cache/modelscope/hub" "$HOME/.cache/huggingface/hub" /root/.cache/modelscope/hub /root/.cache/huggingface/hub; do [ -d "$d" ] || continue; echo "===== $d ====="; timeout 60s find "$d" -maxdepth 5 -type d \( -iname "*GLM-5.2*" -o -iname "*GLM_5_2*" -o -iname "*Qwen3.6-27B*" -o -iname "*Qwen3-4B*" \) -print 2>&1 || true; done'
-  run_sh 082-model-metadata 'for d in /data /models /model /mnt/models "$HOME/.cache/modelscope/hub" "$HOME/.cache/huggingface/hub" /root/.cache/modelscope/hub /root/.cache/huggingface/hub; do [ -d "$d" ] || continue; timeout 60s find "$d" -maxdepth 7 -type f \( -name "config.json" -o -name "quant_model_description.json" -o -name "model.safetensors.index.json" \) -printf "%p\t%s bytes\n" 2>&1 | grep -Ei "glm.?5.?2|qwen3.?6|qwen3-4b" || true; done'
-
-完成命令后：
-
-1. 生成$OUT/REPORT.md，严格分为Confirmed、Unknown、Conflict、Potential blocker。
-2. 对五个特别问题逐项直接回答；没有证据就写Unknown，禁止猜测版本兼容。
-3. 明确区分：host/current environment存在vllm-ascend痕迹，不等于未来R0-clean违规；R0-clean仍必须从零且从未安装vllm-ascend。
-4. 对Docker images只判断“本机是否已有candidate neutral image”，不要下载；不要仅凭名称宣布其合规，缺少package inventory时写Unknown。
-5. 不提出或执行R0-clean exact tuple。
-6. 生成校验清单：
-
-     (cd "$OUT" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
-
-7. 最终只返回：任务状态、OUT绝对路径、REPORT.md完整内容、raw log清单、失败/权限不足、Potential blocker、需要Codex决策的事项。
-8. 完成后停止，不进入环境搭建或任何下一Stage。
+完成后立即停止。不得开始R0-clean环境搭建或任何下一Stage。
 ```
 
 ## Codex验收与下一步
 
 DeepSeek结果返回后，Codex负责：
 
-1. 核对raw logs与REPORT结论；
-2. 更新Confirmed/Unknown/Conflict/Potential blocker；
+1. 核对raw evidence与`REPORT.md`结论；
+2. 更新Confirmed、Unknown、Conflict、Potential Blocker；
 3. 重新判断Driver/Firmware/CANN/Python/torch/torch-npu/compiler profile；
 4. 决定R0-clean exact tuple；
 5. 只有用户批准后，生成下一条Clean Provenance环境构建任务。
