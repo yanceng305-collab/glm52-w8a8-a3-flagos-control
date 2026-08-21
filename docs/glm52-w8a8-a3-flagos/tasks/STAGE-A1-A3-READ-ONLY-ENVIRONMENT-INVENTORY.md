@@ -95,6 +95,7 @@ $HOME/a3-readonly-inventory-<hostname>-<UTC timestamp>/
 5. 不得执行pip/uv/conda install或uninstall；不得apt/yum/dnf修改；不得docker pull/build/run/create/rm/rmi；不得修改网络、Driver、Firmware、CANN；不得kill进程；不得clone/push代码；不得启动模型。
 6. 不得访问第二台服务器。
 7. 不得自行决定R0-clean版本tuple或开始环境搭建。
+8. 不得dump完整env、进程完整argv、Docker credential/proxy配置或任何token/password；只采集本提示词列出的限定字段。
 
 【证据目录】
 在当前用户HOME下创建全新目录：
@@ -173,7 +174,7 @@ NPU与进程：
   run_sh 022-npu-smi-info 'command -v npu-smi >/dev/null && npu-smi info || true'
   run_sh 023-npu-devices 'find /dev -maxdepth 1 \( -name "davinci*" -o -name "devmm_svm" -o -name "hisi_hdc" \) -printf "%f\t%y\t%M\t%u:%g\n" 2>/dev/null | sort'
   run_sh 024-ascend-pci 'command -v lspci >/dev/null && lspci -nn | grep -Ei "Huawei|Ascend|Davinci" || true'
-  run_sh 025-npu-processes 'ps -eo pid,ppid,user,lstart,etime,pcpu,pmem,args --sort=pid | grep -Ei "vllm|torchrun|ray|mindie|python|ascend|npu" | grep -v grep || true'
+  run_sh 025-npu-processes 'ps -eo pid,ppid,user,lstart,etime,pcpu,pmem,comm --sort=pid | grep -Ei "vllm|torchrun|ray|mindie|python|ascend|npu" | grep -v grep || true'
 
 Driver、Firmware、CANN：
 
@@ -245,9 +246,9 @@ run 045-torch-npu-probe env PYTHONDONTWRITEBYTECODE=1 python3 "$OUT/torch_npu_pr
 Docker现状（只列出，不pull/run/inspect外部registry）：
 
   run_sh 060-docker-path-version 'command -v docker || true; docker version 2>&1 || true'
-  run_sh 061-docker-info 'docker info 2>&1 || true'
+  run_sh 061-docker-info 'docker info --format "ServerVersion={{.ServerVersion}}\nStorageDriver={{.Driver}}\nOSType={{.OSType}}\nOperatingSystem={{.OperatingSystem}}\nArchitecture={{.Architecture}}\nKernelVersion={{.KernelVersion}}\nDockerRootDir={{.DockerRootDir}}\nCgroupDriver={{.CgroupDriver}}\nCgroupVersion={{.CgroupVersion}}\nNCPU={{.NCPU}}\nMemTotal={{.MemTotal}}" 2>&1 || true'
   run_sh 062-docker-images 'docker images --digests --no-trunc 2>&1 || true'
-  run_sh 063-docker-containers 'docker ps -a --no-trunc 2>&1 || true'
+  run_sh 063-docker-containers 'docker ps -a --no-trunc --format "{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}\t{{.Networks}}" 2>&1 || true'
 
 网络与HCCL基础信息：
 
