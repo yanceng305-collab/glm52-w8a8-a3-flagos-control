@@ -8,8 +8,11 @@
 - `PLAN.md`：新阶段、Ready/Exit、owner、证据和第二台服务器触发。
 - `STATUS.md`：当前状态、阻塞、GitHub状态与下一门禁。
 - `DECISIONS.md`：已提议/待确认/待ADR技术决策。
-- `REPOSITORY-PLAN.md`：legacy保全、transfer/fork影响与新upstream方案。
+- `MINIMAL-EAGER-EXECUTION-CLOSURE.md`：首次正确GLM-5.2-W8A8 eager token的mandatory能力闭包。
+- `REPOSITORY-PLAN.md`：建仓前legacy保全与formal-fork/standalone路线分析；当前已被standalone决策取代。
+- `CODE-REPOSITORY-BASELINE.md`：正式standalone A3代码仓库、official冻结SHA/tree、remote与sync policy、legacy零变化验收。
 - `tasks/STAGE-A-CLEAN-PROVENANCE.md`：首个可执行Stage的任务合同和验收。
+- `tasks/GLM-MANDATORY-CAPABILITY-CLOSURE.md`：gap confirmation、最小能力实现、microgate PASS与vLLM-Ascend reference规则。
 
 ## 给用户的10条摘要
 
@@ -20,8 +23,8 @@
 5. 首个严格910C-backed canary是Qwen3.6-27B TP2 eager，README里的更小Qwen不能写成官方910C已验证。
 6. GLM-5.2至少被vLLM0.20.2语义、sparse MLA/Indexer、W8A8 Linear和ModelSlim格式四类缺口阻塞。
 7. ModelSlim能生成A3 W8A8不等于FL能加载；AscendV1 reader只在被禁的vllm-ascend中。
-8. 一台A3总HBM 1024GB，放约774GB权重有可能，但KV/workspace/并发与TP/EP必须用真实manifest计算；现在不需要第二台。
-9. 旧fork只rename不能释放同账号fork槽位；首选把legacy连同PR/branch转移到另一owner后再正式fork，所有操作待确认。
+8. 一台A3官方物理规格为8×128GB；runtime logical topology和full-model容量必须由现场inventory与真实checkpoint manifest计算，现在不需要第二台。
+9. 正式代码仓库已采用personal standalone方案并精确复制official冻结main；legacy、PR #1、branches、tags和settings保持零变化。
 10. 下一步不是写GLM补丁，而是确认边界后完成`R0-clean`、Qwen canary，再做vLLM与量化contract决策。
 
 ## 状态标签
@@ -32,4 +35,4 @@
 - Missing：当前目标基线明确无实现、显式报错或缺必需接口。
 - Conflicting：可信来源在版本/路线/行为上不一致，尚未由实验消解。
 
-本目录是新仓库确认前的 external-state candidate；尚不是GitHub事实源，也未触发任何服务器、DeepSeek或GitHub写操作。
+本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库已按`CODE-REPOSITORY-BASELINE.md`落地；服务器、DeepSeek、Clean Provenance和实现仍未启动。

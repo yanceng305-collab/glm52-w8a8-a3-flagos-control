@@ -4,7 +4,7 @@
 
 | ID | 决策 | 状态 | 理由 / 证据 | 重审条件 |
 |---|---|---|---|---|
-| D-001 | 新代码基线只从 `flagos-ai/vllm-plugin-FL` 操作时 current `main` HEAD 开始；legacy只作 history | Proposed for approval | 用户硬约束；当前调查 HEAD `38e7dbc` | 用户批准 repo transition 后冻结新 SHA |
+| D-001 | 新代码基线只从`flagos-ai/vllm-plugin-FL`建仓时current `main`开始；legacy只作history | Implemented | 2026-08-21冻结official commit`92a6f767...`/tree`e610bc58...`并精确复制 | control批准新的upstream同步 |
 | D-002 | 官方 A3 CI stack 只作 reference oracle，不作客户 formal environment | Evidence-backed proposed | image含完整 vllm-ascend package/custom kernels，违反正式环境约束 | 官方发布 clean-room CI 或客户改变约束 |
 | D-003 | 第一 clean-room 候选为 `R0-clean = CI tuple - vllm-ascend`，从零构建且从未安装 vllm-ascend | Inferred / requires experiment | 最大限度保持单变量，同时满足 package/runtime 禁令 | 910C negative audit/canary失败 |
 | D-004 | `R0-clean` compiler profile 先使用 actual CI 的 `triton-ascend==3.2.1`；FlagTree 作为独立 `R1-compiler` candidate | Proposed | README FlagTree 与 CI/FlagGems pins冲突，不能叠装或合成版本 | 官方冻结新一致 tuple 或独立实验完成 |
@@ -33,6 +33,9 @@
 | D-027 | Gap Confirmation路径顺序为FlagGems → vendor.ascend → Reference/PyTorch；三者均不可用才实现新能力 | Required | 复用当前FlagOS合法路径，最小化首次eager前开发 | 某路径违反runtime边界或correctness失败 |
 | D-028 | Reference路径必须NPU-resident并提供device/backend trace | Required | PyTorch tensor在NPU上可由torch_npu/CANN执行；静默CPU fallback不合法 | 目标backend提供等价、可审计的更直接证明 |
 | D-029 | Reference性能优化后置到Eager Correctness后的profiling | Required | 首次bring-up不为FlagGems覆盖率或性能提前开发；瓶颈需测量证明 | Profile确认Reference为主要瓶颈 |
+| D-030 | 正式A3代码仓库使用personal standalone而非formal fork | Implemented | `yanceng305-collab/vllm-plugin-FL-a3-flagos`已创建；legacy零变更，代码baseline与official精确相等 | 只有上游贡献流程形成硬需求时重审formal fork |
+| D-031 | 新代码仓库`main`只保存control-approved official frozen baseline，禁止直接开发 | Required | 防止实验/legacy历史污染；capability使用独立branch和Draft PR | control明确批准baseline同步 |
+| D-032 | Upstream同步采用control-approved exact-SHA fast-forward policy | Required | Standalone无GitHub fork sync；每次记录old/new SHA/tree和兼容影响，不产生额外baseline commit | official历史非fast-forward或项目版本路线变化 |
 
 ## 明确拒绝的路线
 

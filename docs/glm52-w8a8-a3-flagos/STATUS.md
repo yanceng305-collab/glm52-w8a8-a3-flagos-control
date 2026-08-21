@@ -12,7 +12,8 @@
 | 910C maturity | Complete for public evidence | 仅 Qwen3.6 TP2；不覆盖 GLM/W8A8/MTP/EP/多机 |
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
 | A3 capacity | Complete static assessment | 单机 1024 GB aggregate；现场 topology 与 runtime余量 Unknown |
-| Repository feasibility | Complete read-only audit | 零 GitHub mutation；PR #1仍 open Draft |
+| Formal A3 code repository | Established / verified | Standalone `vllm-plugin-FL-a3-flagos`；main/tree与official冻结基线一致 |
+| Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Customer-compliant environment | Planned / Inferred | `R0-clean` 尚未在 910C 执行 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
@@ -30,27 +31,23 @@
 
 ## 当前阻塞/待决策
 
-1. 客户“FlagOS 原生”是否允许官方 FL 仓库内注明 adapted/copied from vllm-ascend 的历史代码；若也禁止，官方 current main 本身不合规。
-2. 客户是否允许中性 `quay.io/ascend/cann:9.0.0-a3-ubuntu22.04-py3.11`，还是只允许 host clean install。
-3. A3 现场 Driver/Firmware/ATB exact version 与 topology 尚未审计。
-4. GLM vLLM 路线：0.23 最小升级、0.24 dev/未合入 Ascend PR，或 0.20.2 backport。
-5. 客户 checkpoint 是 AscendV1 还是 compressed-tensors；manifest、SHA、tensor/scale layout 未提供。
-6. legacy repo transfer/new fork 的目标 owner 尚未选择。
+1. 客户是否允许中性`quay.io/ascend/cann:9.0.0-a3-ubuntu22.04-py3.11`，还是只允许host clean install。
+2. A3现场Driver/Firmware/ATB exact version与topology尚未审计。
+3. GLM vLLM路线：0.23最小升级、0.24 dev/未合入Ascend PR，或0.20.2 backport。
+4. 客户checkpoint是AscendV1还是compressed-tensors；manifest、SHA、tensor/scale layout未提供。
+
+当前“FlagOS原生”工作边界按runtime/package/environment independence执行；只有客户以后明确扩大到official FL历史adapted来源时才重审。
 
 ## GitHub 状态
 
 - `yanceng305-collab/vllm-plugin-FL` 已是官方 fork network 的 fork；direct parent 是 `xiemingda-1002/vllm-plugin-FL`，network source 是 `flagos-ai/vllm-plugin-FL`。
 - PR #1：open Draft；base `ascend-model-migration`，head `audit/glm52-w8a8-stage0-gap`。
-- 仅 rename 不会退出 fork network，不能可靠释放同账号重新 fork 的 slot。
-- 本轮未 rename、transfer、detach、fork、push、建 branch 或修改 PR。
-- 当前文档尚未提交 GitHub：新仓库尚未获确认；提前写 legacy 会违反基线重置约束。确认 owner/迁移方案后再把这些 candidate 文档作为新控制面的首次提交。
+- 正式代码仓库：[yanceng305-collab/vllm-plugin-FL-a3-flagos](https://github.com/yanceng305-collab/vllm-plugin-FL-a3-flagos)，类型为standalone而非fork。
+- Official frozen baseline：commit `92a6f7670465922c60e88f06787b8f0923e761f3`，tree `e610bc5828b4a4a54a8f55429b40500ff4f5a0a7`；新仓库main/tree完全相同。
+- 新仓库只有`main`且无tag；selected legacy-only commits不可达。
+- Legacy未执行rename、transfer、detach、fork sync、push或settings修改；branches/tags/PR #1哈希前后相同。
+- 新仓库`main`禁止直接开发；official同步只按`CODE-REPOSITORY-BASELINE.md`的control-approved fast-forward policy执行。
 
 ## 下一门禁
 
-用户审阅并决定：
-
-- “原生”边界；
-- neutral CANN base policy；
-- legacy/new fork owner 方案。
-
-三项确认后，才把 `Clean Provenance` task 变成 `ready`；当前不向 DeepSeek 下发。
+正式代码仓库落地完成后立即停止。`Clean Provenance`仍为Proposed/not ready；当前不操作服务器、不向DeepSeek下发任务，也不开始GLM适配或性能工作。

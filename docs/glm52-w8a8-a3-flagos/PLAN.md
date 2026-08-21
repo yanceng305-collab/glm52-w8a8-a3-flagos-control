@@ -2,7 +2,7 @@
 
 状态：Proposed for approval
 基线调查日期：2026-08-21
-代码候选起点：`flagos-ai/vllm-plugin-FL@38e7dbc20197e2db742c4e4c9687d36ea4df9900`（调查时 current `main` / `v0.2.1-rc0`）
+正式代码基线：`yanceng305-collab/vllm-plugin-FL-a3-flagos@92a6f7670465922c60e88f06787b8f0923e761f3`，精确对应建仓时`flagos-ai/vllm-plugin-FL`冻结`main`；历史调查SHA仅保留证据语境。
 
 ## 结果目标
 
@@ -18,7 +18,7 @@
 - 目标模型固定为GLM-5.2-W8A8；W8A8是首次目标模型eager correctness硬门禁，不是性能优化。BF16只允许operator/reference/debug microtest，不能替代目标bring-up。
 - FlagScale暂不作为首次模型bring-up前置；先直接闭合`vLLM -> vllm-plugin-FL -> PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`，模型推理链稳定后才在现有后期集成阶段验证FlagScale。
 - FlagGems是preferred实现来源而非mandatory依赖。Bring-up优先correctness和FlagOS Dispatch可达性，不以统一算子来源或FlagGems覆盖率作为首次eager门禁。
-- GitHub 是唯一项目事实源；新仓库确认前，本文件只是 external-state candidate。
+- GitHub是唯一项目事实源：本控制仓库管理PLAN/DECISIONS/tasks，正式代码仓库及冻结关系以`CODE-REPOSITORY-BASELINE.md`为准。
 
 ## 当前关键路径
 

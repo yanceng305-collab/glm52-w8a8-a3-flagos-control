@@ -1,6 +1,10 @@
 # 新仓库与 Legacy 保全方案
 
-状态：Read-only proposal；所有 GitHub 操作待用户确认
+状态：Superseded by implemented standalone decision；保留为pre-decision历史分析
+
+## 已实施决策
+
+用户已选择“不迁移legacy，创建personal standalone A3代码仓库并配置official upstream”。实施结果和当前权威baseline见[`CODE-REPOSITORY-BASELINE.md`](CODE-REPOSITORY-BASELINE.md)。本文件后续transfer/formal-fork方案不再是当前执行路线；任何legacy mutation仍需新的明确授权。
 
 ## 当前事实
 
