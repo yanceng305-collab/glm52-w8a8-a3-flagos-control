@@ -1,6 +1,6 @@
 # 正式A3代码仓库基线
 
-状态更新：existing baseline保持完整，但现已重分类为official `v0.2.1` / vLLM0.20.2 maintenance/reference。Primary GLM development候选转向official new `main` / vLLM0.24；本轮没有执行任何repository mutation。迁移提案见[`CODE-REPOSITORY-MIGRATION-V024.md`](CODE-REPOSITORY-MIGRATION-V024.md)。
+状态更新：existing baseline保持完整并重分类为official `v0.2.1` maintenance/reference；v0.24 branch migration已按[`CODE-REPOSITORY-MIGRATION-V024.md`](CODE-REPOSITORY-MIGRATION-V024.md)完成。
 
 记录日期：2026-08-21
 冻结时间：2026-08-21T15:18:31.5529156+08:00
@@ -21,7 +21,10 @@
 | Commit equality | PASS |
 | Tree equality | PASS |
 | 当前official语义 | `v0.2.1` maintenance/reference；不再是new-main primary |
-| New-main research freeze | `a9435a34dcd7d0a38e3a853535947371a6c62205` / tree`e5e073edf4b65c053e954d78d20365aab0e1f46b`；尚未进入正式repo |
+| New-main frozen baseline | `a9435a34dcd7d0a38e3a853535947371a6c62205` / tree`e5e073edf4b65c053e954d78d20365aab0e1f46b` |
+| v0.2.1 anchor | `baseline/official-v0.2.1-vllm0.20.2` -> `92a6f767...` |
+| v0.24 anchor | `baseline/official-main-vllm0.24-20260821-a9435a3` -> `a9435a34...` |
+| Primary integration | `project/glm52-w8a8-v024` -> `a9435a34...` |
 
 仓库创建时未初始化README、LICENSE、gitignore或任何额外commit；新`main`直接指向冻结official commit。
 
@@ -38,7 +41,7 @@ GitHub服务端没有fork parent/source关系；`upstream`是本项目记录和�
 
 ## Baseline纯净度验收
 
-- 新仓库只有`main`一个branch；
+- Migration前仓库只有`main`；现有四个branch均为control批准的exact refs；
 - 新仓库tag数量为0；
 - 未导入legacy branch、tag或migration ref；
 - Legacy-only commits `82f3e718...`、`637a549...`、`f8627fcb...`、`4d4645b3...`在新standalone仓库不可达；
@@ -64,15 +67,15 @@ PR #1仍为：[Freeze W8A8 Ascend gap and eager repro](https://github.com/yancen
 - 不得从legacy创建branch、merge、cherry-pick或导入tag；
 - 所有实现受control repo最新`PLAN.md`、`DECISIONS.md`和task contract约束。
 
-## 历史Upstream同步策略（Superseded for new main migration）
+## Upstream/baseline策略
 
 1. 不自动同步official，不使用GitHub fork sync按钮；
 2. 每次同步先由control repo形成明确决策，记录old baseline、candidate official SHA/tree和compatibility影响；
-3. 原“只接受official main并fast-forward existing main”的规则已因official branch migration Superseded；new main与v0.2.1已diverged，不能fast-forward；
-4. 新策略是不改existing main，新增immutable v0.2.1 anchor、exact 0.24 main snapshot和project integration branch；详见migration proposal；
+3. Existing main不再同步new main；new main与v0.2.1已diverged；
+4. Immutable anchors不得直接开发；primary integration使用`project/glm52-w8a8-v024`；
 5. 同步后重新验证commit/tree相等、branch/tag纯净度和mandatory tests；
 6. feature branch需要rebase/重建时单独治理，不把实验历史写入`main`。
 
 ## 当前停止点
 
-正式代码仓库existing main保持零变化。Old A2/prompt已暂停；new v0.24 branch migration、A2、服务器操作、GLM适配、mandatory capability实现和性能测试均未执行。
+Repository migration已PASS，existing main和legacy零变化。A3-CP-A2-v024现为Ready但尚未执行；服务器、GLM适配、mandatory capability实现和性能测试尚未开始。

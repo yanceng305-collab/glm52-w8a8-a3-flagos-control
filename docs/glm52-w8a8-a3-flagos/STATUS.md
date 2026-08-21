@@ -1,21 +1,21 @@
 # 项目状态
 
 更新时间：2026-08-21
-总体状态：Old A2 Superseded / Paused；official v0.24 baseline refresh complete for research；repository/A2 execution not authorized
+总体状态：v0.24 repository migration PASS；A3-CP-A2-v024 Ready / not executed
 
 ## 当前快照
 
 | 工作项 | 状态 | 证据边界 |
 |---|---|---|
-| Official branch migration | Research complete / user review pending | `v0.2.1@92a6f767`维护线；observed `main@a9435a34`/tree`e5e073ed`为vLLM0.24 line |
+| Official branch migration | PASS | `v0.2.1@92a6f767`维护线；`main@a9435a34`/tree`e5e073ed`冻结为0.24 baseline |
 | Runtime ownership | Static architecture retained；new-main dynamic unverified | current main仍注册PlatformFL/WorkerFL/ModelRunnerFL/Dispatch；server未执行 |
 | 910C maturity | Complete for public evidence | v0.2.1-era仅Qwen3.6 TP2；new v0.24 stack无FL A3 E2E |
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
 | A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
-| Formal A3 code repository | Established / migration proposed only | existing `main@92a6f767`保持零变化，重分类为official v0.2.1 maintenance/reference |
+| Formal A3 code repository | Migration PASS | existing main不变；v0.2.1 anchor、v0.24 anchor、project branch exact |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
-| New v0.24 A2 | Draft / Not Ready | repo migration、provider transaction、carrier identity、valid free device pair未闭合；无prompt |
+| New v0.24 A2 | **Ready / not executed** | exact carrier/network/compiler replacement/valid pair纳入task PASS/STOP；prompt已生成 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -48,13 +48,12 @@
 
 ## 执行时必须验证 / 后续待决策
 
-1. 用户尚未批准正式代码repo的non-destructive v0.24 branch migration；mutation时须重读moving main SHA/tree。
-2. FlagTree rc1替换/overlay carrier triton-ascend的pip transaction、RECORD/file ownership和single-provider closure未知。
-3. 本机是否已有v0.24 carrier、RepoDigest/image ID与actual package inventory未知；缺失/identity不确定时不得pull。
-4. 第一台A3 valid logical-device pair映射与OC2占用未知；至少需要完整空闲pair。
-5. FlagGems v5.3.4 + chosen provider + FL new main的910C synthetic smoke未验证。
-6. target GLM-5.2-W8A8 checkpoint manifest、format、SHA、tensor/scale layout未提供。
-7. current-main Ascend MLA、DSA/SFA、Indexer、W8A8 Linear/MoE及`concat_and_cache_mla*` closure未闭合。
+1. A2 task内需冻结carrier RepoDigest/image ID；本机缺失时只允许pull exact v0.24 tag。
+2. A2 task内需完成FlagTree replacement并证明single coherent provider；失败STOP。
+3. A2 preflight需冻结valid two-logical-device pair与OC2占用；没有完整free pair即STOP。
+4. FlagGems v5.3.4 + FlagTree + FL project branch的910C synthetic smoke尚待执行。
+5. target GLM-5.2-W8A8 checkpoint manifest、format、SHA、tensor/scale layout尚未提供，但不阻塞A2。
+6. current-main Ascend MLA、DSA/SFA、Indexer、W8A8 Linear/MoE及`concat_and_cache_mla*` closure归后续GLM gate，不阻塞A2。
 
 当前“FlagOS原生”工作边界按实际模型执行ownership判定，不按carrier image/package存在性判定。若trace发现`vllm_ascend`实际参与，只对具体调用进入客户边界/替换判断；只有客户以后明确扩大到official FL历史adapted来源时才另行重审源码合规。
 
@@ -65,16 +64,19 @@
 - 正式代码仓库：[yanceng305-collab/vllm-plugin-FL-a3-flagos](https://github.com/yanceng305-collab/vllm-plugin-FL-a3-flagos)，类型为standalone而非fork。
 - Official frozen baseline：commit `92a6f7670465922c60e88f06787b8f0923e761f3`，tree `e610bc5828b4a4a54a8f55429b40500ff4f5a0a7`；新仓库main/tree完全相同。
 - 该baseline现在正式标记为official `v0.2.1` maintenance/reference；new main research freeze为`a9435a34...`/tree`e5e073ed...`。
-- 新仓库只有`main`且无tag；selected legacy-only commits不可达。
+- `baseline/official-v0.2.1-vllm0.20.2` -> `92a6f767...`。
+- `baseline/official-main-vllm0.24-20260821-a9435a3` -> `a9435a34...`。
+- `project/glm52-w8a8-v024` -> `a9435a34...`。
+- Default branch仍为existing `main`；本轮未配置protection/PR规则。
 - Legacy未执行rename、transfer、detach、fork sync、push或settings修改；branches/tags/PR #1哈希前后相同。
 - Existing `main`禁止直接开发或同步覆盖；new-main migration只按`CODE-REPOSITORY-MIGRATION-V024.md`的新增branch方案，在用户另行批准后执行。
 
 ## 下一门禁
 
-当前没有Ready服务器任务。Old task[`tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)与prompt[`tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md)均已Paused，不得下发。
+当前Ready服务器任务：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。执行提示词：[`tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md)。
 
-下一决策是用户复核[`CODE-REPOSITORY-MIGRATION-V024.md`](CODE-REPOSITORY-MIGRATION-V024.md)与[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)。新A2仅为[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md)，状态Draft / Not Ready / No prompt。
+Old v0.20 task/prompt继续Paused，不得下发。
 
 原完整trace设计已后置到[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，定义为Eager Correctness后的Deferred / On-demand审计支线，不是Baseline Benchmark硬门禁。
 
-本轮未操作服务器、未修改正式代码repo、未pull image、未创建container，也未生成新的DeepSeek提示词。
+本轮未操作服务器。代码repo branch migration与control/prompt已完成；下一步直接执行A2-v024。

@@ -7,7 +7,7 @@
 | 组件 | 官方推荐/实际CI | 客户合规候选 | A3/910C专用 | GLM-5.2-W8A8必需 | 状态/边界 |
 |---|---|---|---:|---:|---|
 | Host OS/CANN | Host CANN版本不参与container tuple；只保留Host runtime条件 | 不bind-mount Host Toolkit | 是 | Driver/runtime层必需 | Boundary Confirmed；Host CANN差异不再分析 |
-| Container base/OS | vLLM-Ascend v0.24 docs: `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | New primary carrier candidate；v0.20 carrier仅maintenance reference | 是 | 必需 | Official source/docs Confirmed；local digest/artifact Unknown |
+| Container base/OS | `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | New primary；本机缺失允许pull唯一tag | 是 | 必需 | Official source/docs；A2冻结local identity |
 | Architecture | aarch64 | 按现场aarch64复核 | 是 | 必需 | Confirmed job metadata |
 | Python | v0.24 A3 source base Python3.12 | 3.12；以actual carrier inventory复核 | 否 | 必需 | Source contract Confirmed；artifact Unknown |
 | Driver | Host mounted | 产品/CANN兼容版本 | 是 | 必需 | exact Unknown |
@@ -23,7 +23,7 @@
 | `VLLM_VENDOR` | unset | unset | Ascend语义 | 必需配置 | Confirmed；`ascend`无效 |
 | FlagGems | README tag`v5.3.4@f7c55cb2...` | preferred非mandatory；exact tag | 否 | per-op可选 | Confirmed source pin；new-main A3 E2E Unknown |
 | triton-ascend | v0.24 carrier`3.2.1` | Carrier starting provider；是否保留待transaction decision | 是 | Triton路径需一个provider | Confirmed source constraint |
-| FlagTree | FL README`0.6.1rc1+ascend3.5@9a90fddf...`；FlagGems generic profile仍0.6.0/Py3.11 | Intended new-main provider candidate | wheel是 | Triton路径候选 | **Conflict**；shares `triton`namespace；replacement/overlay Unknown |
+| FlagTree | FL README`0.6.1rc1+ascend3.5@9a90fddf...` | A2 final provider；替换carrier triton-ascend | wheel是 | Triton路径需要 | Runtime transaction gate；single coherent provider或STOP |
 | FlagCX | CI absent；README ref v0.13.0 | baseline absent | adaptor-specific | baseline非必需 | Optional；910C E2E Unknown |
 | msModelSlim | master`e1009c9`；GLM5.2 feature`f8e5bed` | runtime先不装 | 配方含A3 tag | 重新量化时producer必需 | 工具侧Confirmed；公开A3 log Unknown |
 | Quant format | CI无W8A8 | AscendV1 vs compressed-tensors待ADR | 模型/栈特定 | 必需 | Interface Missing/Conflicting |
@@ -48,9 +48,9 @@ v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V02
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
-| Official v0.24 carrier FL-only environment smoke | Draft / Not Ready | old A2 paused；repo/provider/pair blockers未闭合 |
+| Official v0.24 carrier FL-only environment smoke | **Ready / not executed** | exact network/provider/pair均为task内PASS/STOP gate |
 | Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred on-demand | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace在Eager Correctness后按需触发，不阻塞Baseline Benchmark |
-| FlagTree profile | Unknown / blocker | Intended rc1与carrier triton-ascend共享namespace；transaction未验证 |
+| FlagTree profile | Ready experiment / runtime Unknown | A2卸载carrier compiler后安装rc1并审计ownership |
 | Dense MLA | Missing | placeholder |
 | Sparse MLA/DSA/SFA | Missing | 显式NotImplemented |
 | GLM-5 on 910C | Unknown/Missing backend | README非交叉矩阵 |

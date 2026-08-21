@@ -1,10 +1,12 @@
 # A3-CP-A2-v024 — Official v0.24 Carrier + FlagOS main FL-only Environment Smoke
 
-状态：**Draft / Not Ready / No DeepSeek prompt**
+状态：**Superseded by final Ready contract**
 执行授权：无
 第二台A3：不需要；第一台A3至少需要一个完整、明确空闲的valid logical-device pair
 
 ## Objective
+
+> 本draft已由[`STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)取代，仅保留审计历史，不得执行。
 
 使用本机已有`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`作为environment carrier，在一次性实验container中构造FlagOS new-main FL-only环境，并完成最小platform/worker/model-runner/dispatch与synthetic NPU operator smoke。
 

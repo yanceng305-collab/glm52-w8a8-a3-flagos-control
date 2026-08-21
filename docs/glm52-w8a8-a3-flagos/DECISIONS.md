@@ -64,14 +64,15 @@
 | D-058 | v0.20.2 A3-CP-A2 task与DeepSeek提示词进入Ready | **Superseded / Paused by D-059** | prompt尚未执行；upstream branch migration在server下发前改变primary baseline | 不得恢复旧prompt |
 | D-059 | 立即暂停`118c314`中的old A2 Ready与DeepSeek prompt | Required / Implemented in control | 原task基于v0.2.1/vLLM0.20.2/carrier0.20；不得下发服务器 | new v0.24 A2另行通过review |
 | D-060 | Branch语义冻结为`v0.2.1 = vLLM0.20.2 maintenance`、`main = vLLM0.24 current` | Confirmed | developer通知 + current branches/pyproject/README；observed main`a9435a34...`/tree`e5e073ed...` | mutation前重读moving main |
-| D-061 | 正式代码repo existing `main@92a6f767`保持不变并重分类；新增0.24 immutable baseline与project integration branch | Proposed / user approval required | official v0.2.1与new main已diverged，不能fast-forward；branch-addition避免force/history rewrite | 用户批准repository mutation |
-| D-062 | New A2 primary carrier candidate改为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | Evidence-backed candidate / artifact preflight pending | official source tag`412cda26...`与docs定义0.24 A3 tuple；actual local digest/inventory Unknown | 本机image缺失/identity不确定则STOP |
+| D-061 | Existing `main@92a6f767`保持不变；新增v0.2.1 anchor、0.24 immutable baseline与project integration branch | **Implemented / PASS** | 三个refs atomic push；SHA/tree exact；existing main/default/legacy零变化 | 无 |
+| D-062 | New A2 primary carrier为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | Required / A2 Ready | official source/docs定义0.24 A3 tuple；本机缺失时允许pull唯一tag并冻结identity | exact pull/identity失败则A2 STOP |
 | D-063 | A3 A2至少需要两个logical devices组成经只读拓扑证明的valid、完整空闲pair | Required | official v0.24 Quick Start明确A3至少2 NPU；同physical-card ID映射未官方定义 | Host preflight冻结pair mapping |
-| D-064 | FlagTree rc1与carrier triton-ascend是共享完整`triton`namespace的替代provider，不能假设clean coexistence | Required / transaction Unknown | 两个distribution均打包`triton`/`triton._C`；FlagTree intended profile较新，但overlay/RECORD需验证 | single coherent provider transaction PASS |
+| D-064 | FlagTree rc1与carrier triton-ascend共享namespace；A2在disposable container执行package-manager replacement并验证single provider | Required runtime gate | 禁止手工rm；post-install审计distribution/RECORD/module/native/driver ownership | 失败则A2 STOP |
 | D-065 | GLM primary Contract固定为`FlagOS new main + vLLM0.24 + GLM-5.2-W8A8` | Required | `bb439d...`已完成NVIDIA TP16双机init/weight load并暴露真实MLA cache gap；0.20.2不再primary | strong blocker证明必须fallback |
 | D-066 | current main `docker/ascend/Dockerfile`标记Upstream Conflict / stale candidate | Required | 文件最后相关更新早于0.24 upgrade/README refresh，仍为0.19/CANN8.5/old compiler tuple | upstream修复或developer说明 |
 | D-067 | New-main FL editable安装必须使用writable staging + exact SHA/tree/clean + `--no-build-isolation --no-deps -e` | Required | build-system.requires含torch等依赖；默认isolation可能联网解析，setuptools_scm还需写`_version.py` | build metadata contract变化 |
-| D-068 | 新A2为`A3-CP-A2-v024` Draft / Not Ready，不生成DeepSeek prompt | Required | repo migration、compiler transaction、carrier identity与valid pair未闭合 | 全部Ready blockers关闭并经用户复核 |
+| D-068 | 新A2初始为Draft / Not Ready | **Superseded by D-069** | 用户决定把carrier pull、provider replacement和valid pair转为task内PASS/STOP gate | 不再阻塞Ready |
+| D-069 | `A3-CP-A2-v024`与最终DeepSeek prompt进入Ready；允许严格受限network | User-approved / Ready | 仅exact carrier、FlagTree official resource index、FlagGems v5.3.4；禁止resolver升级核心runtime | task PASS/STOP结果 |
 
 ## 明确拒绝的路线
 

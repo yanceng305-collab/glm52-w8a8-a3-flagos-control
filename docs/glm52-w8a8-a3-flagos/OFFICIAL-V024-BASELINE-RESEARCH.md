@@ -129,7 +129,7 @@ Official versioned docs列出该image，但tag-push workflow曾cancelled、relea
 
 在carrier的`triton-ascend==3.2.1`上安装FlagTree应理解为compiler replacement/overlay transaction，而非clean coexistence。FlagTree source install hook只检查/卸载distribution名`triton`，不显式卸载`triton-ascend`；预编译wheel安装也未必运行source install hook。因此可能出现两个dist-info与混合`triton/*`文件ownership。
 
-### Unknown / Ready blocker
+### Unknown / A2 runtime gate
 
 - resource.flagos.net wheel与Git tag的exact build provenance/RECORD/hash；
 - 安装事务是否移除或保留`triton-ascend`metadata；
@@ -140,21 +140,21 @@ Official versioned docs列出该image，但tag-push workflow曾cancelled、relea
 
 FlagGems v5.3.4 generic `ascend-cann900` profile仍列Python3.11和FlagTree`0.6.0+ascend3.5`，而更晚、面向FL integration的README选择Python3.12 carrier与FlagTree`0.6.1rc1+ascend3.5`。本项目优先研究较新的FL README intended profile，但在A3实验前保持**Conflict / runtime Unknown**，不得把两者合并成“已确认兼容”。
 
-新的A2不得预先宣称安全共存，也不得直接覆盖形成混合namespace。必须先冻结可审计的replacement transaction；无法得到单一coherent provider时STOP。
+新的A2不预先宣称安全共存；它被授权在disposable container内执行可审计replacement transaction。无法得到单一coherent provider时A2 STOP。
 
 ## Current minimal runtime tuple candidate
 
-`R0-v024-FL-main`目前只能冻结为**conditional candidate / Not Ready**：
+`R0-v024-FL-main`已冻结为**Ready experiment profile**；下列Unknown转化为task内PASS/STOP gate：
 
 | Layer | Candidate | Status |
 |---|---|---|
-| Carrier | local exact `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | Officially documented；local identity Unknown |
+| Carrier | exact `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | Local absent时允许pull唯一tag；随后冻结identity |
 | Base runtime | Ubuntu22.04 / Python3.12 / CANN9.0.1 / torch2.10 / torch-npu2.10.post2 | Source contract Confirmed |
 | vLLM | 0.24.0 empty build | Confirmed source contract |
-| FL | mutation-time frozen official new main | Research freeze`a9435a34...`; final SHA pending |
+| FL | `project/glm52-w8a8-v024` | Frozen`a9435a34...`/tree`e5e073ed...` |
 | FlagGems | v5.3.4 / `f7c55cb2...` | Confirmed README pin；preferred |
 | Compiler | exactly one coherent Ascend provider | Required |
-| Intended compiler | FlagTree`0.6.1rc1+ascend3.5` after controlled replacement of carrier provider | Inferred intended route；transaction Unknown |
+| Intended compiler | FlagTree`0.6.1rc1+ascend3.5` after controlled replacement | A2执行并验证single provider；失败STOP |
 | Carrier compiler before replacement | triton-ascend3.2.1 | Confirmed starting state；not final coexistence |
 | Env | `VLLM_PLUGINS=fl`, `VLLM_FL_PLATFORM=ascend`, `TRITON_ALL_BLOCKS_PARALLEL=1`, `VLLM_VENDOR`unset | Confirmed FL contract |
 | Execution | eager | Confirmed README requirement |
@@ -162,7 +162,7 @@ FlagGems v5.3.4 generic `ascend-cann900` profile仍列Python3.11和FlagTree`0.6.
 | FlagCX/FlagScale | absent/not active | Deferred |
 | Device scope | one valid free pair, at least 2 logical devices | Required；mapping Unknown |
 
-当前不能把“FlagTree + triton-ascend并存”写入合法tuple。只有replacement transaction、local artifact和valid pair闭合后，R0-v024才能升级为Ready。
+“FlagTree + triton-ascend并存”仍不是合法终态；A2必须卸载carrier compiler distributions并形成single coherent FlagTree provider。Local artifact和valid pair由task preflight处理，不再阻止Ready。
 
 ## Upstream Conflict: current Ascend Dockerfile
 
@@ -200,11 +200,10 @@ Observed current main的`docker/ascend/Dockerfile`仍声明：
 
 ## Current high-impact Unknowns
 
-1. repository mutation时official main的新exact SHA/tree；
-2. 本机是否已有v0.24 carrier及其RepoDigest/image ID/architecture/actual inventory；
-3. valid A3 logical-device pair的Host映射和OC2占用；
-4. FlagTree replacement transaction与single-provider closure；
-5. exact resolved `compressed_tensors`、NNAL/ATB与other carrier packages；
-6. new main + FlagGems v5.3.4 + chosen provider在910C的synthetic smoke；
-7. target W8A8 checkpoint manifest/format；
-8. current main Ascend MLA/DSA/Indexer/W8A8/concat cache operator closure。
+1. 本机v0.24 carrier RepoDigest/image ID/architecture/actual inventory；缺失时A2允许pull唯一exact tag；
+2. valid A3 logical-device pair的Host映射和OC2占用；
+3. FlagTree replacement transaction与single-provider closure；
+4. exact resolved `compressed_tensors`、NNAL/ATB与other carrier packages；
+5. new main + FlagGems v5.3.4 + FlagTree在910C的synthetic smoke；
+6. target W8A8 checkpoint manifest/format；
+7. current main Ascend MLA/DSA/Indexer/W8A8/concat cache operator closure。
