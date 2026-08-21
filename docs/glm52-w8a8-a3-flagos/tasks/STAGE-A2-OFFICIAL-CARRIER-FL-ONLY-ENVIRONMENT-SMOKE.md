@@ -1,8 +1,8 @@
 # A3-CP-A2 — Official Carrier FL-only Environment Smoke
 
-状态：**Prepared / Not Ready**
+状态：**Ready**
 Parent：`Stage A — Official Carrier FL-only Bring-up`
-执行授权：无；本文件是task contract，不是DeepSeek执行提示词
+执行授权：用户已批准本task进入Ready并生成DeepSeek执行提示词；本轮Codex不代为操作服务器
 执行对象：第一台Ascend A3/910C服务器
 第二台A3：不需要
 
@@ -24,7 +24,7 @@ Parent：`Stage A — Official Carrier FL-only Bring-up`
 
 执行前必须同时满足：
 
-1. 用户明确批准后续DeepSeek执行任务；本control commit本身不构成服务器授权。
+1. **Satisfied：** 用户已批准A3-CP-A2 Ready task与DeepSeek执行提示词。
 2. 任务启动时冻结`WORKDIR="$(pwd -P)"`；该目录可写。不可写则停止，不得自行切换到`$HOME`、`/tmp`或其他目录。
 3. 重新检查当前NPU进程与logical-device占用；只允许选择明确空闲的最小device范围。任何device状态不确定即停止。
 4. 本机已有carrier的tag、RepoDigest和image ID可确认。若image不存在或digest不确定，只报告，不得`docker pull`。
@@ -156,3 +156,5 @@ PASS不代表Qwen、GLM、W8A8、MLA/DSA/Indexer、attention prefill/decode、co
 ## A2之后
 
 A2 PASS后立即停止并由Codex验收。下一步是Qwen canary或control批准的等价最小canary；不得自行扩张A2或进入GLM capability实现。完整dynamic provenance按[`POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)在GLM-5.2-W8A8 Eager Correctness通过后执行。
+
+对应执行提示词：[`DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`](DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md)。

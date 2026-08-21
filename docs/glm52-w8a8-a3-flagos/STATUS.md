@@ -1,7 +1,7 @@
 # 项目状态
 
 更新时间：2026-08-21
-总体状态：Research Freeze accepted；A2 scope reprioritized；execution not started by design
+总体状态：A3-CP-A2 Ready；execution not started
 
 ## 当前快照
 
@@ -14,7 +14,7 @@
 | A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
 | Formal A3 code repository | Established / verified | Standalone `vllm-plugin-FL-a3-flagos`；main/tree与official冻结基线一致 |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
-| Official carrier FL-only environment | A2 Prepared / Not Ready | 只在一次性实验container卸载vllm-ascend并做最小smoke；尚无服务器授权 |
+| Official carrier FL-only environment | **A2 Ready / not executed** | task与DeepSeek prompt已批准；只在一次性实验container卸载vllm-ascend并做最小smoke |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -36,7 +36,7 @@
 - 默认通信 backend 是 HCCL；FlagCX optional。
 - 当前 FL Ascend 不构建自身 native extension；`VLLM_VENDOR` 必须 unset，设置 `ascend` 会失败。
 
-## 当前阻塞/待决策
+## 执行时必须验证 / 后续待决策
 
 1. official A3 carrier是否已存在本机及其exact RepoDigest/image ID尚需执行时确认；缺失或digest不确定时不得pull。
 2. 第一台A3当前有其他OC2 benchmark任务；A2执行时是否存在明确空闲的最小logical device范围必须重新检查。
@@ -59,8 +59,8 @@
 
 ## 下一门禁
 
-下一建议任务是[`tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)：用户另行批准后，由DeepSeek在第一台A3上使用本机已有exact official carrier创建一次性实验container，完成受控卸载、minimal negative check、FL class/dispatch闭环和一个synthetic NPU operator smoke。当前Prepared / Not Ready；本轮未操作服务器、未创建container、未生成DeepSeek执行提示词。
+当前Ready任务是[`tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)，对应提示词为[`tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md)。DeepSeek在第一台A3上使用本机已有exact official carrier创建一次性实验container，完成受控卸载、fresh-process minimal negative check、FL class/dispatch闭环和一个synthetic NPU operator smoke；执行后立即停止等待Codex验收。
 
 原完整trace设计已后置到[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，定义为Eager Correctness后的Deferred / On-demand审计支线，不是Baseline Benchmark硬门禁。
 
-A2当前没有未解决的control-contract blocker；执行仍Not Ready，因为尚未获得服务器/DeepSeek授权，并且本机exact carrier identity与OC2占用下的空闲logical device必须在执行preflight确认。
+A2当前没有未解决的control-contract blocker，状态为Ready。剩余两项是task-start STOP gate而非Ready blocker：本机exact carrier identity必须确认；OC2占用下必须存在明确空闲的最小logical device。任一失败即STOP，不得pull、kill或绕过。

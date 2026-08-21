@@ -14,6 +14,7 @@
 - `R0-CONTAINER-TUPLE-RESOLUTION.md`：`c70aa4b`时期neutral-base tuple的兼容性研究；其强制路线已Superseded，仅保留reference evidence。
 - `tasks/STAGE-A-CLEAN-PROVENANCE.md`：按official carrier FL-only bring-up重定义后的Stage A父合同。
 - `tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：下一条建议Stage；一次性container受控卸载、minimal negative check与synthetic NPU operator smoke。
+- `tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`：A3-CP-A2 Ready执行提示词；严格受task contract约束。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
 - `tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`：历史/补证用只读inventory合同；当前tuple决策已不以其为前置，状态Not Ready。
@@ -30,7 +31,7 @@
 7. ModelSlim能生成A3 W8A8不等于FL能加载；AscendV1 reader当前只在vllm-ascend中找到，其是否需要迁入仍由artifact contract决定。
 8. 一台A3官方物理规格为8×128GB，当前Host边界确认16×64GB logical devices；full-model容量仍必须由container device trace与真实checkpoint manifest计算，现在不需要第二台。
 9. 正式代码仓库已采用personal standalone方案并精确复制official冻结main；legacy、PR #1、branches、tags和settings保持零变化。
-10. 下一步建议是Official Carrier FL-only Environment Smoke；FL需要editable安装时只从container内保留`.git`并通过SHA/tree/clean校验的writable副本安装，正式repo保持readonly。
+10. A3-CP-A2现为Ready；DeepSeek只能按已提交提示词执行，完成后立即停止并等待Codex验收。
 
 ## 状态标签
 

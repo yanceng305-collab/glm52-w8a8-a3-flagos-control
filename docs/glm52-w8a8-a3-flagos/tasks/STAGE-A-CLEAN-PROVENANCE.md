@@ -1,7 +1,7 @@
 # Stage A Parent Contract — Official Carrier FL-only Bring-up
 
-状态：Parent Stage Proposed；A3-CP-A2 Prepared / Not Ready
-当前执行边界：本轮不允许DeepSeek或server操作；等待用户另行批准A2执行
+状态：Parent Stage Active；A3-CP-A2 Ready / not yet executed
+当前执行边界：Ready task与DeepSeek提示词已批准；本轮Codex不操作server
 
 ## 历史与当前边界
 
@@ -31,7 +31,7 @@ official A3 carrier
 ```text
 Static official ownership review (Complete)
   -> A3-CP-A1 historical/read-only host inventory (Dormant / Not Ready)
-  -> A3-CP-A2 Official Carrier FL-only Environment Smoke (Prepared / Not Ready)
+  -> A3-CP-A2 Official Carrier FL-only Environment Smoke (Ready)
   -> 910C Qwen canary (future, separate approval)
   -> GLM contract and mandatory capability closure
   -> GLM-5.2-W8A8 Eager Correctness
@@ -42,7 +42,7 @@ Deferred / on-demand side branch after Eager Correctness:
 
 ## Parent Ready gate
 
-1. 用户明确批准A3-CP-A2服务器执行。
+1. **Satisfied：** 用户已批准A3-CP-A2 Ready task与执行提示词。
 2. 本机已有carrier RepoDigest/image ID可确认；缺失或不确定时只报告，不pull。
 3. 重新检查OC2及其他任务占用，只选择明确空闲的最小logical device范围。
 4. WORKDIR与唯一Evidence目录规则冻结。

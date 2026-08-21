@@ -53,7 +53,7 @@
 | D-047 | Triton类路径必须追踪为`FL/FlagGems kernel -> Triton API -> FlagTree或triton-ascend provider -> CANN`；非Triton路径可直接`PyTorch/torch_npu -> CANN` | Required / provider Unknown | FL源码调用Triton API或torch_npu；实际provider不能由README/安装名猜测 | runtime provider trace |
 | D-048 | `vendor.ascend`是`vllm_fl` ownership下的backend，不是vllm-ascend runtime wrapper；adapted source provenance与runtime dependency分开记录 | Static-checked；runtime verification pending | class path位于`vllm_fl.dispatch.backends.vendor.ascend`，attention直接调用torch_npu；部分文件保留Adapted from声明 | runtime module/call trace反证或客户扩大源码边界 |
 | D-049 | Runtime Provenance Trace是910C Canary前的新门禁 | **Superseded by D-050～D-056** | 完整coexistence/import/native/provider审计信息价值存在，但作为pre-canary门禁范围过重 | 不再作为当前Stage位置 |
-| D-050 | A3-CP-A2改为`Official Carrier FL-only Environment Smoke`；完整Runtime Provenance Audit后置到Eager Correctness之后 | Required / task prepared | 先验证环境与最小FL链可用，再推进canary与mandatory closure；完整动态审计不阻塞first eager | A2 smoke失败或客户重新要求pre-eager审计 |
+| D-050 | A3-CP-A2改为`Official Carrier FL-only Environment Smoke`；完整Runtime Provenance Audit后置到Eager Correctness之后 | Required / task Ready | 先验证环境与最小FL链可用，再推进canary与mandatory closure；完整动态审计不阻塞first eager | A2 smoke失败或客户重新要求pre-eager审计 |
 | D-051 | A2可在新建的一次性实验container内卸载vllm-ascend，且只用于减少bring-up变量 | Required scope exception | 不修改原始image，不触碰其他carrier runtime；该实验不等于package presence违规或official coexistence非法 | 卸载影响非目标依赖或negative check失败 |
 | D-052 | A2对vllm-ascend只做distribution、`find_spec`和有效entry point三项minimal negative check；三项均由卸载后的新Python process执行 | Required | 避免pre-uninstall inventory的module/entry-point cache干扰；残留时停止并保存origin，不手工删除源码/`.so`/`.pth` | Post-Eager Audit开始 |
 | D-053 | A2最小ownership只要求PlatformFL、WorkerFL、ModelRunnerFL、Dispatch及至少一个NPU-resident synthetic operator | Required | A2不是模型/capability验证；不覆盖Qwen、GLM、MLA、DSA、Indexer、W8A8或完整attention/MoE | A2所选operator无法在不扩大范围下构造 |
@@ -61,6 +61,7 @@
 | D-055 | A2必须先重新检查OC2等现有任务的NPU占用，只使用明确空闲的最小logical device范围 | Required safety gate | 不确定或占用device不能使用；不得kill、改Host/network或访问第二台 | 现场资源状态改变 |
 | D-056 | Post-Eager Runtime Provenance Audit比较official coexistence与同carrier FL-only A/B路线，并完整追踪dynamic imports/calls、native libraries、per-op ownership和compiler provider | Deferred / On-demand / Not Ready | Eager Correctness后仅由客户coexistence证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发；不默认阻塞Baseline Benchmark | 任一触发条件成立并另行批准审计 |
 | D-057 | FL frozen baseline的editable安装只允许从container内保留`.git`的disposable writable副本执行 | Required | `setuptools_scm.write_to=vllm_fl/_version.py`可能写source tree；正式repo保持readonly，副本安装前必须验证HEAD`92a6f767...`、tree`e610bc58...`与clean worktree，所有生成artifact仅留副本 | 安装方式或upstream build metadata变化 |
+| D-058 | A3-CP-A2 task与严格同范围DeepSeek执行提示词进入Ready | User-approved / Ready | 用户独立复核`0c25f73...`后批准执行准备；现场carrier identity与空闲device是task-start STOP gate，不再是control Ready blocker | 用户撤销授权或preflight STOP |
 
 ## 明确拒绝的路线
 
