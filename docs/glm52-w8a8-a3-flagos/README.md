@@ -12,6 +12,7 @@
 - `REPOSITORY-PLAN.md`：建仓前legacy保全与formal-fork/standalone路线分析；当前已被standalone决策取代。
 - `CODE-REPOSITORY-BASELINE.md`：正式standalone A3代码仓库、official冻结SHA/tree、remote与sync policy、legacy零变化验收。
 - `tasks/STAGE-A-CLEAN-PROVENANCE.md`：首个可执行Stage的任务合同和验收。
+- `tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`：第一台A3服务器的严格只读inventory Ready task与DeepSeek完整提示词。
 - `tasks/GLM-MANDATORY-CAPABILITY-CLOSURE.md`：gap confirmation、最小能力实现、microgate PASS与vLLM-Ascend reference规则。
 
 ## 给用户的10条摘要

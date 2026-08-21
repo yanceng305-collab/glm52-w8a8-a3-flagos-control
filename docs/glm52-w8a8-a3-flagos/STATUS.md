@@ -17,7 +17,8 @@
 | Customer-compliant environment | Planned / Inferred | `R0-clean` 尚未在 910C 执行 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
-| Server / DeepSeek execution | Not authorized / not started | 按用户要求 |
+| A3-CP-A1 Read-only Inventory | Ready / not executed | DeepSeek提示词已固化；Codex不执行服务器命令 |
+| Clean environment build | Not Ready | 等待inventory、Codex exact tuple和用户另行批准 |
 
 ## 已确认的高影响事实
 
@@ -50,4 +51,4 @@
 
 ## 下一门禁
 
-正式代码仓库落地完成后立即停止。`Clean Provenance`仍为Proposed/not ready；当前不操作服务器、不向DeepSeek下发任务，也不开始GLM适配或性能工作。
+执行并回收A3-CP-A1只读inventory。Codex随后审查raw logs、更新环境事实并决定R0-clean exact tuple；在用户另行批准前，不生成或执行环境构建任务，也不开始GLM适配或性能工作。

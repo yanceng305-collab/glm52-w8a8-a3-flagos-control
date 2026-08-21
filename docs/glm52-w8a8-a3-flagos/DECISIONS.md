@@ -36,6 +36,11 @@
 | D-030 | 正式A3代码仓库使用personal standalone而非formal fork | Implemented | `yanceng305-collab/vllm-plugin-FL-a3-flagos`已创建；legacy零变更，代码baseline与official精确相等 | 只有上游贡献流程形成硬需求时重审formal fork |
 | D-031 | 新代码仓库`main`只保存control-approved official frozen baseline，禁止直接开发 | Required | 防止实验/legacy历史污染；capability使用独立branch和Draft PR | control明确批准baseline同步 |
 | D-032 | Upstream同步采用control-approved exact-SHA fast-forward policy | Required | Standalone无GitHub fork sync；每次记录old/new SHA/tree和兼容影响，不产生额外baseline commit | official历史非fast-forward或项目版本路线变化 |
+| D-033 | 第一次A3服务器接触仅执行A3-CP-A1只读environment inventory | Ready / authorized task | 先冻结真实OS/NPU/Driver/CANN/Python/Docker/package/network/model事实，避免环境假设导致返工 | Inventory回流并经Codex验收 |
+| D-034 | A3-CP-A1唯一允许写入为全新专用证据目录 | Required | raw logs、report和SHA256必须保存；目录外保持只读，不使用sudo绕权 | 用户明确扩大写权限 |
+| D-035 | R0-clean exact tuple必须在inventory审查后由Codex决定 | Required | DeepSeek只提供事实，不得把候选tuple升级为现场结论或开始搭建 | Codex完成兼容审查且用户批准下一任务 |
+| D-036 | Host/现有Python/Docker中存在vllm-ascend只记录为现场污染事实 | Required | 当前/历史存在不等于未来从零构建的R0-clean违规；正式container仍须从未安装vllm-ascend | R0-clean negative audit结果 |
+| D-037 | 本机没有neutral CANN/torch-npu candidate image时只记录，不下载 | Required | Inventory不能触发docker pull/build/run或环境变更 | 用户批准后续环境构建任务 |
 
 ## 明确拒绝的路线
 
