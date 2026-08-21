@@ -20,14 +20,19 @@
 | D-014 | Full-model capacity不使用摘要参数量或第三方artifact冻结 | Required | 华为物理HBM为8×128GB；logical topology Unknown；vLLM recipe约743B与其他metadata约753B有来源冲突 | 真实checkpoint manifest与Stage A topology冻结 |
 | D-015 | W8A8是第一次目标模型eager correctness硬门禁 | Required | 目标固定为GLM-5.2-W8A8；BF16只允许operator/reference/debug microtest，不能替代full-model bring-up | 用户改变目标checkpoint（当前不允许） |
 | D-016 | Minimal Eager Execution Closure必须包含MLA + DSA/SFA + Indexer | Evidence-backed proposed | 固定证据集内：官方config固定index_topk/indexer_types；Transformers eager仍生成sparse mask；vLLM0.23没有合法Dense MLA fallback | 官方新增correctness-preserving fallback及目标平台证据 |
-| D-017 | Capability Microgates只证明首次eager mandatory能力最小可用 | Required | 验收限于backend可达、小规模correctness、checkpoint/runtime contract、目标forward接口 | Eager Correctness通过后进入更完整阶段 |
+| D-017 | Capability Microgates只证明首次eager mandatory能力最小可用 | Required | 验收限于backend可达、小规模correctness、checkpoint/runtime contract、目标forward接口和NPU device/backend trace | Eager Correctness通过后进入更完整阶段 |
 | D-018 | 首次eager前采用`gap confirmation -> Minimal Capability Implementation -> corresponding Microgate PASS` | Required | MLA/DSA/Indexer/W8A8等mandatory能力已静态确认存在Missing/Unwired，不能只检查后直接进入First Eager | 全部mandatory microgate PASS |
-| D-019 | Minimal Capability Implementation只接收已确认Missing/Unwired的首次eager mandatory能力 | Required | 防止范围扩张和提前优化；First Eager后的Minimal Compatibility只处理新暴露故障 | 新证据改变mandatory closure |
+| D-019 | Minimal Capability Implementation只接收FlagGems/vendor.ascend/Reference三路均不可用后确认Missing/Unwired的首次eager mandatory能力 | Required | 防止把“没有FlagGems”误判成Missing，也防止范围扩张和提前优化；First Eager后的Minimal Compatibility只处理新暴露故障 | 新证据改变mandatory closure |
 | D-020 | Mandatory capability原则上独立任务、独立branch、独立Draft PR | Required | 保持正确性归因、许可证/provenance和回滚边界 | 只有不可分割接口经Codex书面批准可合并 |
-| D-021 | vLLM-Ascend允许作为Ascend/910C技术reference，生产实现必须spec-first进入FlagOS ownership链 | Required | 需要其hardware contract与primitive经验，但正式环境和runtime依赖仍被禁止 | 客户扩大源码研究限制或上游许可变化 |
+| D-021 | vLLM-Ascend允许作为Ascend/910C技术reference，生产实现必须spec-first进入`FlagGems/vendor.ascend/Reference -> torch_npu/CANN`的FlagOS ownership链 | Required | 需要其hardware contract与primitive经验，但正式环境和runtime依赖仍被禁止 | 客户扩大源码研究限制或上游许可变化 |
 | D-022 | 禁止通过改名、换目录或机械重构隐藏vLLM-Ascend源码来源 | Required | 技术参考不等于源码复制；实际复用/派生必须满足license与attribution | 对应上游license或法律审查变化 |
 | D-023 | 参考优先级为FlagOS跨平台实现 → official vLLM/Transformers → vLLM-Ascend硬件参考 | Required | 先保持FlagOS架构一致性和模型contract，再吸收910C硬件知识 | official ownership结构变化 |
 | D-024 | 正式环境继续要求vllm-ascend image/distribution/module/entry point/runtime dependency全部不存在，且禁止先安装再卸载 | Required | 参考策略不改变客户运行环境约束 | 客户明确变更正式环境要求 |
+| D-025 | FlagScale不作为首次GLM-5.2-W8A8 bring-up前置 | Required | 当前目标是直接闭合vLLM/FL/Worker/ModelRunner/Dispatch到910C的eager correctness；控制/编排集成后置 | 模型链稳定且进入Advanced Composition |
+| D-026 | FlagGems为preferred而非mandatory实现来源 | Required | Bring-up验收关注correctness和FlagOS Dispatch可达性，不关注统一算子来源 | 性能阶段profile证明需替换现有路径 |
+| D-027 | Gap Confirmation路径顺序为FlagGems → vendor.ascend → Reference/PyTorch；三者均不可用才实现新能力 | Required | 复用当前FlagOS合法路径，最小化首次eager前开发 | 某路径违反runtime边界或correctness失败 |
+| D-028 | Reference路径必须NPU-resident并提供device/backend trace | Required | PyTorch tensor在NPU上可由torch_npu/CANN执行；静默CPU fallback不合法 | 目标backend提供等价、可审计的更直接证明 |
+| D-029 | Reference性能优化后置到Eager Correctness后的profiling | Required | 首次bring-up不为FlagGems覆盖率或性能提前开发；瓶颈需测量证明 | Profile确认Reference为主要瓶颈 |
 
 ## 明确拒绝的路线
 
@@ -61,3 +66,5 @@ R0-clean 用 triton-ascend 3.2.1 复刻实际CI；R1 单独测试 FlagTree。不
 ### ADR-P05：Mandatory Capability Closure与vLLM-Ascend Reference
 
 已知mandatory Missing/Unwired能力必须先经过gap contract，再在FlagOS ownership链中最小实现，最后通过对应microgate；不能以“已有参考代码”为理由跳过验收。Codex可研究vLLM-Ascend的行为和hardware contract；DeepSeek未来只能按implementation contract重新实现。若实际复用/派生源码，PR必须明确范围、许可证和attribution。详细任务规则见`tasks/GLM-MANDATORY-CAPABILITY-CLOSURE.md`。
+
+补充路径规则：gap contract必须先审查FlagGems、vendor.ascend和NPU-resident Reference；存在任一合法correctness路径时不得仅因缺少FlagGems而进入实现。Reference路径的性能问题只在Eager Correctness后由profiling触发。
