@@ -15,6 +15,7 @@
 - 当前阶段不操作服务器、不下发 DeepSeek、不编写 GLM 补丁或优化代码。
 - README、代码、Docker/CI、模型卡冲突必须保留；Unknown 不补猜测版本。
 - eager correctness 在先；graph、MTP、multistream、FlagCX、多机和组合优化在后。
+- 目标模型固定为GLM-5.2-W8A8；W8A8是首次目标模型eager correctness硬门禁，不是性能优化。BF16只允许operator/reference/debug microtest，不能替代目标bring-up。
 - GitHub 是唯一项目事实源；新仓库确认前，本文件只是 external-state candidate。
 
 ## 当前关键路径
@@ -23,7 +24,7 @@
 Research Freeze
   -> Clean Provenance (R0-clean，无 vllm-ascend)
   -> 910C Canary (Qwen3.6-27B TP2 eager)
-  -> GLM Contract Gate (vLLM语义 + quant format)
+  -> GLM Contract Gate (vLLM语义 + quant format + Minimal Eager Execution Closure)
   -> Capability Microgates (MLA/DSA/Indexer/W8A8)
   -> Capacity & Placement
   -> First Eager Load
@@ -43,17 +44,23 @@ Research Freeze
 | **Research Freeze** | 冻结官方 main、CI oracle、冲突和 Unknown | 本轮研究完成 | 用户批准研究结论、仓库方案和“原生”定义 | source SHA、CI links、矩阵、决策 | Codex；用户批准 | 不需要 |
 | **Clean Provenance** | 从中性 CANN base 零起建立 `R0-clean` | 用户授权服务器；base policy、driver/CANN compatibility、repo 已确认 | vllm-ascend package/module/entry point/native lib 全部不存在；FL platform、torch-npu、HCCL、FlagGems/Triton 最小链路通过；fresh rebuild 可复现 | inventory、negative audit、import/native trace、原始日志、环境 hash | DeepSeek 执行；Codex 验收 | 不需要 |
 | **910C Canary** | 用官方当前 910C CI-backed 模型隔离验证基础链 | Clean Provenance accepted；Qwen3.6-27B 权重就绪 | TP2 eager offline + serving 正确；FL/dense attention/HCCL dispatch 可追溯；无污染依赖 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
-| **GLM Contract Gate** | 决定 vLLM 语义基线与 W8A8 artifact contract | Canary accepted；真实 checkpoint manifest 齐全 | ADR 选择 `0.23/0.24 uplift` 或 `0.20.2 backport`；ADR 选择 `AscendV1 native loader` 或经证明等价的 `compressed-tensors conversion` | API/worker diff、IndexShare ownership、tensor/scale/layout 清单 | Codex 决策；DeepSeek仅做授权 spike | 不需要 |
-| **Capability Microgates** | 全模型前逐个验证 sparse MLA、DSA/SFA、Generic FL Indexer到Ascend backend/kernel的可达闭环、W8A8 OOT/NPU Linear candidate与MoE | 两项 contract ADR 批准 | 区分framework/glue已实现与target kernel/E2E缺口；每项有最小可重复correctness test、backend selection和failure signature | dtype/shape/layout、operator结果、可达性trace、日志 | DeepSeek；Codex review | 不需要 |
+| **GLM Contract Gate** | 决定vLLM语义基线与W8A8 artifact contract，并冻结Minimal Eager Execution Closure | Canary accepted；真实checkpoint manifest齐全 | ADR选择`0.23/0.24 uplift`或`0.20.2 backport`；ADR选择`AscendV1 native loader`或经证明等价的`compressed-tensors conversion`；确认首次closure必须含W8A8+MLA+DSA/SFA+Indexer | API/worker diff、IndexShare ownership、tensor/scale/layout、closure证据 | Codex决策；DeepSeek仅做授权spike | 不需要 |
+| **Capability Microgates** | 只验证首次正确eager token所需的W8A8 Linear/MoE、MLA、DSA/SFA、Indexer及必要MoE/runtime闭环 | 两项contract ADR和Minimal Eager Execution Closure批准 | backend可达、小规模correctness、checkpoint/runtime contract正确、接口可支撑目标forward；不要求性能完备 | dtype/shape/layout、reference/tolerance、可达性trace、contract audit、日志 | DeepSeek；Codex review | 不需要 |
 | **Capacity & Placement** | 基于真实artifact与Stage A实测logical-device topology确定布局 | checkpoint manifest、`npu-smi`/`torch.npu.device_count()`/device properties、目标上下文/并发、microgates通过 | 按真实packed weights/scales/float tensors/workspace/KV/communication headroom完成per-rank预算；冻结首次load的TP/EP候选与安全余量 | manifest audit、placement simulation、memory budget、实测topology | DeepSeek测算；Codex验收 | 默认不需要；不足则触发 |
-| **First Eager Load** | 首次 capacity-valid GLM-5.2-W8A8 load，收敛首个真实故障 | placement accepted；已知硬缺口已处理或有明确预期 | 模型构造/权重 load 成功，或只保留一个可复现 first failure；关闭 MTP/graph/FlagCX/multistream | exact run config、first-error log、weight-key audit、dispatch trace | DeepSeek；Codex定下一任务 | 仅 Capacity 明确触发；开始前必须通知 |
+| **First Eager Load** | 使用真实GLM-5.2-W8A8 checkpoint完成首次capacity-valid load，收敛首个真实故障 | placement accepted；mandatory microgates已通过或有明确预期 | 模型构造/权重load成功，或只保留一个可复现first failure；实际走W8A8 Linear/MoE与MLA+DSA+Indexer；关闭MTP/graph/FlagCX/multistream | exact run config、first-error log、weight/scale-key audit、backend trace | DeepSeek；Codex定下一任务 | 仅Capacity明确触发；开始前必须通知 |
 | **Minimal Compatibility** | 一次修复一个已证实缺口 | First Eager Load 单一 failure | 最小 patch、focused test、Qwen canary 无回归、Draft PR | diff、tests、provenance、rollback | DeepSeek；Codex PR review | 沿用批准布局 |
-| **Eager Correctness** | 完成 capacity-valid eager 正确性 | load/forward blockers关闭 | 输出精度、IndexShare owner/shared、MoE、quant scales、稳定多轮满足标准 | golden/tolerance、layer trace、memory/KV | DeepSeek；Codex阶段验收 | 仅容量需要 |
+| **Eager Correctness** | 用真实GLM-5.2-W8A8 checkpoint完成capacity-valid eager正确性 | load/forward blockers关闭 | 第一个正确token及固定数据集满足reference/tolerance；W8A8 Linear/MoE、MLA、DSA/Indexer owner/shared和quant scales均通过；BF16不得替代 | golden/tolerance、layer/backend trace、weight/scale audit、memory/KV | DeepSeek；Codex阶段验收 | 仅容量需要 |
 | **Baseline Benchmark** | 建立未优化基线 | Eager Correctness accepted | 固定输入分布/上下文/并发；给 TTFT、TPOT、吞吐、延迟分位、利用率、功耗、内存和方差 | raw results、env SHA、重复运行 | DeepSeek | 单机先 |
 | **Profile & Bottleneck** | 证明首要瓶颈 | baseline稳定 | kernel/communication/host/调度归因；每项有可证伪假设 | profiler trace、timeline、算子/通信占比 | DeepSeek；Codex审查 | 仅证据指向 scale-out 时触发 |
 | **Single-variable Optimize** | 每次只改变一个算子或配置 | profile假设批准 | 正确性无回归，收益跨多轮成立；失败实验也留证 | before/after、方差、PR、rollback | DeepSeek；Codex验收 | 按实验合同 |
 | **Advanced Composition** | graph、MTP、multistream、FlagTree、FlagCX、TP/EP/DP 独立后再组合 | eager与单变量结果稳定 | ablation 能归因；组合无 correctness/stability 回归 | ablation matrix、fallback、稳定性 | DeepSeek；Codex阶段验收 | 仅 multi-node 项需要 |
 | **Scale-out Acceptance** | 两机 capacity/communication/生产负载验收（若需要） | 明确触发原因、网络与客户通信约束冻结 | HCCL baseline 和可选 FlagCX 分开验证；SLO、稳定性、故障恢复满足验收 | topology、collective、E2E benchmark、故障记录 | DeepSeek；Codex/用户验收 | **此阶段开始需要第二台 A3 服务器** |
+
+## Minimal Eager Execution Closure
+
+官方config、Transformers v5.12.0和vLLM 0.23.0均把GLM-5.2的`index_topk/indexer_types`用于DSA与Indexer执行；没有官方支持且correctness等价的Dense MLA fallback。`VLLM_MLA_DISABLE`也不能形成合法GLM-5.2 fallback。故首次目标模型closure为：真实W8A8 checkpoint + W8A8 Linear/MoE + MLA + DSA/SFA + Indexer +必要MoE/runtime + eager。详细证据见[`MINIMAL-EAGER-EXECUTION-CLOSURE.md`](MINIMAL-EAGER-EXECUTION-CLOSURE.md)。
+
+Microgates只证明backend可达、小规模correctness、checkpoint/runtime contract和目标forward接口；不要求graph、MTP、multistream、FlagCX、fusion或production性能。
 
 ## 阶段治理
 

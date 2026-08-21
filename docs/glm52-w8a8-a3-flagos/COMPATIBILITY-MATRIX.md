@@ -111,6 +111,37 @@
 | Two-node FlagCX | FL+FlagCX | Implemented but unverified | 收益/稳定性Unknown |
 | Graph/MTP/multistream | 全栈 | Unknown | eager后置 |
 
+## Minimal Eager Execution Closure
+
+### Dense MLA fallback判定
+
+| 候选 | 官方/代码状态 | Correctness判定 | Closure结论 |
+|---|---|---|---|
+| Transformers eager attention | eager kernel存在，但`GlmMoeDsaAttention`仍执行Indexer top-k并生成sparse mask | 保留DSA语义 | 不是Dense fallback；DSA/Indexer仍必须 |
+| vLLM 0.23正常GLM路径 | `index_topk`触发Indexer并设置`is_sparse=True` | 保留官方语义 | MLA + DSA + Indexer必须 |
+| `VLLM_MLA_DISABLE=1` | 关闭MLA optimization并选`DeepseekV2Attention`；GLM仍分配top-k buffer，而该class断言buffer必须为None | 代码路径不闭合；即使patch绕过也会删除sparse mask | **不是合法fallback** |
+| 删除/覆盖`index_topk/indexer_types` | 官方config/model code无此支持模式 | 改变目标模型结构语义，无correctness证据 | **禁止用于首次验收** |
+
+证据：官方[GLM-5.2 config](https://huggingface.co/zai-org/GLM-5.2/blob/b4734de4facf877f85769a911abafc5283eab3d9/config.json#L20-L26)、Transformers [DSA/Indexer eager路径](https://github.com/huggingface/transformers/blob/e0e7504bca2bfd1b85bb0eedb148f7b250226f06/src/transformers/models/glm_moe_dsa/modeling_glm_moe_dsa.py#L347-L470)、vLLM 0.23 [sparse MLA/Indexer构造](https://github.com/vllm-project/vllm/blob/0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665/vllm/model_executor/models/deepseek_v2.py#L999-L1074)与[`VLLM_MLA_DISABLE`非闭合路径](https://github.com/vllm-project/vllm/blob/0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665/vllm/model_executor/models/deepseek_v2.py#L1115-L1130)。
+
+### 首次正确eager token的mandatory closure
+
+| 能力 | 状态 | Microgate最小验收 |
+|---|---|---|
+| 真实GLM-5.2-W8A8 checkpoint/runtime contract | Mandatory | manifest、quant metadata、tensor/scale/packing被正确识别 |
+| W8A8 Linear | Mandatory；Ascend runtime Missing | OOT/NPU kernel可达，小shape对reference正确，可支撑目标linear forward |
+| W8A8 MoE | Mandatory；910C unverified | routed/shared experts、scale和router保留精度正确 |
+| MLA | Mandatory；Ascend Missing | backend可达，最小prefill/decode正确 |
+| DSA semantics / SFA或等价backend | Mandatory；Ascend Missing | sparse top-k attention与官方eager/reference一致 |
+| Indexer full/shared | Mandatory；framework Implemented，Ascend closure Missing/Unwired | full层计算、shared层复用、cache/logits/top-k kernel owner明确 |
+| IndexShare weight ownership | Mandatory；current0.20.2 baseline Missing | 真实manifest owner/shared keys加载无错配 |
+| 必要MoE/router/shared-expert/TP-HCCL runtime | Mandatory according to first layout | 目标forward所需链路correctness通过 |
+| eager | Mandatory | 关闭非必需特性后输出第一个正确token |
+| BF16 full-model bring-up | Not acceptable substitute | 仅operator/reference/debug microtest |
+| MTP/graph/multistream/FlagCX/fusion | Not required | 后续阶段 |
+
+结论：第一次目标模型eager closure必须是`GLM-5.2-W8A8 + MLA + DSA/SFA + Indexer + W8A8 Linear/MoE + required runtime + eager`。当前没有证据支持把DSA/Indexer后移。
+
 模型证据：[GLM-5.2要求vLLM0.23+](https://huggingface.co/zai-org/GLM-5.2/blob/b4734de4facf877f85769a911abafc5283eab3d9/README.md)、[IndexShare/MTP config](https://huggingface.co/zai-org/GLM-5.2/blob/b4734de4facf877f85769a911abafc5283eab3d9/config.json)、[vLLM0.23实现](https://github.com/vllm-project/vllm/blob/0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665/vllm/model_executor/models/deepseek_v2.py)。
 
 ## 容量/并行
