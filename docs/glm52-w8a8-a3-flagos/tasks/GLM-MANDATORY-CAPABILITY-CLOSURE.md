@@ -51,7 +51,7 @@ Codex先形成capability gap contract，至少包含：
 2. `vendor.ascend`；
 3. Reference/PyTorch通用实现。
 
-任一路径只有同时满足以下条件才判PASS：在FlagOS Dispatch内可达；无vllm-ascend runtime/package依赖；在910C执行；满足microgate correctness；接口支撑GLM-5.2 forward。Reference tensor必须留在NPU并通过torch_npu/CANN执行；必须记录tensor device、selected dispatch/backend和必要的profiler/import trace，发现静默CPU fallback即失败。
+任一路径只有同时满足以下条件才判PASS：在FlagOS Dispatch内可达；在910C执行；满足microgate correctness；接口支撑GLM-5.2 forward。Reference tensor必须留在NPU并通过torch_npu/CANN执行；必须记录tensor device、selected dispatch/backend和必要的profiler/import trace，发现静默CPU fallback即失败。vllm-ascend image/package存在只作environment inventory；如该capability trace发现`vllm_ascend`实际import/call，必须准确归因并交control判断，不得自动判PASS或FAIL。
 
 现有能力若任一A/B/C路径microgate PASS，直接保留，不为了统一来源或FlagGems覆盖率重写。只有三条路径全部失败，状态才可确认成Missing/Unwired并进入实现。
 
@@ -112,7 +112,7 @@ Codex可深入阅读official vLLM-Ascend并提取：
 ### 禁止的实现方式
 
 - 不得直接复制vLLM-Ascend文件后通过变量名、类名、目录或机械重构隐藏来源；
-- 不得把vLLM-Ascend distribution/module/entry point/native runtime作为生产依赖；
+- 不得让新增capability绕过FlagOS Dispatch而直接以vLLM-Ascend backend作为未经审查的生产owner；环境carrier/package存在不属于本条禁止范围；
 - 不得用代码混淆规避license、copyright或attribution；
 - 不得因为reference已有实现就跳过FlagOS dispatch设计、correctness test或microgate。
 
@@ -131,14 +131,14 @@ Codex可深入阅读official vLLM-Ascend并提取：
 
 ## 正式运行环境边界
 
-参考策略不改变formal environment要求：
+本节已按runtime ownership修正；此前“image/distribution/module/entry point必须全部不存在、环境必须从未安装”的presence-based规则已**Superseded**。
 
-- 无vllm-ascend image；
-- 无vllm-ascend distribution/package；
-- 无`vllm_ascend` module；
-- 无vllm-ascend entry point；
-- 无运行时动态依赖；
-- 不允许先安装再卸载构造环境。
+- official同款vllm-ascend A3 image可作为环境carrier；
+- distribution/module/entry point的installed/discoverable状态必须如实记录，但存在性本身不判违规；
+- 实际模型执行必须由`PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`拥有；
+- 每个capability必须记录最终FlagGems、`vendor.ascend`或Reference owner及torch_npu/CANN下游；
+- 发现任何`vllm_ascend`动态import/call时，记录call site、职责、是否绕过Dispatch和必要性，由control单独判断客户边界/替换；
+- 不以先安装再卸载来制造缺席证据，也不在未trace时声称完全独立。
 
 允许的bring-up执行链为：
 
@@ -149,7 +149,7 @@ FlagOS Dispatch
   -> Ascend 910C
 ```
 
-当前工作解释是客户禁止runtime/package/environment dependency，不禁止开发阶段研究official vLLM-Ascend源码。只有客户以后进一步明确“official FlagOS仓库中的历史adapted来源也禁止”，才重新执行合规判断；在此之前不得自行扩大限制。
+当前工作解释是客户核心要求为FlagOS runtime/dispatch/backend ownership，不禁止official carrier/package存在，也不禁止开发阶段研究official vLLM-Ascend源码。只有runtime trace发现具体参与调用，或客户以后进一步明确“official FlagOS仓库中的历史adapted来源也禁止”，才对对应范围重新执行合规判断；在此之前不得自行扩大限制。
 
 ## 非目标
 

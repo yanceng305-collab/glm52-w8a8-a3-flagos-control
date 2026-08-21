@@ -1,8 +1,14 @@
 # Container R0-clean Tuple Resolution
 
-状态：Static decision complete；runtime experiment pending
+状态：**Superseded as formal route**；compatibility/reference evidence retained
 
 决策日期：2026-08-21
+
+## Supersession notice
+
+本文件记录control commit `c70aa4b83b4d270ee1d920e807296d0b283cfab2`在“vllm-ascend image/package存在本身即违规”前提下形成的neutral-base tuple研究。该前提已被后续official runtime ownership复核推翻：R0-P1/R0-F1不再是当前正式路线，neutral CANN base也不是唯一合法选择。下列OCI digest、CANN/torch-npu兼容性与Host/Container边界可继续作为reference evidence；所有“必须从未安装”“negative audit为合规验收”“primary/fallback已冻结”的表述均按本notice视为**Superseded**。
+
+当前优先候选是official FL `92a6f767...` Dockerfile所用`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`环境carrier，通过`VLLM_PLUGINS=fl`激活FlagOS，并以Runtime Provenance Trace判断实际ownership。carrier/package存在不是单独PASS/FAIL条件。
 
 ## 决策边界
 
@@ -45,11 +51,11 @@ Candidate：`quay.io/ascend/cann:9.0.1-a3-ubuntu22.04-py3.12`
 | Base history | Ubuntu layer + build tools + copiedPython/CANN；未显示torch、vLLM或vllm-ascend安装层 | Static-checked；runtime absence仍Unknown |
 | Entrypoint | source container Toolkit/BiSheng/NNAL env后执行命令 | Confirmed |
 
-结论：该image是**适合R0-primary的neutral base candidate**，不是vllm-ascend image。Tag可变，后续构建前必须核对本机image RepoDigest/manifest与上述ARM64 digest；container启动后的package/module/entry-point negative audit仍是合规验收，不可由OCI history替代。
+历史结论：该image是可研究的neutral base candidate。**Superseded：** 它不再是R0-primary或唯一合法base；package/module/entry-point absence也不再是合规验收。OCI digest仍可用于后续对照实验。
 
-## R0-primary：`R0-P1-CANN901-PY312`
+## 历史候选：`R0-P1-CANN901-PY312`（Superseded as primary）
 
-用途：Clean Provenance与official 910C Qwen canary的第一候选；不声称已经解决GLM-5.2的vLLM>=0.23语义和mandatory capability缺口。
+历史用途：曾作为Clean Provenance与official 910C Qwen canary第一候选；现不再具有执行优先级，也不声称解决GLM-5.2的vLLM>=0.23语义和mandatory capability缺口。
 
 | 层 | 冻结值 | 依据 / 状态 |
 |---|---|---|
@@ -70,14 +76,14 @@ Candidate：`quay.io/ascend/cann:9.0.1-a3-ubuntu22.04-py3.12`
 | Build prerequisites | clang-15、gcc/g++、cmake>=3.26、ninja及FL build deps | official A3/FL build source；exact versions待记录 |
 | FlagCX | 不安装/不激活 | 首次bring-up后置 |
 | FlagScale | 不安装/不前置 | 控制编排层后置 |
-| vllm-ascend | **从未安装；package/module/entry point/runtime均必须不存在** | 客户硬约束 |
+| vllm-ascend | 历史方案要求从未安装 | **Superseded；presence不再是门禁** |
 | Runtime selectors | `VLLM_PLUGINS=fl`、`VLLM_FL_PLATFORM=ascend`、`VLLM_VENDOR` unset | FL source Confirmed |
 
-选择理由：本机已有candidate base与较新的official A3软件栈一致；CANN901/Python312/torch-npu post2由official vLLM-Ascend v0.23.0rc1作为Ascend hardware reference；vLLM/FL保持当前FL已声明的0.20.2接口基线，以便先证明clean environment和Qwen canary。整体状态为**Inferred until experiment**。
+历史选择理由：本机已有candidate base与较新的official A3软件栈一致；CANN901/Python312/torch-npu post2由official vLLM-Ascend v0.23.0rc1作为Ascend hardware reference；vLLM/FL保持0.20.2接口基线。该组合仍可作为**Inferred reference tuple**，但不再自动进入实验。
 
-## 条件fallback：`R0-F1-CANN900-PY311`
+## 历史候选：`R0-F1-CANN900-PY311`（Superseded as fallback）
 
-Fallback不是并行路线，也不因Host CANN版本触发。只有R0-P1失败，且证据把问题归因到CANN901/Python312/torch-npu post2组合，而不是通用FL或模型缺口时，才启用。
+历史规则曾规定仅在R0-P1失败且归因到CANN901/Python312/torch-npu post2时启用；该自动fallback规则现已Superseded。
 
 | 层 | 冻结值 |
 |---|---|
@@ -88,7 +94,7 @@ Fallback不是并行路线，也不因Host CANN版本触发。只有R0-P1失败�
 | vLLM/FL/FlagGems | vLLM0.20.2 empty / FL`92a6f767...` / FlagGems`3e6528cf...` |
 | transformers/NumPy | 5.5.3 / 1.26.4 |
 | FlagCX/FlagScale | 不安装、不前置 |
-| vllm-ascend | 从未安装 |
+| vllm-ascend | 历史方案要求从未安装；该门禁已Superseded |
 
 Fallback依据是official FL 910C CI实际软件链及vLLM-Ascend v0.20.2rc1镜像构建的下层tuple；它只复刻CI-equivalent-minus-vllm-ascend，不代表Host CANN fallback。CANN8.5.0不是R0 fallback。
 
@@ -102,18 +108,18 @@ Fallback依据是official FL 910C CI实际软件链及vLLM-Ascend v0.20.2rc1镜�
 6. 华为容器文档明确Host安装Driver/Firmware并把device和Driver目录挂入container，而CANN软件位于container：[Host mount guidance](https://www.hiascend.com/document/detail/zh/canncommercial/700/envdeployment/instg/instg_0099.html)。
 7. Fallback tuple来自[vLLM-Ascend v0.20.2rc1 requirements](https://github.com/vllm-project/vllm-ascend/blob/v0.20.2rc1/requirements.txt)和[Dockerfile.a3](https://github.com/vllm-project/vllm-ascend/blob/v0.20.2rc1/Dockerfile.a3)。
 
-vLLM-Ascend仅作为official Ascend/A3 hardware implementation reference；它不进入R0 image、package或runtime。
+修正：vLLM-Ascend仍可作为hardware implementation reference；其official A3 image也可作为FlagOS环境carrier。是否有`vllm_ascend`实际runtime参与必须由trace回答，不能由package inventory推断。
 
 ## Unknown与实验门禁
 
 - 本机candidate image RepoDigest是否等于本次registry ARM64 digest；tag可能移动；
-- OCI history未显示torch/vLLM层，但不等于runtime package/module absence，必须做container内negative audit；
+- official carrier exact digest、package/native内容与本机tag一致性未知；
 - Driver25.5.0 + Firmware7.8.0.5.216与CANN901 base的exact公开配套表未被本轮独立解析，需最小device/import诊断确认；
 - FL`92a6f767` + vLLM0.20.2在CANN901/Python312/torch-npu post2组合上的import、worker初始化和Qwen canary未验证；
 - transformers5.5.3与FL tokenizer/config patches在CANN901 primary中的真实闭环未验证；
 - FlagGems`3e6528cf`在CANN901/triton-ascend3.2.1下的preferred operator coverage与fallback路径未验证；
 - Host device/driver/DCMI挂载是否足够覆盖16个logical devices、HCCN/HCCL和container内`npu-smi`未验证；
-- R0-primary失败时是否真的需要fallback，必须由同一failure evidence决定，不能预先切换。
+- neutral candidate是否仍有对照实验价值，只能由official carrier trace的具体故障决定；不得按本文件自动切换。
 
 ## 本轮非执行声明
 

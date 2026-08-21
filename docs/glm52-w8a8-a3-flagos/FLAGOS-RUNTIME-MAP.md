@@ -1,34 +1,42 @@
 # FlagOS on Ascend 910C Runtime Ownership Map
 
-固定代码：FL `38e7dbc` + official vLLM `bc150f5`（v0.20.2）
+当前复核代码：FL `92a6f7670465922c60e88f06787b8f0923e761f3`（2026-08-21 official `main`）+ official vLLM `bc150f5`（v0.20.2）。早期`38e7dbc`证据链接保留其历史语境。
 
 ## 真实调用链
 
 ```text
+Environment carrier
+  quay.io/ascend/vllm-ascend:v0.20.2rc1-a3
+  (CANN / torch-npu / empty vLLM / compiler-provider / installed packages)
+  + VLLM_PLUGINS=fl, VLLM_FL_PLATFORM=ascend
+    ↓
 vllm.LLM / vllm serve
   -> vLLM EngineArgs / EngineCore / Scheduler / Executor
   -> platform entry point fl=vllm_fl:register
   -> PlatformFL(device=npu, dist=hccl, worker=WorkerFL)
-  -> WorkerFL (NPU/distributed init, FlagGems enable, Ascend patches)
+  -> WorkerFL (NPU/distributed init, Ascend patches)
   -> ModelRunnerFL
   -> vLLM model loader / ModelRegistry
   -> vLLM model class
   -> vLLM layers + FL OOT layers + CachedOp dispatch
-       -> FlagGems/Triton
-       -> FL vendor.ascend adapter -> torch-npu -> CANN/AICore
-       -> reference fallback where allowed
+       -> FlagGems or FL vendor.ascend Triton kernel
+            -> Triton API -> FlagTree provider OR triton-ascend provider -> CANN/AICore
+       -> FL vendor.ascend non-Triton implementation -> PyTorch/torch_npu -> CANN/AICore
+       -> NPU-resident Reference -> PyTorch/torch_npu -> CANN/AICore
   -> HCCL default / FlagCX optional
   -> Ascend 910C
 ```
+
+`vllm-ascend` distribution may be installed in the carrier, but it is deliberately not drawn as a runtime hop: static FL source does not show such a hop. Whether the target process imports or calls any `vllm_ascend` code is **Unknown until Runtime Provenance Trace**.
 
 ## 接管边界
 
 - vLLM拥有API、serve、scheduler、EngineCore、Executor、model loader/registry与GLM模型主体。
 - FL接管platform registration、Worker、ModelRunner、OOT layers与operator dispatch。
 - `WorkerFL`/`ModelRunnerFL`是FL维护的vLLM fork，不是vllm-ascend类。
-- Dense Attention glue属于FL，kernel owner是torch-npu/CANN。
+- Dense Attention glue属于`vllm_fl.dispatch.backends.vendor.ascend`，kernel owner是torch-npu/CANN；该backend不是vllm-ascend wrapper。
 - FlagGems负责ATen替换与部分activation/router/operator；不拥有当前Ascend dense attention，也没接通sparse MLA。
-- FlagTree/Triton是compiler/runtime provider，不是model/attention/quant owner。
+- FlagTree或triton-ascend是Triton compiler/provider，不是model/attention/quant owner，也不是vllm-ascend backend代理。
 - FlagCX是optional collective/KV transfer；默认是HCCL。
 
 ## Ownership matrix
@@ -45,6 +53,7 @@ vllm.LLM / vllm serve
 | GLM model class | vLLM DeepSeekV2-derived | MLA/Indexer/MoE | 否 | 间接 | 否 | 5基础存在；5.2语义Missing |
 | OOT layers | FL `ops/custom_ops.py` | FL dispatch | 是 | 视op | 否 | Confirmed framework |
 | CachedOp dispatch | FL `dispatch` + `ascend.yaml` | flagos/vendor/reference | 是 | 视backend | 否 | Confirmed framework |
+| Environment carrier | official FL Ascend Dockerfile基于`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3` | CANN/torch-npu/empty vLLM/compiler/packages | 环境层，不判ownership | 是 | package存在 | Confirmed static；dynamic role Unknown |
 | Dense attention glue | FL `vendor/ascend/impl/attention.py` | torch-npu ops | adapter是 | 强 | 明确adapted | Confirmed Qwen910C |
 | Dense attention kernel | torch-npu/CANN | CANN/AICore | 否 | 核心 | API历史相关 | Confirmed Qwen910C |
 | Dense MLA | 无usable owner；placeholder | — | 否 | — | 对照实现未迁入 | **Missing** |
@@ -60,14 +69,15 @@ vllm.LLM / vllm serve
 | EP dispatch/combine | vLLM managers | HCCL/FlagCX | 否 | backend相关 | 否 | Implemented, unverified EP |
 | Compressed-tensors W8A8 config/checkpoint contract | FL validator + vLLM scheme | INT8 schemes | 混合 | 间接 | 否 | **Implemented**（canonical subset） |
 | FL packed W8A8 loading/glue | `CompressedTensorsPackedW8A8Int8` + scheme patch | vLLM native dynamic-token W8A8 | 是 | 间接 | 否 | **Implemented** |
-| AscendV1 description | FL无人读取；reader仅在vllm-ascend | — | 否 | — | 被禁package独有 | **Missing** |
+| AscendV1 description | FL无人读取；reader当前仅在vllm-ascend找到 | — | 否 | — | carrier package中的实现可作contract reference | **Missing in FL**；是否需要迁入待ADR |
 | OOT/NPU INT8 Linear kernel candidate | FL把upstream candidate list复制给`PlatformEnum.OOT`，但现有CPU/CUDA/ROCm candidates均不支持Ascend NPU | — | glue存在、kernel缺失 | 预期依赖 | 否 | **Missing** |
 | Ascend 910C W8A8 Linear runtime | contract + packed loading + NPU kernel +910C执行 | — | 未闭合 | 预期依赖 | 否 | **Missing**；无910C E2E |
 | W8A8 MoE | FL oracle + vLLM Triton experts | Triton provider | 混合 | 预期 | 否 | Implemented, unverified910C |
 | TP communication | torch distributed/HCCL | HCCL | 否 | 强 | 否 | TP2 Confirmed |
 | FlagCX collective | FL communicator + FlagCX | adaptor/HCCL | FlagOS组件 | adaptor依赖 | 否 | Optional, unverified910C |
 | P/D KV transfer | FL `FlagCXConnector` | libflagcx P2P | FlagOS组件 | adaptor依赖 | 否 | Implemented, unverified |
-| Triton compiler | triton-ascend(CI)或FlagTree(intended) | CANN codegen | profile相关 | 是 | 生态相关 | CI profile confirmed；FlagTreeUnknown |
+| Triton compiler/provider | Triton API；active provider为triton-ascend或FlagTree | CANN codegen | provider相关 | 是 | 非backend代理 | CI package evidence confirmed；目标active provider Unknown |
+| `vllm_ascend` dynamic participation | installed carrier distribution / entry point | Unknown until trace | 不属于FlagOS ownership | 可能间接 | 核查对象 | **Unknown**；presence不等于call |
 | A3/910C FL extension | 无；`VLLM_VENDOR`只支持cuda | 下游二进制栈 | 否 | 依赖下游 | 否 | Not designed |
 
 ## Attention
@@ -104,6 +114,10 @@ vllm.LLM / vllm serve
 
 ## “FlagOS原生”判定
 
-建议验收定义：不安装、不发现、不import、不激活、不链接vllm-ascend package/runtime；允许official FL仓库内已维护adapter和torch-npu/CANN下游。按此定义，`R0-clean`可通过实验成为FlagOS-native。
+当前验收定义改为**运行时ownership**：`PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`必须真实激活；每个关键operator必须记录最终选择的FlagGems、`vllm_fl...vendor.ascend`或Reference实现及其torch_npu/CANN下游。vllm-ascend image/package存在只作environment inventory，不自动判合规或违规。
 
-如果客户也禁止任何historical adapted/copied源码，则current official FL main本身不合规，必须在执行前裁定。
+static scan在FL `92a6f767...`中未发现direct `import vllm_ascend`，但这不能替代进程级import/call/library trace。若后续发现实际参与，必须对具体调用的ownership、必要性与客户边界单独裁定；不能把整个carrier先验拒绝，也不能无证据宣布完全独立。
+
+部分`vendor.ascend`文件明确标注`Adapted from vllm-ascend`，但当前owner、module path和直接调用均位于`vllm_fl`。源码provenance继续遵守license/attribution；只有客户另行禁止official FL历史adapted来源时才扩大合规判断。
+
+当前关键源码证据：[official Ascend Dockerfile](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/docker/ascend/Dockerfile)、[FL entry points](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/pyproject.toml#L50-L54)、[`PlatformFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/platform.py#L69-L89)、[`WorkerFL -> ModelRunnerFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/worker/worker.py#L422-L431)、[Ascend per-op policy](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/config/ascend.yaml)、[`vendor.ascend` attention selector](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/backends/vendor/ascend/ascend.py#L116-L140)、[direct torch_npu attention implementation](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/backends/vendor/ascend/impl/attention.py)。

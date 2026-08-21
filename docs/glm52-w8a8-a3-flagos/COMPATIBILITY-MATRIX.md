@@ -7,23 +7,23 @@
 | 组件 | 官方推荐/实际CI | 客户合规候选 | A3/910C专用 | GLM-5.2-W8A8必需 | 状态/边界 |
 |---|---|---|---:|---:|---|
 | Host OS/CANN | Host CANN版本不参与container tuple；只保留Host runtime条件 | 不bind-mount Host Toolkit | 是 | Driver/runtime层必需 | Boundary Confirmed；Host CANN差异不再分析 |
-| Container base/OS | Primary `cann:9.0.1-a3-ubuntu22.04-py3.12` | Ubuntu22.04/arm64；pin ARM64 digest`004a33d...` | 是 | 必需 | OCI Confirmed；local digest Unknown |
+| Container base/OS | official FL: `quay.io/ascend/vllm-ascend:v0.20.2rc1-a3` | official carrier优先；neutral CANN901仅reference candidate | 是 | 必需 | Dockerfile Confirmed；exact carrier digest Unknown |
 | Architecture | aarch64 | 按现场aarch64复核 | 是 | 必需 | Confirmed job metadata |
-| Python | Actual old CI 3.11.15 | Primary 3.12.13；fallback 3.11.15 | 否 | 必需 | Both OCI Confirmed；primary FL runtime Unknown |
+| Python | official carrier inherited；old CI evidence 3.11.15 | 以carrier实际inventory冻结 | 否 | 必需 | Dockerfile inherited；target exact Unknown |
 | Driver | Host mounted | 产品/CANN兼容版本 | 是 | 必需 | exact Unknown |
 | Firmware | Host side | 与Driver/CANN匹配 | 是 | 必需 | exact Unknown |
-| Container CANN | Old CI 9.0.0 A3 | Primary 9.0.1；fallback 9.0.0 | 是 | 必需 | OCI/reference Confirmed；Host CANN irrelevant |
-| Container ATB/NNAL | old image配套9.0.0 | Primary base配套9.0.1；fallback9.0.0 | 是 | 部分native op必需 | Path Confirmed；exact runtime inventory Unknown |
+| Container CANN | official carrier inherited；old CI evidence 9.0.0 A3 | 以carrier实际inventory冻结 | 是 | 必需 | inherited；target exact Unknown；Host CANN irrelevant |
+| Container ATB/NNAL | official carrier inherited | 以carrier实际inventory冻结 | 是 | 部分native op必需 | path expected；exact runtime inventory Unknown |
 | HCCL | torch-npu/CANN内 | matching stack | 是 | TP>1必需 | TP2 Confirmed；独立版本Unknown |
 | torch | 2.10.0 | 2.10.0 first | 否 | 必需 | image recipe Confirmed |
-| torch-npu | old CI 2.10.0；newer A3 row 2.10.0.post2 | Primary post2；fallback2.10.0 | 是 | 必需 | Official rows Confirmed；primary FL combination Unknown |
+| torch-npu | old CI 2.10.0；newer A3 reference row 2.10.0.post2 | 以official carrier inventory冻结 | 是 | 必需 | official evidence有多个row；target exact Unknown |
 | vLLM | `v0.20.2@bc150f5`, empty | Canary同版；GLM待Contract Gate | 否 | 必需 | Canary Confirmed；GLM需>=0.23 |
 | vLLM native ext | empty build无device ext | 无 | 否 | 非必需 | Confirmed |
 | vllm-plugin-FL | `v0.2.1-rc0@38e7dbc` | 操作时current main重冻结 | 否 | 必需 | Confirmed snapshot |
 | `VLLM_VENDOR` | unset | unset | Ascend语义 | 必需配置 | Confirmed；`ascend`无效 |
-| FlagGems | `3e6528cf`, metadata5.0.2 | R0同pin | 否 | 当前FL链必需 | Confirmed CI；README pin不同 |
-| triton-ascend | 3.2.1 | Primary/fallback 3.2.1 | 是 | Preferred Triton path | Official A3/CI rows Confirmed |
-| FlagTree | CI absent；README0.4；其他metadata指0.5/3.5 | R0 absent；R1待测 | wheel是 | 是否必需Unknown | **Conflicting** |
+| FlagGems | `3e6528cf`, metadata5.0.2 | official Docker pin；preferred非mandatory | 否 | per-op可选 | Confirmed CI；README pin不同 |
+| triton-ascend | carrier/old CI evidence 3.2.1 | active provider必须runtime trace | 是 | Triton路径需要一个provider | package evidence Confirmed；active ownership Unknown |
+| FlagTree | CI absent；README0.4；其他metadata指0.5/3.5 | 若carrier/provider实际使用则记录；不前置替换 | wheel是 | 是否必需Unknown | **Conflicting**；不得画成vllm-ascend代理 |
 | FlagCX | CI absent；README ref v0.13.0 | baseline absent | adaptor-specific | baseline非必需 | Optional；910C E2E Unknown |
 | msModelSlim | master`e1009c9`；GLM5.2 feature`f8e5bed` | runtime先不装 | 配方含A3 tag | 重新量化时producer必需 | 工具侧Confirmed；公开A3 log Unknown |
 | Quant format | CI无W8A8 | AscendV1 vs compressed-tensors待ADR | 模型/栈特定 | 必需 | Interface Missing/Conflicting |
@@ -33,7 +33,7 @@
 | Mooncake | v0.3.8.post1 | baseline absent | 否 | 非必需 | Optional |
 | Ray | >=2.47.1,<=2.48.0 | local-MP baseline absent | 否 | 单机TP非必需 | Optional |
 | FL Ascend custom ext | 无；Python-only | 无 | 是 | 非必需 | Confirmed |
-| vllm-ascend | package/ext installed | **禁止且必须不存在** | 是 | 客户路线不允许 | CI presence Confirmed；clean independence Unknown |
+| vllm-ascend image/distribution | official A3 environment carrier；installed/discoverable | 允许作为carrier；presence不是PASS/FAIL | 是 | 环境carrier可选；FlagOS execution ownership必需 | Presence Confirmed；dynamic import/call **Unknown** |
 
 完整tuple、digest、fallback触发条件与证据见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。
 
@@ -48,7 +48,7 @@
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
-| Clean-room无vllm-ascend | Unknown | 无negative control |
+| FlagOS runtime provenance on official carrier | Partially Confirmed / runtime Unknown | static ownership与CI platform activation有证据；operator/import/compiler动态trace未做 |
 | FlagTree profile | Unknown | CI没装 |
 | Dense MLA | Missing | placeholder |
 | Sparse MLA/DSA/SFA | Missing | 显式NotImplemented |
@@ -62,7 +62,7 @@
 | OOT/NPU INT8 Linear candidate | Missing | upstream CPU/CUDA/ROCm candidates不支持Ascend OOT/NPU |
 | Ascend 910C W8A8 Linear runtime | Missing | contract/glue有，NPU kernel与E2E未闭合 |
 | W8A8 MoE | Implemented but unverified | 仅unit/mock |
-| AscendV1 runtime | Missing | FL无reader |
+| AscendV1 runtime in FL | Missing | FL无reader；carrier中的vllm-ascend reader可作contract reference，不能自动视为FL owner |
 | MTP | General implemented/unverified；5.2 semantics Missing on0.20.2 | 无910C E2E |
 | EP/DP | Implemented but unverified | 无公开910C case |
 | Multi-node HCCL | Unknown | 无目标run |
@@ -100,7 +100,7 @@
 | Router quant | msModelSlim | Confirmed excluded | float路径 |
 | MTP quant coverage | msModelSlim adapter | Implemented but unverified per-module | 无逐模块公开精度 |
 | IndexShare adapter | msModelSlim | Implemented but unverified E2E | full/shared + MTP full |
-| AscendV1 reader | 仅vllm-ascend | **Missing in FL** | 客户禁止依赖 |
+| AscendV1 reader | 当前仅在vllm-ascend找到 | **Missing in FL** | 是否需要FL实现由真实artifact contract决定；package存在不等于该reader被调用 |
 | Compressed-tensors W8A8 config/checkpoint contract | FL validation | **Implemented** | canonical dynamic-token/per-channel INT8 subset存在 |
 | FL W8A8 packed loading/glue | `CompressedTensorsPackedW8A8Int8` | **Implemented** | packed参数创建、unpack、scheme patch存在 |
 | OOT/NPU INT8 Linear kernel candidate | vLLM selector + FL OOT list glue | **Missing** | 原始candidate仅CPU/CUDA/ROCm，platform gate不接受Ascend OOT/NPU |

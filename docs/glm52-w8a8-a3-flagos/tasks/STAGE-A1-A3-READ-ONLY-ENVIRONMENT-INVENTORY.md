@@ -1,9 +1,9 @@
 # Stage A1 Task Contract — A3 Read-only Environment Inventory
 
-状态：Superseded for current tuple decision；Not Ready
+状态：**Superseded / Dormant；Not Ready；embedded execution prompt MUST NOT be used**
 
 Task ID：`A3-CP-A1`
-Parent：`Stage A — Clean Provenance`
+Parent：`Stage A — FlagOS Runtime Provenance`
 执行对象：第一台Ascend A3/910C服务器
 执行者：DeepSeek
 验收者：Codex
@@ -11,7 +11,7 @@ Parent：`Stage A — Clean Provenance`
 
 ## 目标
 
-该任务原用于第一次接触A3服务器时冻结现场事实。用户已提供当前Container边界所需Host事实，R0 tuple不再等待Host CANN分析；本任务保留为历史/补证合同，未经新授权不得执行。
+该任务原用于第一次接触A3服务器时冻结现场事实。用户已提供当前Container边界所需Host事实，R0 tuple不再等待Host CANN分析；本任务保留为历史/补证合同，未经新授权不得执行。文件下方旧DeepSeek提示词包含已Superseded的`R0-clean exact tuple`目的和措辞，**不得下发**；未来若需Host补证必须按当前runtime-ownership边界另建任务。
 
 ## Evidence目录
 
@@ -69,7 +69,7 @@ $WORKDIR/a3-readonly-inventory-<hostname>-<UTC timestamp>/
 - NNAL/ATB/HCCL相关安装路径与可读取版本；
 - 当前系统package manager中已有的Ascend/CANN/HCCL/ATB条目；只查询，不修改。
 
-### Python与软件包污染现状
+### Python与软件包存在/来源现状
 
 - Python executable与版本；
 - pip executable与版本；
@@ -96,7 +96,7 @@ $WORKDIR/a3-readonly-inventory-<hostname>-<UTC timestamp>/
 - Docker client/server版本与基本runtime信息；
 - 本机已有Docker images：repository、tag、digest、image ID、创建时间/大小（系统能安全提供多少就记录多少）；
 - 当前container的ID、image、状态、名称和网络等非敏感字段；
-- 识别是否已有可能的neutral CANN/torch-npu base image；仅凭名称或tag不能确认合规，必要信息不足写Unknown；
+- 识别本机已有official FL A3 carrier或其他CANN/torch-npu candidate image；仅凭名称或tag不能确认runtime ownership，必要信息不足写Unknown；
 - 没有candidate image时只记录，不下载。
 
 ### HCCL与NPU网络
@@ -166,8 +166,8 @@ $WORKDIR/a3-readonly-inventory-<hostname>-<UTC timestamp>/
 1. 真实A3到底向PyTorch暴露多少个NPU device？
 2. 官方物理规格`8×128GB`与现场logical device presentation是什么关系？
 3. 当前Driver/CANN是否有足够证据支撑拟议clean FlagOS stack？证据不足时必须写Unknown/Potential Blocker，不得自行冻结tuple。
-4. Host、当前Python环境或现有Docker images中是否存在vllm-ascend痕迹？必须说明：当前/历史存在不等于未来R0-clean违规；正式R0-clean仍要求从零构建且从未安装vllm-ascend。
-5. 本机是否已有合适的neutral CANN/torch-npu base image？没有则只记录，不下载；仅凭image名称不能宣布合规。
+4. Host、当前Python环境或现有Docker images中是否存在vllm-ascend？必须把installed/discoverable与activated/imported/called分开；存在本身不等于违规。
+5. 本机是否已有official FL A3 carrier或其他CANN/torch-npu candidate image？没有则只记录，不下载；仅凭image名称不能宣布runtime ownership。
 
 ## DeepSeek完整执行提示词
 
@@ -199,7 +199,7 @@ $WORKDIR/a3-readonly-inventory-<hostname>-<UTC timestamp>/
 5. Driver、Firmware、CANN toolkit、NNAL/ATB/HCCL的版本、安装路径、symlink实际指向和现有系统package记录。
 6. Python/pip版本，以及当前distribution/module中vllm、vllm-ascend/vllm_ascend、vllm-plugin-FL/vllm_fl、FlagGems、FlagCX、FlagTree、Triton/triton-ascend、torch、torch-npu是否存在；对存在项记录version和origin/location。
 7. 当前登录shell的PATH、PYTHONPATH、LD_LIBRARY_PATH及显式Ascend/CANN/HCCL/NPU/VLLM/FlagOS/Triton变量。不得dump完整env或credential变量，不得source新的set_env.sh。
-8. Docker client/server版本和基本runtime信息；本机已有images及非敏感container状态；是否存在candidate neutral CANN/torch-npu image。没有则记录，不pull；仅凭名称不能确认合规。
+8. Docker client/server版本和基本runtime信息；本机已有images及非敏感container状态；是否存在official FL A3 carrier或其他CANN/torch-npu candidate image。没有则记录，不pull；仅凭名称不能确认runtime ownership。
 9. 网络接口、地址、路由、link、HCCN工具、每个可见NPU的只读HCCN/IP信息，以及可读HCCN/HCCL配置。不得修改网络。
 10. 在当前mount和已知/常见模型根目录中检查GLM-5.2-W8A8、Qwen3.6-27B及相关Qwen canary是否存在。只记录目录、总体大小和config/quant description/safetensors index等metadata；不要遍历整个根文件系统、读取大权重内容或计算全量权重hash。
 
@@ -245,8 +245,8 @@ REPORT.md必须严格包含：
 1. 真实A3向PyTorch暴露多少个NPU device？
 2. 8×128GB官方物理规格与现场logical presentation是什么关系？
 3. 当前Driver/CANN是否有足够证据支撑拟议clean FlagOS stack？证据不足必须写Unknown/Potential Blocker，不得决定tuple。
-4. Host、当前Python或已有Docker image中是否存在vllm-ascend痕迹？明确说明当前/历史存在不等于未来R0-clean违规。
-5. 本机是否已有合适的neutral CANN/torch-npu base image？没有则只记录，不下载；信息不足时写Unknown。
+4. Host、当前Python或已有Docker image中是否存在vllm-ascend？把存在性与实际runtime participation分开；存在本身不判违规。
+5. 本机是否已有official FL A3 carrier或其他CANN/torch-npu candidate image？没有则只记录，不下载；信息不足时写Unknown。
 
 最终返回：任务状态、WORKDIR绝对路径、Evidence目录绝对路径、REPORT.md完整内容、raw evidence清单、命令失败/权限不足、Potential Blocker和需要Codex决策的事项。
 
@@ -261,6 +261,6 @@ DeepSeek结果返回后，Codex负责：
 2. 更新Confirmed、Unknown、Conflict、Potential Blocker；
 3. 重新判断Driver/Firmware/CANN/Python/torch/torch-npu/compiler profile；
 4. 决定R0-clean exact tuple；
-5. 只有用户批准后，生成下一条Clean Provenance环境构建任务。
+5. 只有用户批准后，生成下一条Runtime Provenance Trace执行任务。
 
 DeepSeek不得自行执行第3～5项。

@@ -1,21 +1,23 @@
 # FlagOS A3/910C 环境调查与证据链
 
 调查日期：2026-08-21
-固定 FL：`38e7dbc20197e2db742c4e4c9687d36ea4df9900`
+当前复核 FL：`92a6f7670465922c60e88f06787b8f0923e761f3`（2026-08-21 official `main`）；早期CI调查固定SHA `38e7dbc20197e2db742c4e4c9687d36ea4df9900`仅保留其时间语境。
 
 ## 当前Container边界决策
 
 本项目已明确采用容器化部署。Host CANN 8.5.0/9.0.1不参与R0 tuple选择，除非未来显式bind-mount Host Toolkit；原则上R0只依赖Host A3/910C、Driver/Firmware、container runtime、device/driver挂载、HCCN/HCCL网络、disk/model路径和NPU占用。
 
-当前R0-primary与conditional fallback的权威定义见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。本文件后续以CANN900为第一候选的内容保留为Research Freeze历史证据，不再覆盖当前Container tuple决策。
+`c70aa4b`曾把neutral CANN base和vllm-ascend package缺席设为唯一合法路线；该架构前提已被本次修正Superseded。Host/Container边界仍有效，但[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)中的R0-P1/R0-F1只保留兼容性reference evidence，不再是正式执行路线。
 
 ## 总判定
 
-- **Confirmed：** 官方 910C CI image 是完整 vllm-ascend runtime，不是只提供 CANN/torch-npu 的中性底座。
+- **Confirmed：** 官方 current Ascend Dockerfile直接以`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`作环境carrier；其中包含vllm-ascend distribution/custom artifacts，而非中性CANN-only底座。
 - **Confirmed：** FL Docker/CI setup 不卸载、覆盖或移除 vllm-ascend；package/entry point仍 installed/discoverable。
-- **Confirmed：** `VLLM_PLUGINS=fl` 过滤 platform entry points，公开 CI log 显示实际激活 `Platform plugin fl`；Worker/ModelRunner来自FL。
-- **Unknown：** 官方没有从零且从未安装 vllm-ascend 的 910C negative-control job，不能证明 clean-room import/native closure。
-- **Inferred：** 客户合规第一候选应从 neutral CANN A3 base 零起，复刻 CI tuple但不安装 vllm-ascend，命名 `R0-clean`。
+- **Confirmed：** Dockerfile设置`VLLM_PLUGINS=fl`与`VLLM_FL_PLATFORM=ascend`；公开CI log显示`Platform plugin fl`激活；静态源码把worker设为`WorkerFL`并构造`ModelRunnerFL`。
+- **Confirmed：** official `ascend.yaml`是per-op策略：attention/rms_norm为`vendor -> flagos -> reference`，silu为`flagos -> vendor -> reference`；不是一个统一vendor backend总接管。
+- **Confirmed（静态）：** `vendor.ascend`返回`vllm_fl.dispatch.backends.vendor.ascend.impl.*`类/函数并直接调用torch_npu/PyTorch；FL树未发现direct `import vllm_ascend`。部分文件明确保留`Adapted from vllm-ascend`来源，这属于源码provenance，不等于动态runtime依赖。
+- **Unknown：** 在目标910C进程中是否有任何`vllm_ascend`模块、entry point、native artifact或side effect实际参与执行；必须由Runtime Provenance Trace验证，不能由package存在或静态grep单独裁定。
+- **Superseded：** “客户合规第一候选必须是neutral CANN base且从未安装vllm-ascend”的推断不再有效。
 
 ## 官方实际 CI 证据链
 
@@ -37,7 +39,7 @@ FL layer: FlagGems 3e6528cf + VLLM_PLUGINS=fl
     ↓
 CI setup: pip install --no-deps -e FL; no uninstall/replace
     ↓
-910C: vllm-ascend discoverable, FL activated, Qwen3.6 TP2 success
+ 910C: carrier package discoverable, FL activated, Qwen3.6 TP2 success
 ```
 
 关键证据：
@@ -48,6 +50,13 @@ CI setup: pip install --no-deps -e FL; no uninstall/replace
 - [FL 910C matrix](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/tests/platforms/ascend.yaml)
 - [Successful run 32287718197](https://github.com/flagos-ai/vllm-plugin-FL/actions/runs/32287718197)
 - [vllm-ascend A3 Dockerfile](https://github.com/vllm-project/vllm-ascend/blob/367b8e62da799870a7476ce34f5f7658589a8aad/Dockerfile.a3)
+- [Current FL Ascend Dockerfile](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/docker/ascend/Dockerfile)
+- [FL plugin entry points](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/pyproject.toml#L50-L54)
+- [`PlatformFL` worker selection](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/platform.py#L193-L220)
+- [`WorkerFL` constructs `ModelRunnerFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/worker/worker.py#L422-L431)
+- [Ascend per-op dispatch policy](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/config/ascend.yaml)
+- [`vendor.ascend` attention ownership](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/backends/vendor/ascend/ascend.py#L116-L140)
+- [`vllm_fl` Ascend attention direct torch_npu calls](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/backends/vendor/ascend/impl/attention.py)
 
 ## CI image 的准确角色
 
@@ -57,8 +66,9 @@ CI setup: pip install --no-deps -e FL; no uninstall/replace
 | 实际激活 vllm-ascend platform？ | 否；entry point可见但被filter，FL被激活 | Confirmed |
 | CI卸载/覆盖/屏蔽package？ | 不卸载、不覆盖；只在plugin loading层过滤 | Confirmed |
 | 使用 `VLLM_TARGET_DEVICE=empty`？ | 是，构建 official vLLM 0.20.2 source | Confirmed |
-| 证明无package也能跑？ | 不可；没有negative control | Unknown |
-| 最准确描述 | 经验证的完整Ascend软件栈载体；FL取得platform ownership，但环境仍污染 | Confirmed + Inferred解释 |
+| 证明无package也能跑？ | 不可；没有negative control，但该问题不再是formal route的先决门禁 | Unknown / non-blocking |
+| package存在是否证明vllm-ascend backend执行？ | 否；必须区分installed/discoverable与activated/imported/called | Confirmed distinction |
+| 最准确描述 | 经验证的Ascend软件栈carrier；FL取得platform ownership，operator ownership预期由FL dispatch决定；动态闭包待trace | Confirmed + Unknown |
 
 ## `ascend+empty` 的含义
 
@@ -84,46 +94,46 @@ CI setup: pip install --no-deps -e FL; no uninstall/replace
 | FlagGems metadata | 另有FlagTree 0.5 / Triton 3.5 / torch组合 |
 | FlagTree current main | Ascend向Triton 3.5演进；安装会替换`triton` namespace |
 
-结论为 **Conflicting**。不能拼成“最新兼容版本”。`R0-clean` 为保持单变量先用 actual CI 的 triton-ascend 3.2.1 且不装 FlagTree；`R1-compiler` 再独立验证 FlagTree，严禁叠装。
+结论为 **Conflicting**。不能拼成“最新兼容版本”，也不能把FlagTree画成vllm-ascend backend代理。Triton类实际链应追踪为`FlagGems/vendor.ascend kernel -> Triton API -> FlagTree provider或triton-ascend provider -> CANN`；当前official carrier内实际provider仍需runtime inventory/trace确认。非Triton的`vendor.ascend`/Reference可直接走`PyTorch/torch_npu -> CANN`。
 
 FlagCX在 current CI 未安装，`PlatformFL`默认回退HCCL。FlagCX有Ascend adaptor，但不是单机/TP canary前提。
 
-## 客户合规路线（建议，不是安装脚本）
+## 当前official-first路线（建议，不是安装脚本）
 
 ```text
 A3/910C
   ↓ Driver/Firmware（exact待产品矩阵/现场冻结）
-Neutral CANN layer: Ubuntu 22.04 + CANN 9.0.0 A3 + matching ATB/NNAL
-  ↓ Python 3.11.15
-torch 2.10.0 + torch-npu 2.10.0
-  ↓ single Triton provider: triton-ascend 3.2.1 (R0)
-official vLLM 0.20.2 empty source build
-  ↓ FlagGems 3e6528cf without conflicting extras
-vllm-plugin-FL approved current-main SHA, Python-only
-  ↓ HCCL baseline
-Clean Provenance tests
+official FL Ascend carrier
+  quay.io/ascend/vllm-ascend:v0.20.2rc1-a3
+  CANN + torch/torch_npu + official vLLM empty + carrier packages/providers
+  ↓ VLLM_PLUGINS=fl; VLLM_FL_PLATFORM=ascend
+PlatformFL -> WorkerFL -> ModelRunnerFL
+  ↓ FlagOS Dispatch per operator
+FlagGems / vllm_fl vendor.ascend / NPU-resident Reference
+  ↓ Triton provider -> CANN，或PyTorch/torch_npu -> CANN
+Runtime Provenance Trace
   ↓ Qwen3.6-27B TP2 eager canary
 ```
 
-每层必要性：Driver/Firmware使设备可用；CANN/ATB/HCCL提供NPU runtime/native ops/collectives；torch-npu提供PyTorch NPU接口；empty vLLM提供API/engine；FL接管platform/worker/runner/dispatch；FlagGems提供统一operator；Triton provider编译kernel。FlagTree/FlagCX/ModelSlim都不默认进入第一baseline。
+每层必要性：Driver/Firmware使设备可用；carrier复用official已验证的CANN/torch-npu/vLLM/编译器组合；empty vLLM提供API/engine；FL接管platform/worker/runner/dispatch；FlagGems、`vendor.ascend`与Reference按per-op policy提供实现；Triton provider只负责对应kernel编译链。FlagCX/FlagScale/ModelSlim均不默认进入第一次runtime provenance。
 
-该路线在910C canary通过前只能标 **Inferred**。
+official carrier与静态ownership为 **Confirmed**；目标服务器上的动态ownership闭包为 **Unknown until trace**。
 
-## Clean Provenance 负证据
+## Runtime Provenance验收证据
 
-- `pip show vllm-ascend`失败；`find_spec("vllm_ascend")`为空；无其entry point/native library/import trace；
-- 从fresh base生成，从未安装后卸载；
-- `current_platform`唯一为`PlatformFL`；
-- official vLLM是empty source build；
-- package/native/import inventory与环境hash齐全；
-- torch-npu device、HCCL、FlagGems/Triton kernel、FL最小test通过；
-- fresh rebuild结果一致。
+- image digest、distribution/module/entry-point/native-library inventory完整；其中vllm-ascend的存在本身不判FAIL；
+- `current_platform`实际为`PlatformFL`，worker class实际为`WorkerFL`，runner实例实际为`ModelRunnerFL`；
+- FlagOS Dispatch已注册并对关键operator记录候选顺序、最终selected impl、module/class/function origin；
+- 对每个关键operator区分FlagGems、`vllm_fl...vendor.ascend`与Reference，并验证tensor/device不发生静默CPU fallback；
+- 记录`sys.modules`、import audit、loaded Python/native modules和调用栈，明确是否存在任何`vllm_ascend`实际参与；
+- Triton类kernel记录`triton` distribution owner、active driver/provider与CANN下游；非Triton路径记录torch_npu/CANN op；
+- 若发现`vllm_ascend`实际import/call，输出具体调用、必要性与影响，暂停合规结论并交control裁定。
 
 ## Unknown
 
 - 客户现场Driver/Firmware/ATB exact version；
-- neutral CANN image是否允许；只允许host install时，公开FL无完整recipe；
-- 去掉vllm-ascend后是否缺隐式transitive/native artifact；
-- FlagTree最终兼容profile；
+- official carrier在现场的exact digest与完整package/native inventory；
+- `vllm_ascend`是否在目标进程中有任何实际import/call/side effect，以及若有是否属于客户允许边界；
+- active compiler究竟是FlagTree还是triton-ascend provider；
 - `TRITON_ALL_BLOCKS_PARALLEL=1`对GLM是否必需；
 - 客户是否也禁止FL内historical adapted code。
