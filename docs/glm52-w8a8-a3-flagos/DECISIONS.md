@@ -11,10 +11,13 @@
 | D-005 | baseline communication 使用 HCCL；FlagCX 后置为独立变量 | Evidence-backed proposed | current 910C CI 走 HCCL；FlagCX未安装/未E2E | 客户明确强制FlagCX或独立验证通过 |
 | D-006 | 首个严格官方 910C-backed canary 使用 Qwen3.6-27B TP2 eager | Evidence-backed proposed | current CI matrix 中最小真实成功模型 | 官方出现更小的同栈910C E2E |
 | D-007 | GLM vLLM 版本不在本轮猜测冻结；canary后设 Contract Gate | Required | FL 0.20.2 与 GLM-5.2 vLLM>=0.23硬冲突 | Contract Gate ADR完成 |
-| D-008 | AscendV1 与 compressed-tensors 的 quant contract 不在本轮猜测选择 | Required | ModelSlim能产出不等于FL能读；真实checkpoint未知 | manifest/layout审计和spike完成 |
+| D-008 | AscendV1 与 compressed-tensors 的runtime artifact contract不在本轮猜测选择 | Required | FL compressed-tensors W8A8 contract和packed loading/glue已Implemented；但AscendV1 reader、OOT/NPU INT8 Linear kernel与真实checkpoint格式仍未闭合 | manifest/layout审计和spike完成 |
 | D-009 | “FlagOS原生”暂按 package/runtime independence 定义：允许官方FL维护的adapter与torch-npu/CANN下游 | Awaiting customer confirmation | 符合用户明确禁止项；当前FL含历史adapted源码 | 客户若也禁止历史来源，则项目需判定当前官方main不合规 |
-| D-010 | 第二台A3不是 research、Clean Provenance 或 canary 前置 | Proposed | 单机足以完成这些目标；完整模型aggregate容量理论可能 | Capacity gate或scale-out目标触发 |
+| D-010 | 第二台A3不是 research、Clean Provenance 或 canary 前置 | Proposed | 华为只直接确认单机物理规格8×128GB；runtime logical-device呈现、真实checkpoint footprint和可用余量均Unknown，必须在Stage A/Capacity gate实测重算 | Capacity gate或scale-out目标触发 |
 | D-011 | repository mutation 必须在 owner/preflight/影响报告获确认后执行 | Required | 保护branches/tags/PR #1；rename-alone不释放fork slot | 用户明确确认操作序列 |
+| D-012 | Indexer状态按framework、Ascend可达闭环、GLM-5.2 E2E三层记录 | Evidence refinement | Generic FL Indexer framework已Implemented；Missing仅指Ascend/910C backend/kernel closure与GLM E2E | official main或目标E2E证据变化 |
+| D-013 | W8A8 Linear按contract、packed glue、OOT/NPU kernel、910C runtime四层记录 | Evidence refinement | 前两层Implemented；OOT/NPU candidate与910C runtime Missing | 新NPU kernel或E2E证据出现 |
+| D-014 | Full-model capacity不使用摘要参数量或第三方artifact冻结 | Required | 华为物理HBM为8×128GB；logical topology Unknown；vLLM recipe约743B与其他metadata约753B有来源冲突 | 真实checkpoint manifest与Stage A topology冻结 |
 
 ## 明确拒绝的路线
 

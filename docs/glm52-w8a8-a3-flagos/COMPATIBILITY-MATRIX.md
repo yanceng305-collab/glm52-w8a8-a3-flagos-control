@@ -52,7 +52,13 @@
 | Sparse MLA/DSA/SFA | Missing | 显式NotImplemented |
 | GLM-5 on 910C | Unknown/Missing backend | README非交叉矩阵 |
 | GLM-5.2 on 910C | Missing | 版本语义+backend缺口 |
-| W8A8 Linear | Missing | NPU无candidate |
+| Generic FL Indexer framework | Implemented | `SparseAttnIndexerFL/BF16`与DeepSeek-V4 glue存在 |
+| Ascend/910C reachable Indexer closure | Missing / Unwired | backend、kernel owner、sparse MLA/DSA路径未闭合 |
+| GLM-5.2 Ascend E2E Indexer | Missing | 无目标CI/E2E |
+| Compressed-tensors W8A8 config/checkpoint contract | Implemented | canonical W8A8 subset validator存在 |
+| FL W8A8 loading/packed glue | Implemented | packed参数与scheme patch存在 |
+| OOT/NPU INT8 Linear candidate | Missing | upstream CPU/CUDA/ROCm candidates不支持Ascend OOT/NPU |
+| Ascend 910C W8A8 Linear runtime | Missing | contract/glue有，NPU kernel与E2E未闭合 |
 | W8A8 MoE | Implemented but unverified | 仅unit/mock |
 | AscendV1 runtime | Missing | FL无reader |
 | MTP | General implemented/unverified；5.2 semantics Missing on0.20.2 | 无910C E2E |
@@ -76,8 +82,10 @@
 | MTP iteration reuse | vLLM0.23+ | **Missing** | 0.20.2无该语义 |
 | Dense MLA | FL placeholder | **Missing** | 构造报错 |
 | Sparse MLA/DSA/SFA | FL selector | **Missing** | 显式拒绝 |
-| Indexer NPU kernel | 无wired owner | **Missing** | upstream非NPU；FL未接GLM |
-| Indexer cache kernels | vLLM/FlagGems静态code | Implemented but unverified | backend不可达 |
+| Generic FL Indexer framework | `SparseAttnIndexerFL/BF16` + DeepSeek-V4 attention glue | **Implemented** | custom-op/CachedOp与BF16调用点存在；不等于Ascend可达 |
+| Ascend/910C Indexer backend/kernel closure | Generic framework + target backend/kernel owner | **Missing / Unwired** | Ascend backend、kernel owner、metadata/cache与sparse MLA/DSA路径未闭合 |
+| GLM-5.2 Ascend E2E Indexer | GLM sparse MLA/DSA完整链 | **Missing** | 当前910C CI无GLM/Indexer case |
+| Indexer cache kernels | vLLM/FlagGems静态code | Implemented but unverified | 不能绕过上述可达性缺口 |
 | MTP model construction | vLLM DeepSeekMTP | Implemented but unverified | 不绕开MLA/Indexer |
 | Router sigmoid/top-k | vLLM+FL | Implemented but unverified for GLM | Qwen不能证明GLM组合 |
 | BF16 routed experts | FL Ascend adapter | Implemented but unverified for GLM | Qwen只证明primitive |
@@ -91,7 +99,10 @@
 | MTP quant coverage | msModelSlim adapter | Implemented but unverified per-module | 无逐模块公开精度 |
 | IndexShare adapter | msModelSlim | Implemented but unverified E2E | full/shared + MTP full |
 | AscendV1 reader | 仅vllm-ascend | **Missing in FL** | 客户禁止依赖 |
-| CT W8A8 Linear | vLLM+FL candidates | **Missing on NPU** | CUDA条件拒绝NPU |
+| Compressed-tensors W8A8 config/checkpoint contract | FL validation | **Implemented** | canonical dynamic-token/per-channel INT8 subset存在 |
+| FL W8A8 packed loading/glue | `CompressedTensorsPackedW8A8Int8` | **Implemented** | packed参数创建、unpack、scheme patch存在 |
+| OOT/NPU INT8 Linear kernel candidate | vLLM selector + FL OOT list glue | **Missing** | 原始candidate仅CPU/CUDA/ROCm，platform gate不接受Ascend OOT/NPU |
+| Ascend 910C W8A8 Linear runtime | contract + loading + NPU kernel + E2E | **Missing** | 前两层已实现，kernel/E2E未闭合 |
 | CT W8A8 MoE | FL Triton adapter | Implemented but unverified | compiler/layout/scale待验 |
 | Eager full load | 全栈 | Unknown | 多前置Missing |
 | Single-node capacity-valid | Hardware+runtime | Unknown | aggregate只说明可能 |
@@ -104,8 +115,12 @@
 
 ## 容量/并行
 
-- 一台 A3：硬件口径8×128GB，软件口径16×64GB logical devices，总计1024GB。
-- GLM-5.2约753B参数；公开第三方W8A8 artifact约774.08GB。
-- 静态差约249.92GB，未扣scales、float tensors、KV、workspace、communication、allocator与分片不均。
-- 单机有可能但未验证；Canary用TP2，full model按现场16-device topology做placement，不预先冻结TP/DP/EP。
+- **Confirmed physical specification：** 华为官方 Atlas 800I A3 为 `8 × 128GB = 1024GB`，[见官方技术规格](https://e.huawei.com/cn/products/computing/ascend/atlas-800i-a3)。
+- **Unknown runtime presentation：** “16 × 64GB logical devices”当前不得作为事实或容量分片前提；Stage A未来必须以真实`npu-smi`、`torch.npu.device_count()`和device properties冻结logical-device count、单device可用HBM与拓扑。
+- **Parameter-count source conflict：** 当前[vLLM官方GLM-5.2 recipe](https://recipes.vllm.ai/zai-org/GLM-5.2)写约743B total / 39B active；其他model-hub metadata可能显示约753B。计划采用“来源冲突”标记，不用任一摘要数字替代真实checkpoint manifest。
+- 第三方W8A8 artifact大小只能作为非权威旁证，不能冻结full-model capacity或静态余量。
+- Full-model capacity必须重新读取本项目真实GLM-5.2-W8A8 checkpoint manifest，逐项计入packed weights、scales、保留float tensor、workspace、KV、communication/allocator headroom，并结合Stage A实际logical-device topology做per-rank placement。
+- Canary仍用TP2；full model不预先冻结TP/DP/EP或logical-device数量。
 - 第二台不是当前前置；只由Capacity失败或明确scale-out/communication Stage触发。
+
+Indexer与W8A8分层的固定源码证据：[`SparseAttnIndexerFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/ops/sparse_attn_indexer.py#L388-L460)、[`SparseAttnIndexerBF16`](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/ops/sparse_attn_indexer_bf16.py#L476-L538)、[compressed-tensors W8A8 validator](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/quantization/compressed_tensors.py#L83-L153)、[packed W8A8 glue](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/quantization/w8a8/packed.py#L40-L149)、[vLLM INT8 candidate table](https://github.com/vllm-project/vllm/blob/bc150f50299199599673614f80d12a196f377655/vllm/model_executor/kernels/linear/__init__.py#L151-L159)。
