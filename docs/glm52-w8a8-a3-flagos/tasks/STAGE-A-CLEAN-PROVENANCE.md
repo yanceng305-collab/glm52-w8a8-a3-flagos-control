@@ -1,40 +1,39 @@
 # Stage A Task Contract — Clean Provenance
 
-状态：Parent Stage Proposed；子任务A3-CP-A1 Ready；环境构建仍Not Ready
-当前允许执行者：DeepSeek仅可执行`STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`；其他server/Clean Provenance动作禁止
+状态：Parent Stage Proposed；Container tuple static-resolved；环境构建仍Not Ready
+当前执行边界：本轮不允许DeepSeek或server操作；等待用户批准后续最小container实验任务
 
 ## 目标
 
-在一台 A3/910C 上，从客户允许的中性 Ascend/CANN 基础层开始，建立一个从未安装过 vllm-ascend image/package/runtime/plugin 的 `R0-clean`，证明最小 NPU、HCCL、Triton provider、FlagGems 和 FL platform 链路闭合。
+在一台A3/910C上，从批准的neutral CANN Container base开始，建立一个从未安装过vllm-ascend image/package/runtime/plugin的`R0-clean`，证明NPU、HCCL、compiler、FL platform与至少一条合法FlagOS Dispatch算子路径闭合。
 
 本 Stage 不加载 Qwen/GLM，不实现 GLM patch，不测试性能，不引入 FlagTree、FlagCX 或 ModelSlim。
 
 ## 子任务顺序
 
 ```text
-A3-CP-A1 Read-only Environment Inventory (Ready)
-  -> Codex inventory review / fact update
-  -> R0-clean exact tuple decision
-  -> future clean environment build task (Not Ready)
+Container boundary and tuple static resolution (Complete)
+  -> local image digest + minimal negative-audit experiment design (Not Ready)
+  -> clean environment build task (Not Ready)
 ```
 
-A3-CP-A1只采集现场事实，不使用本文件中的环境候选执行安装。
+A3-CP-A1保留为历史/补证合同，不再是当前tuple决策前置。
 
 ## Ready 条件
 
-1. A3-CP-A1只读inventory完成并经Codex验收。
-2. 用户确认允许中性CANN image，或指定只允许host clean install。
-3. Driver/Firmware/CANN产品兼容依据与现场inventory齐备。
-4. Codex基于inventory冻结R0-clean exact tuple。
-5. 用户另行批准环境构建任务。
+1. 用户批准local image digest与minimal negative-audit实验。
+2. 本机candidate RepoDigest与批准的ARM64 manifest关系明确。
+3. Host Driver/Firmware/container runtime/device/network挂载合同冻结。
+4. Primary Container tuple及failure-triggered fallback保持control-approved。
+5. 用户另行批准environment build任务。
 
 ## 环境假设（待实验，不是安装脚本）
 
-`R0-clean` 第一候选：Ubuntu 22.04 userland、Python 3.11.15、CANN 9.0.0 A3、torch/torch-npu 2.10.0、triton-ascend 3.2.1、official vLLM 0.20.2 empty source build、FlagGems `3e6528cf`、FL current-approved SHA；`VLLM_VENDOR` unset，`VLLM_PLUGINS=fl`，`VLLM_FL_PLATFORM=ascend`。
+`R0-primary`：`R0-P1-CANN901-PY312`。Base为本机candidate`quay.io/ascend/cann:9.0.1-a3-ubuntu22.04-py3.12`，Container内使用CANN901配套Toolkit/ops/NNAL、Python3.12.13、torch2.10.0、torch-npu2.10.0.post2、triton-ascend3.2.1、official vLLM0.20.2 empty、FL`92a6f767...`、FlagGems`3e6528cf...`；FlagCX/FlagScale不前置，vllm-ascend从未安装。
 
-Driver/Firmware/ATB exact version保持 Unknown，必须由产品矩阵/现场 inventory 冻结，不能从本假设补写。
+条件fallback：`R0-F1-CANN900-PY311`，仅在primary失败且归因到CANN901/Python312/post2组合时使用。CANN8.5不是fallback。完整tuple和Unknown见[`../R0-CONTAINER-TUPLE-RESOLUTION.md`](../R0-CONTAINER-TUPLE-RESOLUTION.md)。
 
-该候选不得由A3-CP-A1执行或自行确认；inventory后可被Codex修改或否决。
+Host CANN8.5/9.0.1不参与选择；R0原则上不得bind-mount Host Toolkit。
 
 ## Exit / 验收
 
@@ -42,7 +41,7 @@ Driver/Firmware/ATB exact version保持 Unknown，必须由产品矩阵/现场 i
 2. official vLLM 确认为 `VLLM_TARGET_DEVICE=empty` source build，无 device-native vLLM extension。
 3. 唯一激活 OOT platform 是 FL；`current_platform=PlatformFL`、device=`npu`；`VLLM_VENDOR` unset。
 4. Driver/Firmware/CANN/Python/torch/torch-npu/Triton/FlagGems/FL inventory机器可读；未知字段明确 Unknown。
-5. torch-npu device smoke、HCCL collective、代表性 FlagGems/Triton kernel、FL 最小 unit/functional 集通过。
+5. torch-npu device smoke、HCCL collective、代表性FlagGems/vendor.ascend/NPU-resident Reference合法路径和FL最小unit/functional集通过。
 6. 从 fresh base 重建一次并得到一致 inventory 与结果；不得通过卸载 vllm-ascend实现。
 7. 验收结论只覆盖 clean provenance，不冒充模型或 GLM 支持。
 
@@ -66,5 +65,5 @@ Driver/Firmware/ATB exact version保持 Unknown，必须由产品矩阵/现场 i
 ## 资源
 
 - 一台 A3/910C；第二台不需要。
-- A3-CP-A1执行owner：DeepSeek；环境构建owner仍未授权。
+- Container研究owner：Codex；环境构建owner仍未授权。
 - 验收 owner：Codex；进入下一 Stage 需要用户批准。

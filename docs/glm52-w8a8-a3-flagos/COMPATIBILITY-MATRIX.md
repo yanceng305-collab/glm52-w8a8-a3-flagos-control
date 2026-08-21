@@ -6,23 +6,23 @@
 
 | 组件 | 官方推荐/实际CI | 客户合规候选 | A3/910C专用 | GLM-5.2-W8A8必需 | 状态/边界 |
 |---|---|---|---:|---:|---|
-| Host OS | 完整Unknown；kernel `5.10.0-216.0.0.115.oe2203sp4.aarch64` | 现场后冻结 | 是 | 基础必需 | metadata Confirmed；完整OS Unknown |
-| Container OS | Ubuntu 22.04 | Ubuntu 22.04 | 否 | 必需 | Confirmed |
+| Host OS/CANN | Host CANN版本不参与container tuple；只保留Host runtime条件 | 不bind-mount Host Toolkit | 是 | Driver/runtime层必需 | Boundary Confirmed；Host CANN差异不再分析 |
+| Container base/OS | Primary `cann:9.0.1-a3-ubuntu22.04-py3.12` | Ubuntu22.04/arm64；pin ARM64 digest`004a33d...` | 是 | 必需 | OCI Confirmed；local digest Unknown |
 | Architecture | aarch64 | 按现场aarch64复核 | 是 | 必需 | Confirmed job metadata |
-| Python | 3.11.15 | 3.11.15 | 否 | 必需 | Confirmed |
+| Python | Actual old CI 3.11.15 | Primary 3.12.13；fallback 3.11.15 | 否 | 必需 | Both OCI Confirmed；primary FL runtime Unknown |
 | Driver | Host mounted | 产品/CANN兼容版本 | 是 | 必需 | exact Unknown |
 | Firmware | Host side | 与Driver/CANN匹配 | 是 | 必需 | exact Unknown |
-| CANN | 9.0.0 A3 | 9.0.0 A3 | 是 | 必需 | Confirmed；patch/build Unknown |
-| ATB/NNAL | image中有`latest` path | CANN base配套 | 是 | 部分native op可能必需 | exact/necessity Unknown |
+| Container CANN | Old CI 9.0.0 A3 | Primary 9.0.1；fallback 9.0.0 | 是 | 必需 | OCI/reference Confirmed；Host CANN irrelevant |
+| Container ATB/NNAL | old image配套9.0.0 | Primary base配套9.0.1；fallback9.0.0 | 是 | 部分native op必需 | Path Confirmed；exact runtime inventory Unknown |
 | HCCL | torch-npu/CANN内 | matching stack | 是 | TP>1必需 | TP2 Confirmed；独立版本Unknown |
 | torch | 2.10.0 | 2.10.0 first | 否 | 必需 | image recipe Confirmed |
-| torch-npu | 2.10.0；另有2.10.0.post2 | 2.10.0 first；post2另测 | 是 | 必需 | CI Confirmed；suffix Conflicting |
+| torch-npu | old CI 2.10.0；newer A3 row 2.10.0.post2 | Primary post2；fallback2.10.0 | 是 | 必需 | Official rows Confirmed；primary FL combination Unknown |
 | vLLM | `v0.20.2@bc150f5`, empty | Canary同版；GLM待Contract Gate | 否 | 必需 | Canary Confirmed；GLM需>=0.23 |
 | vLLM native ext | empty build无device ext | 无 | 否 | 非必需 | Confirmed |
 | vllm-plugin-FL | `v0.2.1-rc0@38e7dbc` | 操作时current main重冻结 | 否 | 必需 | Confirmed snapshot |
 | `VLLM_VENDOR` | unset | unset | Ascend语义 | 必需配置 | Confirmed；`ascend`无效 |
 | FlagGems | `3e6528cf`, metadata5.0.2 | R0同pin | 否 | 当前FL链必需 | Confirmed CI；README pin不同 |
-| triton-ascend | 3.2.1 | R0同版 | 是 | FlagGems/Triton kernels必需 | Confirmed CI |
+| triton-ascend | 3.2.1 | Primary/fallback 3.2.1 | 是 | Preferred Triton path | Official A3/CI rows Confirmed |
 | FlagTree | CI absent；README0.4；其他metadata指0.5/3.5 | R0 absent；R1待测 | wheel是 | 是否必需Unknown | **Conflicting** |
 | FlagCX | CI absent；README ref v0.13.0 | baseline absent | adaptor-specific | baseline非必需 | Optional；910C E2E Unknown |
 | msModelSlim | master`e1009c9`；GLM5.2 feature`f8e5bed` | runtime先不装 | 配方含A3 tag | 重新量化时producer必需 | 工具侧Confirmed；公开A3 log Unknown |
@@ -34,6 +34,8 @@
 | Ray | >=2.47.1,<=2.48.0 | local-MP baseline absent | 否 | 单机TP非必需 | Optional |
 | FL Ascend custom ext | 无；Python-only | 无 | 是 | 非必需 | Confirmed |
 | vllm-ascend | package/ext installed | **禁止且必须不存在** | 是 | 客户路线不允许 | CI presence Confirmed；clean independence Unknown |
+
+完整tuple、digest、fallback触发条件与证据见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。
 
 ## 910C 成熟度
 
@@ -147,7 +149,7 @@
 ## 容量/并行
 
 - **Confirmed physical specification：** 华为官方 Atlas 800I A3 为 `8 × 128GB = 1024GB`，[见官方技术规格](https://e.huawei.com/cn/products/computing/ascend/atlas-800i-a3)。
-- **Unknown runtime presentation：** “16 × 64GB logical devices”当前不得作为事实或容量分片前提；Stage A未来必须以真实`npu-smi`、`torch.npu.device_count()`和device properties冻结logical-device count、单device可用HBM与拓扑。
+- **User-confirmed runtime presentation：** 当前Host边界冻结为`16 × 64GB logical devices = 1024GB aggregate`；后续container/device trace仍需验证全部16个device可见和单device可用HBM，不能把aggregate直接当KV/workspace余量。
 - **Parameter-count source conflict：** 当前[vLLM官方GLM-5.2 recipe](https://recipes.vllm.ai/zai-org/GLM-5.2)写约743B total / 39B active；其他model-hub metadata可能显示约753B。计划采用“来源冲突”标记，不用任一摘要数字替代真实checkpoint manifest。
 - 第三方W8A8 artifact大小只能作为非权威旁证，不能冻结full-model capacity或静态余量。
 - Full-model capacity必须重新读取本项目真实GLM-5.2-W8A8 checkpoint manifest，逐项计入packed weights、scales、保留float tensor、workspace、KV、communication/allocator headroom，并结合Stage A实际logical-device topology做per-rank placement。

@@ -11,8 +11,9 @@
 - `MINIMAL-EAGER-EXECUTION-CLOSURE.md`：首次正确GLM-5.2-W8A8 eager token的mandatory能力闭包。
 - `REPOSITORY-PLAN.md`：建仓前legacy保全与formal-fork/standalone路线分析；当前已被standalone决策取代。
 - `CODE-REPOSITORY-BASELINE.md`：正式standalone A3代码仓库、official冻结SHA/tree、remote与sync policy、legacy零变化验收。
+- `R0-CONTAINER-TUPLE-RESOLUTION.md`：Host/Container边界、R0-primary/fallback完整Container tuple、official证据与实验Unknown。
 - `tasks/STAGE-A-CLEAN-PROVENANCE.md`：首个可执行Stage的任务合同和验收。
-- `tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`：第一台A3服务器的严格只读inventory Ready task与DeepSeek完整提示词。
+- `tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`：历史/补证用只读inventory合同；当前tuple决策已不以其为前置，状态Not Ready。
 - `tasks/GLM-MANDATORY-CAPABILITY-CLOSURE.md`：gap confirmation、最小能力实现、microgate PASS与vLLM-Ascend reference规则。
 
 ## 给用户的10条摘要
@@ -24,7 +25,7 @@
 5. 首个严格910C-backed canary是Qwen3.6-27B TP2 eager，README里的更小Qwen不能写成官方910C已验证。
 6. GLM-5.2至少被vLLM0.20.2语义、sparse MLA/Indexer、W8A8 Linear和ModelSlim格式四类缺口阻塞。
 7. ModelSlim能生成A3 W8A8不等于FL能加载；AscendV1 reader只在被禁的vllm-ascend中。
-8. 一台A3官方物理规格为8×128GB；runtime logical topology和full-model容量必须由现场inventory与真实checkpoint manifest计算，现在不需要第二台。
+8. 一台A3官方物理规格为8×128GB，当前Host边界确认16×64GB logical devices；full-model容量仍必须由container device trace与真实checkpoint manifest计算，现在不需要第二台。
 9. 正式代码仓库已采用personal standalone方案并精确复制official冻结main；legacy、PR #1、branches、tags和settings保持零变化。
 10. 下一步不是写GLM补丁，而是确认边界后完成`R0-clean`、Qwen canary，再做vLLM与量化contract决策。
 

@@ -13,11 +13,11 @@
 | D-007 | GLM vLLM 版本不在本轮猜测冻结；canary后设 Contract Gate | Required | FL 0.20.2 与 GLM-5.2 vLLM>=0.23硬冲突 | Contract Gate ADR完成 |
 | D-008 | AscendV1 与 compressed-tensors 的runtime artifact contract不在本轮猜测选择 | Required | FL compressed-tensors W8A8 contract和packed loading/glue已Implemented；但AscendV1 reader、OOT/NPU INT8 Linear kernel与真实checkpoint格式仍未闭合 | manifest/layout审计和spike完成 |
 | D-009 | “FlagOS原生”当前按package/runtime/environment independence定义；允许研究vLLM-Ascend并允许official FL维护的adapter与torch-npu/CANN下游 | Working boundary | 客户明确禁止runtime/package/环境依赖，尚未禁止开发阶段研究或official FL历史adapted来源 | 仅当客户以后明确扩大到历史adapted来源时重审 |
-| D-010 | 第二台A3不是 research、Clean Provenance 或 canary 前置 | Proposed | 华为只直接确认单机物理规格8×128GB；runtime logical-device呈现、真实checkpoint footprint和可用余量均Unknown，必须在Stage A/Capacity gate实测重算 | Capacity gate或scale-out目标触发 |
+| D-010 | 第二台A3不是research、Clean Provenance或canary前置 | Proposed | Host边界已确认16×64GB logical devices/1024GB aggregate；真实checkpoint footprint、container可用量和KV/workspace余量仍Unknown | Capacity gate或scale-out目标触发 |
 | D-011 | repository mutation 必须在 owner/preflight/影响报告获确认后执行 | Required | 保护branches/tags/PR #1；rename-alone不释放fork slot | 用户明确确认操作序列 |
 | D-012 | Indexer状态按framework、Ascend可达闭环、GLM-5.2 E2E三层记录 | Evidence refinement | Generic FL Indexer framework已Implemented；Missing仅指Ascend/910C backend/kernel closure与GLM E2E | official main或目标E2E证据变化 |
 | D-013 | W8A8 Linear按contract、packed glue、OOT/NPU kernel、910C runtime四层记录 | Evidence refinement | 前两层Implemented；OOT/NPU candidate与910C runtime Missing | 新NPU kernel或E2E证据出现 |
-| D-014 | Full-model capacity不使用摘要参数量或第三方artifact冻结 | Required | 华为物理HBM为8×128GB；logical topology Unknown；vLLM recipe约743B与其他metadata约753B有来源冲突 | 真实checkpoint manifest与Stage A topology冻结 |
+| D-014 | Full-model capacity不使用摘要参数量或第三方artifact冻结 | Required | 物理8×128GB与logical16×64GB已确认；vLLM recipe约743B与其他metadata约753B有来源冲突，且runtime余量未知 | 真实checkpoint manifest与container device/memory trace冻结 |
 | D-015 | W8A8是第一次目标模型eager correctness硬门禁 | Required | 目标固定为GLM-5.2-W8A8；BF16只允许operator/reference/debug microtest，不能替代full-model bring-up | 用户改变目标checkpoint（当前不允许） |
 | D-016 | Minimal Eager Execution Closure必须包含MLA + DSA/SFA + Indexer | Evidence-backed proposed | 固定证据集内：官方config固定index_topk/indexer_types；Transformers eager仍生成sparse mask；vLLM0.23没有合法Dense MLA fallback | 官方新增correctness-preserving fallback及目标平台证据 |
 | D-017 | Capability Microgates只证明首次eager mandatory能力最小可用 | Required | 验收限于backend可达、小规模correctness、checkpoint/runtime contract、目标forward接口和NPU device/backend trace | Eager Correctness通过后进入更完整阶段 |
@@ -36,11 +36,17 @@
 | D-030 | 正式A3代码仓库使用personal standalone而非formal fork | Implemented | `yanceng305-collab/vllm-plugin-FL-a3-flagos`已创建；legacy零变更，代码baseline与official精确相等 | 只有上游贡献流程形成硬需求时重审formal fork |
 | D-031 | 新代码仓库`main`只保存control-approved official frozen baseline，禁止直接开发 | Required | 防止实验/legacy历史污染；capability使用独立branch和Draft PR | control明确批准baseline同步 |
 | D-032 | Upstream同步采用control-approved exact-SHA fast-forward policy | Required | Standalone无GitHub fork sync；每次记录old/new SHA/tree和兼容影响，不产生额外baseline commit | official历史非fast-forward或项目版本路线变化 |
-| D-033 | 第一次A3服务器接触仅执行A3-CP-A1只读environment inventory | Ready / authorized task | 先冻结真实OS/NPU/Driver/CANN/Python/Docker/package/network/model事实，避免环境假设导致返工 | Inventory回流并经Codex验收 |
-| D-034 | A3-CP-A1唯一允许写入为全新专用证据目录 | Required | raw logs、report和SHA256必须保存；目录外保持只读，不使用sudo绕权 | 用户明确扩大写权限 |
-| D-035 | R0-clean exact tuple必须在inventory审查后由Codex决定 | Required | DeepSeek只提供事实，不得把候选tuple升级为现场结论或开始搭建 | Codex完成兼容审查且用户批准下一任务 |
+| D-033 | A3-CP-A1不再是当前tuple决策前置 | Superseded / Not Ready | 用户已确认Container边界所需Host事实；本轮禁止服务器/DeepSeek操作 | 未来需要补充Host runtime证据并获新授权 |
+| D-034 | 若未来重新执行A3-CP-A1，唯一允许写入仍为当前WORKDIR下全新Evidence目录 | Dormant control | raw logs/report/checksum需保存；目录外只读，不自行换目录或提权 | 新任务授权 |
+| D-035 | R0-clean tuple改由Container官方证据和candidate image静态解析 | Superseded by D-038～D-043 | Host CANN不再是tuple输入；runtime acceptance仍需后续实验 | Primary/fallback实验结果 |
 | D-036 | Host/现有Python/Docker中存在vllm-ascend只记录为现场污染事实 | Required | 当前/历史存在不等于未来从零构建的R0-clean违规；正式container仍须从未安装vllm-ascend | R0-clean negative audit结果 |
-| D-037 | 本机没有neutral CANN/torch-npu candidate image时只记录，不下载 | Required | Inventory不能触发docker pull/build/run或环境变更 | 用户批准后续环境构建任务 |
+| D-037 | 本机已有neutral candidate时仍不在research轮启动container | Satisfied for current round | 已记录CANN901 candidate；本轮只做OCI/official source研究 | 用户批准后续container实验 |
+| D-038 | R0软件tuple以Container为边界；Host CANN版本不参与选择 | Required | 容器化部署只依赖Host Driver/Firmware/runtime/device/network/disk/model条件；原则上不bind-mount Host Toolkit | 未来方案显式挂载Host Toolkit |
+| D-039 | R0-primary采用`cann:9.0.1-a3-ubuntu22.04-py3.12`完整Container tuple | Static decision / experiment pending | 本机已有candidate；OCI确认CANN901/Python3.12.13/NNAL；official A3 reference配套torch2.10/post2/triton3.2.1 | clean negative audit或Qwen canary失败且归因到tuple |
+| D-040 | R0-primary继续使用official vLLM0.20.2 empty与FL`92a6f767` | Required for first clean/Qwen gate | 保持当前FL接口/CI contract；不声称满足GLM-5.2最终vLLM语义 | GLM Contract Gate批准0.23+ uplift/backport |
+| D-041 | 条件fallback为CANN900/Python311 CI-equivalent-minus-vllm-ascend tuple | Conditional only | 仅当primary失败且证据归因到CANN901/Python312/post2组合时启用；不与primary并行 | 对应failure evidence |
+| D-042 | CANN8.5.0不是R0 fallback | Required | Host已有版本不构成Container fallback理由 | 新的Container级official证据和control决策 |
+| D-043 | Candidate tag必须在执行前核对local RepoDigest并做container内vllm-ascend negative audit | Required | OCI history支持neutral判断但不能证明本机tag内容和runtime package absence | Digest/negative audit PASS |
 
 ## 明确拒绝的路线
 

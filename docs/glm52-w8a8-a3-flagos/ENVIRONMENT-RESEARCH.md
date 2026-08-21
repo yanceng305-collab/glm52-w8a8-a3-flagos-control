@@ -3,6 +3,12 @@
 调查日期：2026-08-21
 固定 FL：`38e7dbc20197e2db742c4e4c9687d36ea4df9900`
 
+## 当前Container边界决策
+
+本项目已明确采用容器化部署。Host CANN 8.5.0/9.0.1不参与R0 tuple选择，除非未来显式bind-mount Host Toolkit；原则上R0只依赖Host A3/910C、Driver/Firmware、container runtime、device/driver挂载、HCCN/HCCL网络、disk/model路径和NPU占用。
+
+当前R0-primary与conditional fallback的权威定义见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。本文件后续以CANN900为第一候选的内容保留为Research Freeze历史证据，不再覆盖当前Container tuple决策。
+
 ## 总判定
 
 - **Confirmed：** 官方 910C CI image 是完整 vllm-ascend runtime，不是只提供 CANN/torch-npu 的中性底座。

@@ -1,6 +1,6 @@
 # GLM-5.2-W8A8 × FlagOS × Ascend A3/910C 项目计划
 
-状态：Research Freeze与Repository PASS；Clean Provenance parent Proposed；A3-CP-A1 Ready
+状态：Research Freeze与Repository PASS；Container R0 tuple static-resolved；environment build Not Ready
 基线调查日期：2026-08-21
 正式代码基线：`yanceng305-collab/vllm-plugin-FL-a3-flagos@92a6f7670465922c60e88f06787b8f0923e761f3`，精确对应建仓时`flagos-ai/vllm-plugin-FL`冻结`main`；历史调查SHA仅保留证据语境。
 
@@ -46,13 +46,13 @@ Research Freeze
 | Stage | 目标 | Ready gate | Exit / 验收 | 必存证据 | Owner | 第二台 A3 |
 |---|---|---|---|---|---|---|
 | **Research Freeze** | 冻结官方 main、CI oracle、冲突和 Unknown | 本轮研究完成 | 用户批准研究结论、仓库方案和“原生”定义 | source SHA、CI links、矩阵、决策 | Codex；用户批准 | 不需要 |
-| **Clean Provenance** | 先以A3-CP-A1只读inventory冻结现场，再设计并构建`R0-clean` | A3-CP-A1 Ready；环境构建必须等待inventory验收、exact tuple和用户另行批准 | vllm-ascend package/module/entry point/native lib全部不存在；FL platform、torch-npu、HCCL、FlagOS Dispatch与backend inventory闭合；至少一条代表性合法NPU算子路径通过；fresh rebuild可复现 | host inventory、negative audit、import/device/backend trace、原始日志、环境hash | DeepSeek仅执行Ready子任务；Codex验收/决策 | 不需要 |
+| **Clean Provenance** | 以Container tuple构建并验证`R0-clean` | Primary/fallback已静态定义；构建必须等待local digest/negative-audit实验设计和用户另行批准 | vllm-ascend package/module/entry point/native lib全部不存在；FL platform、torch-npu、HCCL、FlagOS Dispatch与backend inventory闭合；至少一条代表性合法NPU算子路径通过；fresh rebuild可复现 | Container inventory、negative audit、import/device/backend trace、原始日志、环境hash | Codex先设计实验；DeepSeek尚未授权 | 不需要 |
 | **910C Canary** | 用官方当前 910C CI-backed 模型隔离验证基础链 | Clean Provenance accepted；Qwen3.6-27B 权重就绪 | TP2 eager offline + serving 正确；FL/dense attention/HCCL dispatch 可追溯；无污染依赖 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
 | **GLM Contract Gate** | 决定vLLM语义基线与W8A8 artifact contract，并冻结Minimal Eager Execution Closure | Canary accepted；真实checkpoint manifest齐全 | ADR选择`0.23/0.24 uplift`或`0.20.2 backport`；ADR选择`AscendV1 native loader`或经证明等价的`compressed-tensors conversion`；确认首次closure必须含W8A8+MLA+DSA/SFA+Indexer | API/worker diff、IndexShare ownership、tensor/scale/layout、closure证据 | Codex决策；DeepSeek仅做授权spike | 不需要 |
 | **Capability Microgates / Gap Confirmation** | 对每个mandatory capability按`FlagGems -> vendor.ascend -> Reference/PyTorch`依次审查，确认现有合法路径或形成gap contract | 两项contract ADR和Minimal Eager Execution Closure批准 | 路径在FlagOS Dispatch内可达、无vllm-ascend依赖、910C可执行、microgate correctness通过、接口支撑GLM forward；Reference须证明tensor留在NPU且无静默CPU fallback；三路都失败才标Missing/Unwired | path audit、gap contract、reference/tolerance、device/backend trace、failure signature | Codex定义/审查；DeepSeek仅在未来授权后执行repro | 不需要 |
 | **Minimal Capability Implementation** | 只补齐A/B/C三条现有路径全部不可用且属于首次eager mandatory closure的能力 | 对应gap contract证明三路均失败并获批准 | MLA、DSA/SFA、Indexer、W8A8等原则上独立小任务、独立branch、独立Draft PR；按FlagOS架构spec-first重新实现；不为FlagGems覆盖率或性能提前开发 | implementation contract、path audit、PR diff、license/reference disclosure、focused tests | DeepSeek未来实现；Codex contract/PR review | 不需要 |
 | **Corresponding Microgate PASS** | 对选定现有路径或最小新实现使用同一contract验收 | 对应合法路径可测试或独立Draft PR可测试 | backend可达、小shape correctness、checkpoint/runtime contract、GLM forward接口全部PASS；device/backend trace证明NPU执行且无静默CPU fallback；全部mandatory项PASS后才解锁Capacity | raw test、reference/tolerance、dispatch/device trace、contract audit | DeepSeek未来测试；Codex逐项验收 | 不需要 |
-| **Capacity & Placement** | 基于真实artifact与Stage A实测logical-device topology确定布局 | checkpoint manifest、`npu-smi`/`torch.npu.device_count()`/device properties、目标上下文/并发、**全部mandatory microgate PASS** | 按真实packed weights/scales/float tensors/workspace/KV/communication headroom完成per-rank预算；冻结首次load的TP/EP候选与安全余量 | manifest audit、placement simulation、memory budget、实测topology | DeepSeek测算；Codex验收 | 默认不需要；不足则触发 |
+| **Capacity & Placement** | 基于真实artifact与已冻结16×64GB Host topology确定布局 | checkpoint manifest、container内`npu-smi`/`torch.npu.device_count()`/device properties、目标上下文/并发、**全部mandatory microgate PASS** | 验证16-device可见性并按真实packed weights/scales/float tensors/workspace/KV/communication headroom完成per-rank预算；冻结首次load的TP/EP候选与安全余量 | manifest audit、placement simulation、memory budget、container device trace | DeepSeek测算；Codex验收 | 默认不需要；不足则触发 |
 | **First Eager Load** | 使用真实GLM-5.2-W8A8 checkpoint完成首次capacity-valid load，收敛首个真实故障 | placement accepted；**全部mandatory microgate PASS** | 模型构造/权重load成功，或只保留一个可复现first failure；实际走W8A8 Linear/MoE与MLA+DSA+Indexer；关闭MTP/graph/FlagCX/multistream | exact run config、first-error log、weight/scale-key audit、backend trace | DeepSeek；Codex定下一任务 | 仅Capacity明确触发；开始前必须通知 |
 | **Minimal Compatibility** | 只处理First Eager Load后新暴露的整模型问题，不接收已知mandatory capability补齐 | First Eager Load产生此前microgate无法暴露的单一failure | 一次一个新故障、最小patch、focused test、mandatory microgate与Qwen canary无回归、独立Draft PR | first-failure证据、diff、tests、provenance、rollback | DeepSeek；Codex PR review | 沿用批准布局 |
 | **Eager Correctness** | 用真实GLM-5.2-W8A8 checkpoint完成capacity-valid eager正确性 | load/forward blockers关闭 | 第一个正确token及固定数据集满足reference/tolerance；W8A8 Linear/MoE、MLA、DSA/Indexer owner/shared和quant scales均通过；BF16不得替代 | golden/tolerance、layer/backend trace、weight/scale audit、memory/KV | DeepSeek；Codex阶段验收 | 仅容量需要 |
@@ -62,9 +62,9 @@ Research Freeze
 | **Advanced Composition** | graph、MTP、multistream、FlagTree、FlagCX、FlagScale、TP/EP/DP独立后再组合 | eager与单变量结果稳定 | ablation能归因；组合无correctness/stability回归；FlagScale不反向成为模型bring-up依赖 | ablation matrix、fallback、稳定性 | DeepSeek；Codex阶段验收 | 仅 multi-node 项需要 |
 | **Scale-out Acceptance** | 两机 capacity/communication/生产负载验收（若需要） | 明确触发原因、网络与客户通信约束冻结 | HCCL baseline 和可选 FlagCX 分开验证；SLO、稳定性、故障恢复满足验收 | topology、collective、E2E benchmark、故障记录 | DeepSeek；Codex/用户验收 | **此阶段开始需要第二台 A3 服务器** |
 
-### Clean Provenance当前子任务
+### Clean Provenance当前决策
 
-`A3-CP-A1 — A3 Read-only Environment Inventory`已Ready，任务文件为[`tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`](tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md)。该任务只允许现场读取和证据目录写入，不允许安装、卸载、拉取image、创建container、启动模型或决定R0-clean tuple。
+R0-primary为`R0-P1-CANN901-PY312`，fallback为条件触发的`R0-F1-CANN900-PY311`；完整定义见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。Host CANN不参与tuple选择；environment build/runtime experiment仍Not Ready，本轮不生成DeepSeek任务。
 
 ## Minimal Eager Execution Closure
 

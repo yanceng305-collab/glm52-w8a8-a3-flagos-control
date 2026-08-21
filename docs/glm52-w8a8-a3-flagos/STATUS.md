@@ -11,14 +11,15 @@
 | Runtime ownership | Complete | 固定源码静态追踪 + 910C Qwen CI |
 | 910C maturity | Complete for public evidence | 仅 Qwen3.6 TP2；不覆盖 GLM/W8A8/MTP/EP/多机 |
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
-| A3 capacity | Complete static assessment | 单机 1024 GB aggregate；现场 topology 与 runtime余量 Unknown |
+| A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
 | Formal A3 code repository | Established / verified | Standalone `vllm-plugin-FL-a3-flagos`；main/tree与official冻结基线一致 |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Customer-compliant environment | Planned / Inferred | `R0-clean` 尚未在 910C 执行 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
-| A3-CP-A1 Read-only Inventory | Ready / not executed | DeepSeek提示词已固化；Codex不执行服务器命令 |
-| Clean environment build | Not Ready | 等待inventory、Codex exact tuple和用户另行批准 |
+| Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
+| Container R0 tuple resolution | Static complete | Primary CANN901/Python312；conditional fallback CANN900/Python311 |
+| Clean environment build | Not Ready | 等待local image digest/negative audit实验与用户另行批准 |
 
 ## 已确认的高影响事实
 
@@ -32,10 +33,11 @@
 
 ## 当前阻塞/待决策
 
-1. 客户是否允许中性`quay.io/ascend/cann:9.0.0-a3-ubuntu22.04-py3.11`，还是只允许host clean install。
-2. A3现场Driver/Firmware/ATB exact version与topology尚未审计。
-3. GLM vLLM路线：0.23最小升级、0.24 dev/未合入Ascend PR，或0.20.2 backport。
-4. 客户checkpoint是AscendV1还是compressed-tensors；manifest、SHA、tensor/scale layout未提供。
+1. 本机candidate image RepoDigest与remote ARM64 digest是否一致，以及container内是否完全无vllm-ascend。
+2. Driver25.5.0/Firmware7.8.0.5.216与CANN901 primary的最小device/import兼容尚未实验验证。
+3. FL`92a6f767`/vLLM0.20.2与CANN901/Python312/torch-npu post2组合未通过clean import/worker/Qwen canary。
+4. GLM vLLM路线：0.23最小升级、0.24 dev/未合入Ascend PR，或0.20.2 backport。
+5. 客户checkpoint是AscendV1还是compressed-tensors；manifest、SHA、tensor/scale layout未提供。
 
 当前“FlagOS原生”工作边界按runtime/package/environment independence执行；只有客户以后明确扩大到official FL历史adapted来源时才重审。
 
@@ -51,4 +53,4 @@
 
 ## 下一门禁
 
-执行并回收A3-CP-A1只读inventory。Codex随后审查raw logs、更新环境事实并决定R0-clean exact tuple；在用户另行批准前，不生成或执行环境构建任务，也不开始GLM适配或性能工作。
+R0 Container tuple静态决策已完成。下一步只能在用户另行批准后设计最小clean image/digest/negative-audit实验；当前不操作服务器、不创建container、不生成DeepSeek任务，也不开始GLM适配或性能工作。

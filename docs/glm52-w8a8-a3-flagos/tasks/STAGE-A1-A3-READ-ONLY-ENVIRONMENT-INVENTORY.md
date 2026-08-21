@@ -1,6 +1,6 @@
 # Stage A1 Task Contract — A3 Read-only Environment Inventory
 
-状态：Ready
+状态：Superseded for current tuple decision；Not Ready
 
 Task ID：`A3-CP-A1`
 Parent：`Stage A — Clean Provenance`
@@ -11,7 +11,7 @@ Parent：`Stage A — Clean Provenance`
 
 ## 目标
 
-第一次接触A3服务器只冻结现场事实，为后续`R0-clean` exact tuple设计提供输入。不得安装、卸载、启动模型、创建容器、修改系统或自行决定环境版本。
+该任务原用于第一次接触A3服务器时冻结现场事实。用户已提供当前Container边界所需Host事实，R0 tuple不再等待Host CANN分析；本任务保留为历史/补证合同，未经新授权不得执行。
 
 ## Evidence目录
 
