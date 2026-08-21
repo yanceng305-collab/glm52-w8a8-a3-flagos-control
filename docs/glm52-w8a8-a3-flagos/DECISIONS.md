@@ -55,11 +55,12 @@
 | D-049 | Runtime Provenance Trace是910C Canary前的新门禁 | **Superseded by D-050～D-056** | 完整coexistence/import/native/provider审计信息价值存在，但作为pre-canary门禁范围过重 | 不再作为当前Stage位置 |
 | D-050 | A3-CP-A2改为`Official Carrier FL-only Environment Smoke`；完整Runtime Provenance Audit后置到Eager Correctness之后 | Required / task prepared | 先验证环境与最小FL链可用，再推进canary与mandatory closure；完整动态审计不阻塞first eager | A2 smoke失败或客户重新要求pre-eager审计 |
 | D-051 | A2可在新建的一次性实验container内卸载vllm-ascend，且只用于减少bring-up变量 | Required scope exception | 不修改原始image，不触碰其他carrier runtime；该实验不等于package presence违规或official coexistence非法 | 卸载影响非目标依赖或negative check失败 |
-| D-052 | A2对vllm-ascend只做distribution、`find_spec`和有效entry point三项minimal negative check | Required | 以低成本确认FL-only Python环境；残留时停止并保存origin，不手工删除源码/`.so`/`.pth` | Post-Eager Audit开始 |
+| D-052 | A2对vllm-ascend只做distribution、`find_spec`和有效entry point三项minimal negative check；三项均由卸载后的新Python process执行 | Required | 避免pre-uninstall inventory的module/entry-point cache干扰；残留时停止并保存origin，不手工删除源码/`.so`/`.pth` | Post-Eager Audit开始 |
 | D-053 | A2最小ownership只要求PlatformFL、WorkerFL、ModelRunnerFL、Dispatch及至少一个NPU-resident synthetic operator | Required | A2不是模型/capability验证；不覆盖Qwen、GLM、MLA、DSA、Indexer、W8A8或完整attention/MoE | A2所选operator无法在不扩大范围下构造 |
 | D-054 | A2 compiler范围仅为distribution/import-origin inventory；active provider只在synthetic smoke自然触发时记录 | Required | FlagTree与triton-ascend深度trace不会提前解锁模型bring-up | 对应Triton capability microgate或Post-Eager Audit |
 | D-055 | A2必须先重新检查OC2等现有任务的NPU占用，只使用明确空闲的最小logical device范围 | Required safety gate | 不确定或占用device不能使用；不得kill、改Host/network或访问第二台 | 现场资源状态改变 |
-| D-056 | Post-Eager Runtime Provenance Audit比较official coexistence与同carrier FL-only A/B路线，并完整追踪dynamic imports/calls、native libraries、per-op ownership和compiler provider | Deferred / Not Ready | source provenance与runtime dependency继续分离；发现实际参与后只裁定具体调用 | Eager Correctness accepted并另行批准审计 |
+| D-056 | Post-Eager Runtime Provenance Audit比较official coexistence与同carrier FL-only A/B路线，并完整追踪dynamic imports/calls、native libraries、per-op ownership和compiler provider | Deferred / On-demand / Not Ready | Eager Correctness后仅由客户coexistence证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发；不默认阻塞Baseline Benchmark | 任一触发条件成立并另行批准审计 |
+| D-057 | FL frozen baseline的editable安装只允许从container内保留`.git`的disposable writable副本执行 | Required | `setuptools_scm.write_to=vllm_fl/_version.py`可能写source tree；正式repo保持readonly，副本安装前必须验证HEAD`92a6f767...`、tree`e610bc58...`与clean worktree，所有生成artifact仅留副本 | 安装方式或upstream build metadata变化 |
 
 ## 明确拒绝的路线
 

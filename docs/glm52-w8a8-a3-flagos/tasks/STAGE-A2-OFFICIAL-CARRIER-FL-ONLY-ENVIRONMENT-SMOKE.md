@@ -29,15 +29,19 @@ Parent：`Stage A — Official Carrier FL-only Bring-up`
 3. 重新检查当前NPU进程与logical-device占用；只允许选择明确空闲的最小device范围。任何device状态不确定即停止。
 4. 本机已有carrier的tag、RepoDigest和image ID可确认。若image不存在或digest不确定，只报告，不得`docker pull`。
 5. Host device/Driver/DCMI必要挂载边界已知；不得修改Host Driver、Firmware、CANN、HCCN/HCCL或network。
-6. 正式A3代码仓库仍位于冻结baseline，工作树代码内容不得被任务修改。
+6. 正式A3代码仓库仍位于冻结baseline，只读挂载且不得被任务修改；container内writable staging方案能够保留完整`.git` metadata并在安装前复核HEAD/tree/clean worktree。
 7. 新建唯一Evidence目录：`$WORKDIR/a3-cp-a2-official-carrier-fl-only-smoke-<hostname>-<UTC timestamp>/`。
 
 ## 唯一允许的环境变更
 
+冻结baseline的`pyproject.toml`使用`[tool.setuptools_scm] write_to = "vllm_fl/_version.py"`，而source baseline没有预生成该文件。因此editable build需要可写source tree；不得直接对readonly正式repo安装并把由此产生的写失败误判为FlagOS问题。
+
 只允许在本任务新建的一次性实验container内部：
 
 1. 使用标准Python package操作卸载`vllm-ascend` distribution。
-2. 如果inventory证明container中的`vllm-plugin-FL`缺失或不等于冻结baseline，可从只读挂载的正式代码仓库执行`--no-deps` editable安装；不得修改源码、checkout其他SHA或安装capability patch。
+2. 如果inventory证明container中的`vllm-plugin-FL`缺失或不等于冻结baseline，先把只读挂载的正式代码仓库完整复制到一次性container内部的writable staging目录；副本必须保留`.git`信息。安装前重新验证副本：HEAD等于`92a6f7670465922c60e88f06787b8f0923e761f3`、HEAD tree等于`e610bc5828b4a4a54a8f55429b40500ff4f5a0a7`、working tree内容与冻结baseline一致且无预存修改。只允许从该disposable writable copy执行`--no-deps` editable安装。
+
+正式repo始终readonly，禁止checkout、生成文件或回写。`vllm_fl/_version.py`、egg-info、build metadata及其他editable/build artifacts只允许出现在container内writable staging副本；不得复制回Host正式repo。
 
 禁止卸载、重装或升级CANN、torch、torch-npu、vLLM、triton/triton-ascend、ATB/NNAL、FlagGems及其他carrier Ascend runtime依赖。不得修改原始image，不得build或commit新image。任务container退出后保留其ID和状态供审查，不自行删除。
 
@@ -59,7 +63,7 @@ Parent：`Stage A — Official Carrier FL-only Bring-up`
 
 ### 3. FL-only变更与最小negative check
 
-在container内卸载`vllm-ascend`后，只检查：
+在container内卸载`vllm-ascend`后，必须启动一个**新的Python process**执行以下三项检查。该process不得复用pre-uninstall inventory期间的解释器、module cache或已加载entry-point对象：
 
 1. Python distribution `vllm-ascend`不存在；
 2. `importlib.util.find_spec("vllm_ascend")`返回`None`；
@@ -102,6 +106,7 @@ A2明确不执行完整`sys.modules`生命周期、loaded `.so`、native library
 - checksum manifest；
 - image/container identity；
 - pre/post package inventory；
+- FL readonly source与container writable staging的HEAD、tree、pre-install clean status，以及生成artifact位置；
 - minimal negative check结果；
 - FL platform/worker/runner/dispatch证据；
 - NPU-resident synthetic operator smoke证据；
@@ -116,11 +121,13 @@ A2只有在以下全部成立时PASS：
 1. official carrier由本机已有exact image成功启动；
 2. 只在实验container内成功卸载vllm-ascend；
 3. 三项minimal negative check全部通过；
-4. carrier基础Ascend stack未被破坏，torch/torch-npu/NPU可用；
-5. `PlatformFL`、`WorkerFL`、`ModelRunnerFL`来源确认；
-6. FlagOS Dispatch registry/policy确认；
-7. 至少一个NPU-resident synthetic operator经FlagOS ownership成功执行；
-8. Evidence完整且未越过安全边界。
+4. negative check明确由卸载后的新Python process执行；
+5. 若安装FL，writable staging在安装前通过exact HEAD/tree/clean校验，所有生成artifact仅位于该副本；正式repo保持readonly且零修改；
+6. carrier基础Ascend stack未被破坏，torch/torch-npu/NPU可用；
+7. `PlatformFL`、`WorkerFL`、`ModelRunnerFL`来源确认；
+8. FlagOS Dispatch registry/policy确认；
+9. 至少一个NPU-resident synthetic operator经FlagOS ownership成功执行；
+10. Evidence完整且未越过安全边界。
 
 PASS不代表Qwen、GLM、W8A8、MLA/DSA/Indexer、attention prefill/decode、compiler完整provenance或vllm-ascend coexistence已验证。
 
@@ -132,6 +139,7 @@ PASS不代表Qwen、GLM、W8A8、MLA/DSA/Indexer、attention prefill/decode、co
 - minimal negative check残留distribution/module/entry point；
 - 必须手工删除源码、`.so`、`.pth`或site-packages才能继续；
 - FL baseline无法在不改代码、不改main的条件下使用；
+- writable staging未保留`.git`、HEAD/tree不匹配、安装前worktree不clean，或构建产物试图写回正式repo；
 - synthetic smoke需要模型权重、服务启动、attention/MoE完整链或capability实现；
 - 需要pull/build image、修改Host或访问第二台服务器。
 

@@ -16,7 +16,7 @@
 - **Confirmed：** Dockerfile设置`VLLM_PLUGINS=fl`与`VLLM_FL_PLATFORM=ascend`；公开CI log显示`Platform plugin fl`激活；静态源码把worker设为`WorkerFL`并构造`ModelRunnerFL`。
 - **Confirmed：** official `ascend.yaml`是per-op策略：attention/rms_norm为`vendor -> flagos -> reference`，silu为`flagos -> vendor -> reference`；不是一个统一vendor backend总接管。
 - **Confirmed（静态）：** `vendor.ascend`返回`vllm_fl.dispatch.backends.vendor.ascend.impl.*`类/函数并直接调用torch_npu/PyTorch；FL树未发现direct `import vllm_ascend`。部分文件明确保留`Adapted from vllm-ascend`来源，这属于源码provenance，不等于动态runtime依赖。
-- **Unknown / deferred：** official coexistence进程中是否有任何`vllm_ascend`模块、native artifact或side effect实际参与执行；该问题由Post-Eager Runtime Provenance Audit验证，不再阻塞A2、canary或first eager。
+- **Unknown / deferred：** official coexistence进程中是否有任何`vllm_ascend`模块、native artifact或side effect实际参与执行；该问题由Post-Eager Runtime Provenance Audit按需验证，不阻塞A2、canary、first eager或Baseline Benchmark。
 - **Superseded：** “客户合规第一候选必须是neutral CANN base且从未安装vllm-ascend”的推断不再有效。
 
 ## 官方实际 CI 证据链
@@ -130,9 +130,9 @@ official carrier与静态ownership为 **Confirmed**。A2只验证卸载后的FL-
 - 至少一个小shape、NPU-resident synthetic operator经FlagOS selected impl成功；
 - compiler仅inventory，除非synthetic smoke自然触发，否则不扩张provider trace。
 
-这项受控卸载只用于减少变量，不恢复“package presence即违规”的旧规则，也不能证明official coexistence路线有问题。
+这项受控卸载只用于减少变量，不恢复“package presence即违规”的旧规则，也不能证明official coexistence路线有问题。若FL需要editable安装，必须从container内保留`.git`并通过exact HEAD/tree/clean校验的writable副本安装；正式repo保持readonly。三项negative check必须由卸载后的新Python process执行。
 
-## Post-Eager Runtime Provenance验收证据
+## Post-Eager Runtime Provenance验收证据（Deferred / On-demand）
 
 - Eager Correctness后比较A组official coexistence与B组同carrier FL-only路线；
 - image digest、distribution/module/entry-point/native-library inventory完整；其中vllm-ascend的存在本身不判FAIL；
@@ -142,6 +142,8 @@ official carrier与静态ownership为 **Confirmed**。A2只验证卸载后的FL-
 - 记录`sys.modules`、import audit、loaded Python/native modules和调用栈，明确是否存在任何`vllm_ascend`实际参与；
 - Triton类kernel记录`triton` distribution owner、active driver/provider与CANN下游；非Triton路径记录torch_npu/CANN op；
 - 若发现`vllm_ascend`实际import/call，输出具体调用、必要性与影响，暂停合规结论并交control裁定。
+
+该审计只在客户要求coexistence证明、正式方案考虑保留vllm-ascend distribution、FL-only与coexistence出现行为差异，或最终交付需要完整provenance证据时触发；不作为Baseline Benchmark默认门禁。
 
 ## Unknown
 

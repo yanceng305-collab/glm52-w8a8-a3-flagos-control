@@ -19,7 +19,7 @@
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
 | Neutral R0 tuple research (`c70aa4b`) | **Superseded as formal route** | R0-P1/R0-F1仅保留compatibility reference evidence |
-| Post-Eager Runtime Provenance Audit | Deferred / Not Ready | 原A2完整trace设计已保留；Eager Correctness后做coexistence/FL-only A/B审计 |
+| Post-Eager Runtime Provenance Audit | Deferred / On-demand / Not Ready | 原A2完整trace设计已保留；Eager Correctness后按触发条件做A/B审计，不阻塞Baseline Benchmark |
 
 ## 已确认的高影响事实
 
@@ -28,6 +28,8 @@
 - official `ascend.yaml`按operator选择FlagGems、`vendor.ascend`或Reference；`vendor.ascend`位于`vllm_fl` ownership并直接调用torch_npu/CANN，不是vllm-ascend backend wrapper。
 - vllm-ascend package存在本身不再判违规；目标进程中是否有任何`vllm_ascend`实际import/call仍Unknown。
 - A2中的container内卸载只用于减少FL-only bring-up变量，不构成对official coexistence路线的合规否定。
+- FL editable安装不得直接写readonly正式repo；如确有需要，必须在container内复制含`.git`的writable staging，安装前验证exact HEAD/tree/clean状态，生成artifact只留副本。
+- 卸载后的distribution、`find_spec`和entry-point negative check必须由新的Python process执行。
 - 官方当前 910C 成功证据是 Qwen3.6-27B/35B-A3B TP2；GLM、W8A8、MTP、EP、多机、FlagCX均未覆盖。
 - FL current main 使用 vLLM 0.20.2；GLM-5.2 官方要求 0.23.0+ 的 IndexShare/MTP reuse。
 - 当前 FL Ascend 上 usable MLA、DSA/SFA、wired NPU Indexer、W8A8 Linear、AscendV1 reader 为 Missing。
@@ -59,4 +61,6 @@
 
 下一建议任务是[`tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)：用户另行批准后，由DeepSeek在第一台A3上使用本机已有exact official carrier创建一次性实验container，完成受控卸载、minimal negative check、FL class/dispatch闭环和一个synthetic NPU operator smoke。当前Prepared / Not Ready；本轮未操作服务器、未创建container、未生成DeepSeek执行提示词。
 
-原完整trace设计已后置到[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，Stage位置为Eager Correctness之后、Baseline Benchmark之前。
+原完整trace设计已后置到[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，定义为Eager Correctness后的Deferred / On-demand审计支线，不是Baseline Benchmark硬门禁。
+
+A2当前没有未解决的control-contract blocker；执行仍Not Ready，因为尚未获得服务器/DeepSeek授权，并且本机exact carrier identity与OC2占用下的空闲logical device必须在执行preflight确认。

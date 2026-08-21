@@ -1,13 +1,13 @@
 # Post-Eager Runtime Provenance Audit
 
-状态：**Deferred / Not Ready**
-Stage位置：GLM-5.2-W8A8 `Eager Correctness`之后、`Baseline Benchmark`之前
+状态：**Deferred / On-demand / Not Ready**
+Stage位置：GLM-5.2-W8A8 `Eager Correctness`之后的审计支线；不默认阻塞`Baseline Benchmark`
 前身：`A3-CP-A2 — FlagOS Runtime Provenance Trace`；原trace设计保留于本合同并后置
 第二台A3：默认不需要
 
 ## 工程意图
 
-在目标GLM-5.2-W8A8 eager correctness已经闭合后，对official carrier coexistence与FL-only环境做受控对照，回答完整runtime ownership问题。该审计不阻塞首次bring-up，也不把vllm-ascend image/package存在性当成违规。
+在目标GLM-5.2-W8A8 eager correctness已经闭合后，按需对official carrier coexistence与FL-only环境做受控对照，回答完整runtime ownership问题。该审计不阻塞首次bring-up或Baseline Benchmark，也不把vllm-ascend image/package存在性当成违规。
 
 对照profile：
 
@@ -22,9 +22,12 @@ B. 同一carrier的一次性实验container内卸载vllm-ascend，保留同一FL
 
 1. A3-CP-A2 FL-only Environment Smoke已PASS。
 2. Qwen canary、GLM Contract、mandatory capability closure、First Eager Load、Minimal Compatibility与Eager Correctness已按PLAN验收。
-3. 真实GLM-5.2-W8A8 checkpoint、exact runtime配置和golden/tolerance证据冻结。
-4. A/B对照container、image digest、device范围、Evidence和停止条件获得单独执行批准。
-5. 当前NPU资源足以串行执行，不影响其他任务；默认不使用第二台服务器。
+3. 至少满足一个触发条件：客户要求证明official coexistence路线；后续正式方案考虑保留vllm-ascend distribution；FL-only与coexistence出现需要定位的行为差异；最终交付前需要完整runtime provenance证据。
+4. 真实GLM-5.2-W8A8 checkpoint、exact runtime配置和golden/tolerance证据冻结。
+5. A/B对照container、image digest、device范围、Evidence和停止条件获得单独执行批准。
+6. 当前NPU资源足以串行执行，不影响其他任务；默认不使用第二台服务器。
+
+未触发上述条件时，本审计保持Deferred；Baseline Benchmark可在Eager Correctness验收后独立进入。
 
 ## 审计目标链
 
@@ -121,6 +124,7 @@ vLLM
 ## 非目标
 
 - 不重新证明首次eager correctness；
+- 不作为Baseline Benchmark或性能阶段的默认Ready gate；
 - 不把package presence作为PASS/FAIL；
 - 不做benchmark/profile或以A/B差异宣称性能结论；
 - 不自动修改、替换或删除runtime实现；

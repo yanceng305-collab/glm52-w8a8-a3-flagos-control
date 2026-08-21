@@ -36,12 +36,14 @@ Research Freeze
   -> First Eager Load
   -> Minimal Compatibility
   -> Eager Correctness
-  -> Post-Eager Runtime Provenance Audit
   -> Baseline Benchmark
   -> Profile & Bottleneck
   -> Single-variable Optimize
   -> Advanced Composition
   -> Scale-out Acceptance（仅被触发时）
+
+Deferred / on-demand side branch after Eager Correctness:
+  -> Post-Eager Runtime Provenance Audit
 ```
 
 ## 阶段计划
@@ -59,8 +61,8 @@ Research Freeze
 | **First Eager Load** | 使用真实GLM-5.2-W8A8 checkpoint完成首次capacity-valid load，收敛首个真实故障 | placement accepted；**全部mandatory microgate PASS** | 模型构造/权重load成功，或只保留一个可复现first failure；实际走W8A8 Linear/MoE与MLA+DSA+Indexer；关闭MTP/graph/FlagCX/multistream | exact run config、first-error log、weight/scale-key audit、backend trace | DeepSeek；Codex定下一任务 | 仅Capacity明确触发；开始前必须通知 |
 | **Minimal Compatibility** | 只处理First Eager Load后新暴露的整模型问题，不接收已知mandatory capability补齐 | First Eager Load产生此前microgate无法暴露的单一failure | 一次一个新故障、最小patch、focused test、mandatory microgate与Qwen canary无回归、独立Draft PR | first-failure证据、diff、tests、provenance、rollback | DeepSeek；Codex PR review | 沿用批准布局 |
 | **Eager Correctness** | 用真实GLM-5.2-W8A8 checkpoint完成capacity-valid eager正确性 | load/forward blockers关闭 | 第一个正确token及固定数据集满足reference/tolerance；W8A8 Linear/MoE、MLA、DSA/Indexer owner/shared和quant scales均通过；BF16不得替代 | golden/tolerance、layer/backend trace、weight/scale audit、memory/KV | DeepSeek；Codex阶段验收 | 仅容量需要 |
-| **Post-Eager Runtime Provenance Audit** | 对比official carrier coexistence与同carrier FL-only路线，完整审计动态ownership | Eager Correctness accepted；A/B exact环境与trace合同另行批准 | Platform/Worker/Runner/Dispatch、GLM关键operator、`vllm_ascend`动态参与、compiler/provider与native library路径均有范围限定结论 | A/B manifest、import/call/library trace、per-op backend、provider/CANN trace、审计矩阵 | DeepSeek未来执行；Codex审计/裁决 | 默认不需要 |
-| **Baseline Benchmark** | 建立未优化基线 | Eager Correctness与Post-Eager Runtime Provenance Audit accepted | 固定输入分布/上下文/并发；给 TTFT、TPOT、吞吐、延迟分位、利用率、功耗、内存和方差 | raw results、env SHA、重复运行 | DeepSeek | 单机先 |
+| **Baseline Benchmark** | 建立未优化基线 | Eager Correctness accepted；Post-Eager Audit不是默认前置 | 固定输入分布/上下文/并发；给 TTFT、TPOT、吞吐、延迟分位、利用率、功耗、内存和方差 | raw results、env SHA、重复运行 | DeepSeek | 单机先 |
+| **Post-Eager Runtime Provenance Audit（Deferred / On-demand支线）** | 对比official carrier coexistence与同carrier FL-only路线，完整审计动态ownership | Eager Correctness accepted；客户要求证明coexistence、正式方案考虑保留distribution、A/B出现行为差异、或最终交付需要完整provenance之一触发；A/B合同另行批准 | Platform/Worker/Runner/Dispatch、GLM关键operator、`vllm_ascend`动态参与、compiler/provider与native library路径均有范围限定结论 | A/B manifest、import/call/library trace、per-op backend、provider/CANN trace、审计矩阵 | DeepSeek未来执行；Codex审计/裁决 | 默认不需要 |
 | **Profile & Bottleneck** | 证明首要瓶颈 | baseline稳定 | kernel/communication/host/调度归因；每项有可证伪假设 | profiler trace、timeline、算子/通信占比 | DeepSeek；Codex审查 | 仅证据指向 scale-out 时触发 |
 | **Single-variable Optimize** | 每次只改变一个算子或配置 | profile假设批准 | 正确性无回归，收益跨多轮成立；失败实验也留证 | before/after、方差、PR、rollback | DeepSeek；Codex验收 | 按实验合同 |
 | **Advanced Composition** | graph、MTP、multistream、FlagTree、FlagCX、FlagScale、TP/EP/DP独立后再组合 | eager与单变量结果稳定 | ablation能归因；组合无correctness/stability回归；FlagScale不反向成为模型bring-up依赖 | ablation matrix、fallback、稳定性 | DeepSeek；Codex阶段验收 | 仅 multi-node 项需要 |
@@ -70,7 +72,7 @@ Research Freeze
 
 `c70aa4b`中的R0-P1/R0-F1及neutral-base-only门禁继续保持**Superseded**；本次不会恢复。A3-CP-A2优先使用本机已有exact `quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`作为carrier，仅在一次性实验container内卸载vllm-ascend plugin，先证明FL-only最小环境和synthetic operator链。若本机image缺失或digest不确定，停止并报告，不得pull。
 
-完整coexistence/dynamic provenance不再阻塞Qwen、GLM mandatory closure或first eager；原trace设计移至[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，在Eager Correctness后比较“保留package + FL selectors”和“同carrier卸载package”的A/B路线。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
+完整coexistence/dynamic provenance不再阻塞Qwen、GLM mandatory closure、first eager或Baseline Benchmark；原trace设计移至[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，作为Eager Correctness后的Deferred / On-demand支线，按客户证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发。A/B仍比较“保留package + FL selectors”和“同carrier卸载package”。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
 
 ## Minimal Eager Execution Closure
 

@@ -35,6 +35,8 @@ Static official ownership review (Complete)
   -> 910C Qwen canary (future, separate approval)
   -> GLM contract and mandatory capability closure
   -> GLM-5.2-W8A8 Eager Correctness
+
+Deferred / on-demand side branch after Eager Correctness:
   -> Post-Eager Runtime Provenance Audit
 ```
 
@@ -44,7 +46,7 @@ Static official ownership review (Complete)
 2. 本机已有carrier RepoDigest/image ID可确认；缺失或不确定时只报告，不pull。
 3. 重新检查OC2及其他任务占用，只选择明确空闲的最小logical device范围。
 4. WORKDIR与唯一Evidence目录规则冻结。
-5. 允许的唯一package变更是实验container内卸载vllm-ascend，以及必要时对冻结FL baseline执行`--no-deps` editable安装。
+5. 允许的唯一package变更是实验container内卸载vllm-ascend，以及必要时从container内部完整、保留`.git`且通过SHA/tree/clean校验的writable staging副本执行冻结FL baseline的`--no-deps` editable安装；正式repo只读。
 6. 不修改Host、原始image、正式代码repo或其他carrier runtime package。
 
 ## Parent Exit
@@ -52,7 +54,8 @@ Static official ownership review (Complete)
 Stage A在A3-CP-A2满足以下结果时结束：
 
 - official carrier从本机exact image启动；
-- container内vllm-ascend卸载与三项minimal negative check通过；
+- container内vllm-ascend卸载完成，三项minimal negative check由卸载后的新Python process执行并通过；
+- 若安装FL，container staging的HEAD/tree/clean校验通过，生成artifact未回写正式repo；
 - torch/torch-npu/NPU仍可用；
 - PlatformFL、WorkerFL、ModelRunnerFL与FlagOS Dispatch确认；
 - 至少一个NPU-resident synthetic operator经FlagOS ownership成功；

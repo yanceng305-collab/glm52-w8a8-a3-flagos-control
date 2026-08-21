@@ -8,7 +8,7 @@
 
 本文件记录control commit `c70aa4b83b4d270ee1d920e807296d0b283cfab2`在“vllm-ascend image/package存在本身即违规”前提下形成的neutral-base tuple研究。该前提已被后续official runtime ownership复核推翻：R0-P1/R0-F1不再是当前正式路线，neutral CANN base也不是唯一合法选择。下列OCI digest、CANN/torch-npu兼容性与Host/Container边界可继续作为reference evidence；所有“必须从未安装”“negative audit为合规验收”“primary/fallback已冻结”的表述均按本notice视为**Superseded**。
 
-当前优先候选是official FL `92a6f767...` Dockerfile所用`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`环境carrier。前置A2只在一次性实验container内卸载vllm-ascend并验证FL-only最小闭环；完整coexistence/dynamic ownership审计后置到Eager Correctness之后。carrier/package存在仍不是单独PASS/FAIL条件。
+当前优先候选是official FL `92a6f767...` Dockerfile所用`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`环境carrier。前置A2只在一次性实验container内卸载vllm-ascend并验证FL-only最小闭环；完整coexistence/dynamic ownership审计是Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。carrier/package存在仍不是单独PASS/FAIL条件。
 
 ## 决策边界
 
