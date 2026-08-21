@@ -7,64 +7,65 @@
 | 组件 | 官方推荐/实际CI | 客户合规候选 | A3/910C专用 | GLM-5.2-W8A8必需 | 状态/边界 |
 |---|---|---|---:|---:|---|
 | Host OS/CANN | Host CANN版本不参与container tuple；只保留Host runtime条件 | 不bind-mount Host Toolkit | 是 | Driver/runtime层必需 | Boundary Confirmed；Host CANN差异不再分析 |
-| Container base/OS | official FL: `quay.io/ascend/vllm-ascend:v0.20.2rc1-a3` | official carrier优先；neutral CANN901仅reference candidate | 是 | 必需 | Dockerfile Confirmed；exact carrier digest Unknown |
+| Container base/OS | vLLM-Ascend v0.24 docs: `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | New primary carrier candidate；v0.20 carrier仅maintenance reference | 是 | 必需 | Official source/docs Confirmed；local digest/artifact Unknown |
 | Architecture | aarch64 | 按现场aarch64复核 | 是 | 必需 | Confirmed job metadata |
-| Python | official carrier inherited；old CI evidence 3.11.15 | 以carrier实际inventory冻结 | 否 | 必需 | Dockerfile inherited；target exact Unknown |
+| Python | v0.24 A3 source base Python3.12 | 3.12；以actual carrier inventory复核 | 否 | 必需 | Source contract Confirmed；artifact Unknown |
 | Driver | Host mounted | 产品/CANN兼容版本 | 是 | 必需 | exact Unknown |
 | Firmware | Host side | 与Driver/CANN匹配 | 是 | 必需 | exact Unknown |
-| Container CANN | official carrier inherited；old CI evidence 9.0.0 A3 | 以carrier实际inventory冻结 | 是 | 必需 | inherited；target exact Unknown；Host CANN irrelevant |
-| Container ATB/NNAL | official carrier inherited | 以carrier实际inventory冻结 | 是 | 部分native op必需 | path expected；exact runtime inventory Unknown |
-| HCCL | torch-npu/CANN内 | matching stack | 是 | TP>1必需 | TP2 Confirmed；独立版本Unknown |
+| Container CANN | v0.24 A3 source base CANN9.0.1 | 9.0.1 A3；Host CANN irrelevant | 是 | 必需 | Source contract Confirmed；artifact inventory Unknown |
+| Container ATB/NNAL | CANN9.0.1 family | actual carrier inventory冻结 | 是 | 部分native op必需 | Version family Confirmed；exact packages Unknown |
+| HCCL | torch-npu/CANN内 | matching v0.24 stack | 是 | A3至少2 devices | v0.2.1 TP2 evidence；new-main A3未验证 |
 | torch | 2.10.0 | 2.10.0 first | 否 | 必需 | image recipe Confirmed |
 | torch-npu | old CI 2.10.0；newer A3 reference row 2.10.0.post2 | 以official carrier inventory冻结 | 是 | 必需 | official evidence有多个row；target exact Unknown |
-| vLLM | `v0.20.2@bc150f5`, empty | Canary同版；GLM待Contract Gate | 否 | 必需 | Canary Confirmed；GLM需>=0.23 |
+| vLLM | `v0.24.0`, empty | Primary fixed 0.24；0.20.2 maintenance/reference | 否 | 必需 | New-main pyproject/README + carrier source Confirmed |
 | vLLM native ext | empty build无device ext | 无 | 否 | 非必需 | Confirmed |
-| vllm-plugin-FL | `v0.2.1-rc0@38e7dbc` | 操作时current main重冻结 | 否 | 必需 | Confirmed snapshot |
+| vllm-plugin-FL | observed main`a9435a34...`/tree`e5e073ed...`；v0.2.1=`92a6f767...` | Primary new main；mutation时重冻结 | 否 | 必需 | Branch migration Confirmed；main moving |
 | `VLLM_VENDOR` | unset | unset | Ascend语义 | 必需配置 | Confirmed；`ascend`无效 |
-| FlagGems | `3e6528cf`, metadata5.0.2 | official Docker pin；preferred非mandatory | 否 | per-op可选 | Confirmed CI；README pin不同 |
-| triton-ascend | carrier/old CI evidence 3.2.1 | active provider必须runtime trace | 是 | Triton路径需要一个provider | package evidence Confirmed；active ownership Unknown |
-| FlagTree | CI absent；README0.4；其他metadata指0.5/3.5 | 若carrier/provider实际使用则记录；不前置替换 | wheel是 | 是否必需Unknown | **Conflicting**；不得画成vllm-ascend代理 |
+| FlagGems | README tag`v5.3.4@f7c55cb2...` | preferred非mandatory；exact tag | 否 | per-op可选 | Confirmed source pin；new-main A3 E2E Unknown |
+| triton-ascend | v0.24 carrier`3.2.1` | Carrier starting provider；是否保留待transaction decision | 是 | Triton路径需一个provider | Confirmed source constraint |
+| FlagTree | FL README`0.6.1rc1+ascend3.5@9a90fddf...`；FlagGems generic profile仍0.6.0/Py3.11 | Intended new-main provider candidate | wheel是 | Triton路径候选 | **Conflict**；shares `triton`namespace；replacement/overlay Unknown |
 | FlagCX | CI absent；README ref v0.13.0 | baseline absent | adaptor-specific | baseline非必需 | Optional；910C E2E Unknown |
 | msModelSlim | master`e1009c9`；GLM5.2 feature`f8e5bed` | runtime先不装 | 配方含A3 tag | 重新量化时producer必需 | 工具侧Confirmed；公开A3 log Unknown |
 | Quant format | CI无W8A8 | AscendV1 vs compressed-tensors待ADR | 模型/栈特定 | 必需 | Interface Missing/Conflicting |
-| compressed-tensors | image requirements>=0.11.0；FL用其contract | 随批准vLLM冻结 | 否 | 选CT路线时必需 | exact需重算 |
-| transformers | CI image5.5.3；GLM config写5.12.0 | 随vLLM/模型contract冻结 | 否 | 必需 | Conflicting |
-| NumPy | 1.26.4 | 1.26.4 | 否 | 依赖 | Confirmed |
-| Mooncake | v0.3.8.post1 | baseline absent | 否 | 非必需 | Optional |
+| compressed-tensors | v0.24 carrier constraint`>=0.11.0` | actual resolved version + artifact ADR | 否 | 选CT路线时必需 | Constraint Confirmed；exact Unknown |
+| transformers | v0.24 carrier`5.13.0` | 5.13.0 source contract，actual复核 | 否 | 必需 | Confirmed requirement；FL patches compatibility Unknown |
+| NumPy | v0.24 requirements未exact pin | actual carrier inventory | 否 | 依赖 | Exact Unknown；不沿用old CI pin |
+| Mooncake | v0.24 A3 Dockerfile`0.3.11.post1` | baseline nonessential | 否 | 非必需 | Confirmed carrier source；optional for A2 |
 | Ray | >=2.47.1,<=2.48.0 | local-MP baseline absent | 否 | 单机TP非必需 | Optional |
 | FL Ascend custom ext | 无；Python-only | 无 | 是 | 非必需 | Confirmed |
-| vllm-ascend image/distribution | official A3 environment carrier；installed/discoverable | 允许作为carrier；presence不是PASS/FAIL | 是 | 环境carrier可选；FlagOS execution ownership必需 | Presence Confirmed；dynamic import/call **Unknown** |
+| vllm-ascend image/distribution | v0.24.0rc1 A3 official documented carrier | 允许作为carrier；FL-only smoke可在disposable container卸载 | 是 | Carrier candidate；FlagOS ownership必需 | Source/docs Confirmed；actual artifact/import Unknown |
 
-完整tuple、digest、fallback触发条件与证据见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。
+v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)；历史neutral tuple见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。
 
 ## 910C 成熟度
 
 | 功能域 | 状态 | 边界 |
 |---|---|---|
 | FL platform/NPU init | Confirmed | 公开CI多日成功 |
-| Qwen3.6-27B dense TP2 inference/serve | Confirmed | 单节点2 logical devices |
-| Qwen3.6-35B-A3B BF16 MoE TP2 | Confirmed | 当前CI |
+| Qwen3.6-27B dense TP2 inference/serve | Confirmed on v0.2.1-era stack | 单节点2 logical devices；new v0.24 canary待重冻 |
+| Qwen3.6-35B-A3B BF16 MoE TP2 | Confirmed on v0.2.1-era stack | 不能自动外推new main/provider tuple |
 | Benchmark | Confirmed smoke only | 非性能baseline |
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
-| Official carrier FL-only environment smoke | Unknown / A2 pending | disposable container卸载、minimal negative check、FL classes/Dispatch与synthetic NPU op尚未执行 |
+| Official v0.24 carrier FL-only environment smoke | Draft / Not Ready | old A2 paused；repo/provider/pair blockers未闭合 |
 | Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred on-demand | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace在Eager Correctness后按需触发，不阻塞Baseline Benchmark |
-| FlagTree profile | Unknown | CI没装 |
+| FlagTree profile | Unknown / blocker | Intended rc1与carrier triton-ascend共享namespace；transaction未验证 |
 | Dense MLA | Missing | placeholder |
 | Sparse MLA/DSA/SFA | Missing | 显式NotImplemented |
 | GLM-5 on 910C | Unknown/Missing backend | README非交叉矩阵 |
-| GLM-5.2 on 910C | Missing | 版本语义+backend缺口 |
-| Generic FL Indexer framework | Implemented | `SparseAttnIndexerFL/BF16`与DeepSeek-V4 glue存在 |
+| GLM-5.2-Slim init/weight load | Confirmed PARTIAL on NVIDIA only | TP16/2-node NCCL；不证明Ascend/W8A8 |
+| GLM-5.2-W8A8 on 910C | Missing / Unknown E2E | new main有模型contract，Ascend mandatory closure未闭合 |
+| Generic vLLM0.24 Indexer framework | Implemented | `deepseek_v2.Indexer` + upstream `SparseAttnIndexer`；native platform list不含Ascend |
 | Ascend/910C reachable Indexer closure | Missing / Unwired | backend、kernel owner、sparse MLA/DSA路径未闭合 |
 | GLM-5.2 Ascend E2E Indexer | Missing | 无目标CI/E2E |
-| Compressed-tensors W8A8 config/checkpoint contract | Implemented | canonical W8A8 subset validator存在 |
-| FL W8A8 loading/packed glue | Implemented | packed参数与scheme patch存在 |
+| Compressed-tensors W8A8 contract | Upstream vLLM0.24/CT present；current FL custom validator absent | v0.2.1 validator仅maintenance reference；target contract需重审 |
+| FL W8A8 loading/packed glue | **Absent from current main** | v0.2.1 `w8a8/packed.py`存在但new main tree仅剩`quant_linear.py`；replacement path Unknown |
 | OOT/NPU INT8 Linear candidate | Missing | upstream CPU/CUDA/ROCm candidates不支持Ascend OOT/NPU |
 | Ascend 910C W8A8 Linear runtime | Missing | contract/glue有，NPU kernel与E2E未闭合 |
 | W8A8 MoE | Implemented but unverified | 仅unit/mock |
 | AscendV1 runtime in FL | Missing | FL无reader；carrier中的vllm-ascend reader可作contract reference，不能自动视为FL owner |
-| MTP | General implemented/unverified；5.2 semantics Missing on0.20.2 | 无910C E2E |
+| MTP | vLLM0.24 structure implemented/unverified | 无target 910C E2E；first eager仍后置MTP |
 | EP/DP | Implemented but unverified | 无公开910C case |
 | Multi-node HCCL | Unknown | 无目标run |
 | FlagCX | Implemented but unverified | CI未启用 |
@@ -77,15 +78,15 @@
 
 | 能力 | Owner/实现 | 状态 | 结论 |
 |---|---|---|---|
-| `glm_moe_dsa` config | FL bridge/transformers | Implemented but unverified | bridge不等于5.2语义完整 |
-| Model class | vLLM DeepSeekV2-derived | Implemented but unverified | 0.20.2有类名 |
-| IndexShare owner/shared | vLLM0.23+ | **Missing baseline** | 0.20.2每层建Indexer |
-| Shared top-k reuse | vLLM0.23+ | **Missing** | correctness contract |
-| Shared checkpoint ownership | vLLM0.23+ | **Missing** | 0.20.2期待不匹配 |
-| MTP iteration reuse | vLLM0.23+ | **Missing** | 0.20.2无该语义 |
+| `glm_moe_dsa` config | FL new-main bridge + transformers | Implemented but unverified on target | bridge不等于5.2-W8A8/910C闭环 |
+| Model class | vLLM0.24 `GlmMoeDsaForCausalLM` / DeepSeekV2-derived | **Implemented** | NVIDIA partial已完成构造/weight loading |
+| IndexShare owner/shared | vLLM0.24 model contract | Implemented but target unverified | 从“0.20 baseline Missing”升级为0.24 contract audit |
+| Shared top-k reuse | vLLM0.24 sparse path | Implemented but target unverified | 需真实checkpoint/owner microgate |
+| Shared checkpoint ownership | vLLM0.24 + target loader | Implemented contract / unverified | 需manifest key audit |
+| MTP iteration reuse | vLLM0.24 | Implemented structure / unverified | first eager仍关闭MTP |
 | Dense MLA | FL placeholder | **Missing** | 构造报错 |
 | Sparse MLA/DSA/SFA | FL selector | **Missing** | 显式拒绝 |
-| Generic FL Indexer framework | `SparseAttnIndexerFL/BF16` + DeepSeek-V4 attention glue | **Implemented** | custom-op/CachedOp与BF16调用点存在；不等于Ascend可达 |
+| Generic Indexer model/framework | vLLM0.24 `deepseek_v2.Indexer` + `SparseAttnIndexer` + FL schemas | **Implemented** | 不等于Ascend native/backend可达 |
 | Ascend/910C Indexer backend/kernel closure | Generic framework + target backend/kernel owner | **Missing / Unwired** | Ascend backend、kernel owner、metadata/cache与sparse MLA/DSA路径未闭合 |
 | GLM-5.2 Ascend E2E Indexer | GLM sparse MLA/DSA完整链 | **Missing** | 当前910C CI无GLM/Indexer case |
 | Indexer cache kernels | vLLM/FlagGems静态code | Implemented but unverified | 不能绕过上述可达性缺口 |
@@ -101,11 +102,13 @@
 | Router quant | msModelSlim | Confirmed excluded | float路径 |
 | MTP quant coverage | msModelSlim adapter | Implemented but unverified per-module | 无逐模块公开精度 |
 | IndexShare adapter | msModelSlim | Implemented but unverified E2E | full/shared + MTP full |
-| AscendV1 reader | 当前仅在vllm-ascend找到 | **Missing in FL** | 是否需要FL实现由真实artifact contract决定；package存在不等于该reader被调用 |
-| Compressed-tensors W8A8 config/checkpoint contract | FL validation | **Implemented** | canonical dynamic-token/per-channel INT8 subset存在 |
-| FL W8A8 packed loading/glue | `CompressedTensorsPackedW8A8Int8` | **Implemented** | packed参数创建、unpack、scheme patch存在 |
-| OOT/NPU INT8 Linear kernel candidate | vLLM selector + FL OOT list glue | **Missing** | 原始candidate仅CPU/CUDA/ROCm，platform gate不接受Ascend OOT/NPU |
-| Ascend 910C W8A8 Linear runtime | contract + loading + NPU kernel + E2E | **Missing** | 前两层已实现，kernel/E2E未闭合 |
+| `concat_and_cache_mla` | FL schema + FlagGems generic Triton implementation | Implemented pieces / **Unwired for Ascend FL** | `bb439d`真实failure；FlagGems可达性与910C correctness Unknown |
+| `concat_and_cache_mla_rope_fused` | FL schema | **Missing / Unwired** | current source未找到Ascend backend |
+| AscendV1 reader | 当前仅在vllm-ascend找到 | **Missing in FL / contract pending** | 是否需要FL实现由真实artifact决定 |
+| Compressed-tensors W8A8 config/checkpoint contract | upstream vLLM0.24 + compressed_tensors | Implemented upstream / target unverified | FL v0.2.1 validator已不在new main，必须从实际artifact重新审计 |
+| FL W8A8 packed loading/glue | v0.2.1 `CompressedTensorsPackedW8A8Int8` | **Maintenance reference only / absent current main** | 不能假设old glue仍进入0.24 runtime |
+| OOT/NPU INT8 Linear kernel candidate | vLLM0.24 selector + FL/FlagGems/vendor paths | **Unknown / re-audit required** | 0.20.2 Missing结论不能直接移植到0.24；仍无910C PASS |
+| Ascend 910C W8A8 Linear runtime | contract + loading + NPU kernel + E2E | **Missing / unverified closure** | 必须按FlagGems/vendor/reference重新gap confirmation |
 | CT W8A8 MoE | FL Triton adapter | Implemented but unverified | compiler/layout/scale待验 |
 | Eager full load | 全栈 | Unknown | 多前置Missing |
 | Single-node capacity-valid | Hardware+runtime | Unknown | aggregate只说明可能 |
@@ -121,7 +124,7 @@
 | 候选 | 官方/代码状态 | Correctness判定 | Closure结论 |
 |---|---|---|---|
 | Transformers eager attention | eager kernel存在，但`GlmMoeDsaAttention`仍执行Indexer top-k并生成sparse mask | 保留DSA语义 | 不是Dense fallback；DSA/Indexer仍必须 |
-| vLLM 0.23正常GLM路径 | `index_topk`触发Indexer并设置`is_sparse=True` | 保留官方语义 | MLA + DSA + Indexer必须 |
+| vLLM 0.24 primary GLM路径 | `index_topk`触发Indexer并设置`is_sparse=True` | 保留官方语义；NVIDIA partial进一步证明实际构造/weight load | MLA + DSA + Indexer必须 |
 | `VLLM_MLA_DISABLE=1` | 关闭MLA optimization并选`DeepseekV2Attention`；GLM仍分配top-k buffer，而该class断言buffer必须为None | 代码路径不闭合；即使patch绕过也会删除sparse mask | **不是合法fallback** |
 | 删除/覆盖`index_topk/indexer_types` | 官方config/model code无此支持模式 | 改变目标模型结构语义，无correctness证据 | **禁止用于首次验收** |
 
@@ -137,7 +140,7 @@
 | MLA | Mandatory；Ascend Missing | backend可达，最小prefill/decode正确 |
 | DSA semantics / SFA或等价backend | Mandatory；Ascend Missing | sparse top-k attention与官方eager/reference一致 |
 | Indexer full/shared | Mandatory；framework Implemented，Ascend closure Missing/Unwired | full层计算、shared层复用、cache/logits/top-k kernel owner明确 |
-| IndexShare weight ownership | Mandatory；current0.20.2 baseline Missing | 真实manifest owner/shared keys加载无错配 |
+| IndexShare weight ownership | Mandatory；vLLM0.24 contract存在、target unverified | 真实manifest owner/shared keys加载无错配 |
 | 必要MoE/router/shared-expert/TP-HCCL runtime | Mandatory according to first layout | 目标forward所需链路correctness通过 |
 | eager | Mandatory | 关闭非必需特性后输出第一个正确token |
 | BF16 full-model bring-up | Not acceptable substitute | 仅operator/reference/debug microtest |
@@ -145,7 +148,7 @@
 
 结论：第一次目标模型eager closure必须是`GLM-5.2-W8A8 + MLA + DSA/SFA + Indexer + W8A8 Linear/MoE + required runtime + eager`。当前没有证据支持把DSA/Indexer后移。
 
-模型证据：[GLM-5.2要求vLLM0.23+](https://huggingface.co/zai-org/GLM-5.2/blob/b4734de4facf877f85769a911abafc5283eab3d9/README.md)、[IndexShare/MTP config](https://huggingface.co/zai-org/GLM-5.2/blob/b4734de4facf877f85769a911abafc5283eab3d9/config.json)、[vLLM0.23实现](https://github.com/vllm-project/vllm/blob/0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665/vllm/model_executor/models/deepseek_v2.py)。
+模型证据：[GLM-5.2要求vLLM0.23+](https://huggingface.co/zai-org/GLM-5.2/blob/b4734de4facf877f85769a911abafc5283eab3d9/README.md)、[IndexShare/MTP config](https://huggingface.co/zai-org/GLM-5.2/blob/b4734de4facf877f85769a911abafc5283eab3d9/config.json)、[vLLM0.24实现](https://github.com/vllm-project/vllm/blob/ee0da84ab9e04ac7610e28580af62c365e898389/vllm/model_executor/models/deepseek_v2.py)、[FL GLM partial commit](https://github.com/flagos-ai/vllm-plugin-FL/commit/bb439d028479475a965712e08ce0b955fe02aafb)。
 
 ## 容量/并行
 
@@ -157,4 +160,4 @@
 - Canary仍用TP2；full model不预先冻结TP/DP/EP或logical-device数量。
 - 第二台不是当前前置；只由Capacity失败或明确scale-out/communication Stage触发。
 
-Indexer与W8A8分层的固定源码证据：[`SparseAttnIndexerFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/ops/sparse_attn_indexer.py#L388-L460)、[`SparseAttnIndexerBF16`](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/ops/sparse_attn_indexer_bf16.py#L476-L538)、[compressed-tensors W8A8 validator](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/quantization/compressed_tensors.py#L83-L153)、[packed W8A8 glue](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/quantization/w8a8/packed.py#L40-L149)、[vLLM INT8 candidate table](https://github.com/vllm-project/vllm/blob/bc150f50299199599673614f80d12a196f377655/vllm/model_executor/kernels/linear/__init__.py#L151-L159)。
+Old Indexer/W8A8 links above are v0.2.1-era maintenance evidence, not new-main ownership. Primary evidence now includes[vLLM0.24 GLM/Indexer model](https://github.com/vllm-project/vllm/blob/ee0da84ab9e04ac7610e28580af62c365e898389/vllm/model_executor/models/deepseek_v2.py)、[upstream SparseAttnIndexer platform limit](https://github.com/vllm-project/vllm/blob/ee0da84ab9e04ac7610e28580af62c365e898389/vllm/model_executor/layers/sparse_attn_indexer.py#L474-L488)、[FL current-main quantization tree](https://github.com/flagos-ai/vllm-plugin-FL/tree/a9435a34dcd7d0a38e3a853535947371a6c62205/vllm_fl/quantization)和[`bb439d` GLM partial](https://github.com/flagos-ai/vllm-plugin-FL/commit/bb439d028479475a965712e08ce0b955fe02aafb)。

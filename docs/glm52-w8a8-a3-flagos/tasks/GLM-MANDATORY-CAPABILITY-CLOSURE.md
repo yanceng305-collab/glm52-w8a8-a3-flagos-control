@@ -1,6 +1,6 @@
 # GLM Mandatory Capability Closure Stage Contract
 
-状态：Proposed；not ready；当前不授权实现或服务器执行
+状态：Proposed；not ready；primary baseline refreshed to FlagOS new main/vLLM0.24；当前不授权实现或服务器执行
 
 ## 目标与项目贡献
 
@@ -15,6 +15,8 @@ Capability Microgates / Gap Confirmation
 
 本合同同时定义vLLM-Ascend的技术参考边界，避免把“允许研究参考实现”误解为“允许复制源码或引入runtime依赖”。
 
+Branch migration update：`92a6f767...`/vLLM0.20.2只作maintenance/reference；所有capability gap必须基于mutation时冻结的official new main/vLLM0.24重新确认。`bb439d...`的NVIDIA GLM partial是model-contract evidence，不是Ascend PASS。
+
 ## 适用能力
 
 | Capability | 当前证据状态 | Gap Confirmation处理 |
@@ -23,8 +25,11 @@ Capability Microgates / Gap Confirmation
 | Ascend DSA/SFA | 静态评估Missing | 重新审查A/B/C路径；三路失败才进入实现 |
 | Generic FL Indexer framework | Implemented | 审查可达backend；不得因缺FlagGems自动判Missing |
 | Ascend/910C Indexer closure | Missing / Unwired | 按backend/kernel/cache子缺口执行A/B/C路径审查 |
-| Compressed-tensors W8A8 contract/packed glue | Implemented | 作为输入contract；审查现有执行路径 |
-| OOT/NPU INT8 Linear kernel / 910C W8A8 runtime | 静态评估Missing | 必须审查FlagGems、vendor.ascend及NPU-resident Reference |
+| Compressed-tensors W8A8 contract | Upstream vLLM0.24 path；target unverified | v0.2.1 FL validator仅作reference；从真实artifact重建contract |
+| FL packed W8A8 glue | v0.2.1 Implemented；current main absent | 不得沿用old glue；查明0.24 loading owner与替代路径 |
+| OOT/NPU INT8 Linear kernel / 910C W8A8 runtime | 0.20.2静态Missing；0.24需重审 | 必须审查vLLM0.24 selector、FlagGems v5.3.4、vendor.ascend及NPU-resident Reference |
+| `concat_and_cache_mla` | FL schema + FlagGems generic implementation；Ascend reachability Unwired | 形成cache layout/op contract并审查A/B/C可达性 |
+| `concat_and_cache_mla_rope_fused` | FL schema only；Ascend Missing/Unwired | 独立gap contract与microgate |
 | W8A8 MoE | Implemented but unverified | 先microgate；仅A/B/C均失败并确认缺口后实现 |
 | Required MoE/router/shared-expert/TP-HCCL/KV Cache | 混合状态 | 先microgate；只实现三路均不可用且阻塞首次forward的缺口 |
 

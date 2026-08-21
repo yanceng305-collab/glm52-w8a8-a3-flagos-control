@@ -20,7 +20,7 @@ B. 同一carrier的一次性实验container内卸载vllm-ascend，保留同一FL
 
 ## Ready gate
 
-1. A3-CP-A2 FL-only Environment Smoke已PASS。
+1. Current-primary A3-CP-A2-v024 FL-only Environment Smoke已PASS；historical v0.20.2 A2不计。
 2. Qwen canary、GLM Contract、mandatory capability closure、First Eager Load、Minimal Compatibility与Eager Correctness已按PLAN验收。
 3. 至少满足一个触发条件：客户要求证明official coexistence路线；后续正式方案考虑保留vllm-ascend distribution；FL-only与coexistence出现需要定位的行为差异；最终交付前需要完整runtime provenance证据。
 4. 真实GLM-5.2-W8A8 checkpoint、exact runtime配置和golden/tolerance证据冻结。

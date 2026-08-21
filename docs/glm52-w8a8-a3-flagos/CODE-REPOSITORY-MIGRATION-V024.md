@@ -1,0 +1,83 @@
+# Formal Code Repository Migration Proposal — vLLM 0.24 Line
+
+状态：**Proposed / No repository mutation authorized**
+目标repo：`yanceng305-collab/vllm-plugin-FL-a3-flagos`
+
+## Current facts
+
+- Repo为standalone，default branch `main`。
+- 只有`main`，当前commit `92a6f7670465922c60e88f06787b8f0923e761f3`。
+- 该SHA现在是official `v0.2.1` / vLLM0.20.2 maintenance/reference HEAD。
+- 当前repo没有PR、没有tag、`main`无branch protection。
+- official new `main` research freeze为`a9435a34...`/tree`e5e073ed...`，但mutation前必须重新读取。
+- official `v0.2.1`与new `main`已diverged，不能fast-forward。
+- legacy repo `yanceng305-collab/vllm-plugin-FL`及PR #1完全不在本方案mutation范围。
+
+## Recommended least-risk same-repository plan
+
+不修改现有`main`，通过新增可审计branch把维护线、immutable upstream snapshot与项目integration分开：
+
+```text
+existing main
+  92a6f767...  (保持不变；v0.2.1 maintenance/reference)
+
+baseline/official-v0.2.1-vllm0.20.2
+  92a6f767...  (新增immutable anchor)
+
+baseline/official-main-vllm0.24-<freeze-date>-<short-sha>
+  <mutation时重新冻结的official main exact SHA>
+
+project/glm52-w8a8-v024
+  从上述0.24 baseline exact SHA创建；作为primary integration/PR base
+
+capability/<mla|dsa|indexer|w8a8|...>
+  从同一0.24 baseline或control批准的project head派生；独立Draft PR
+```
+
+### Future authorized operation sequence
+
+1. 重新读取official default branch、`main` HEAD/tree与`v0.2.1` HEAD/tree；若与control research freeze不同，先更新control，不执行mutation。
+2. 只读快照existing repo branches/tags/PR/default/protection与remote heads。
+3. 从existing `main@92a6f767...`新增`baseline/official-v0.2.1-vllm0.20.2`。
+4. 从official exact new-main SHA直接新增`baseline/official-main-vllm0.24-<date>-<sha>`；不得merge或cherry-pick整条0.24 history到old main。
+5. 从0.24 immutable baseline新增`project/glm52-w8a8-v024`。
+6. 对两个baseline branch启用禁止force-push/删除的保护；project branch使用PR-only与required checks（按repo可用能力配置）。
+7. 将GitHub default branch改为`project/glm52-w8a8-v024`，使新clone/PR默认进入0.24项目线。
+8. existing `main`保持commit、tree和名称不变，不删除、不force-push、不merge divergent histories。
+9. 记录origin/upstream、branch SHA/tree、default-branch变更前后和可达性；验证legacy repo/PR #1零变化。
+
+## Why this is recommended
+
+- 不重写或覆盖existing `main`；
+- `92a6f767...`保留双重可追溯锚点；
+- new main exact upstream snapshot不可变；
+- primary integration branch名称明确，不把baseline branch用于直接开发；
+- capability PR拥有稳定base和清晰回滚点；
+- 无需创建第三个代码repo，也无需formal fork/detach。
+
+## Effects and risks
+
+| 操作 | 影响 | 风险控制 |
+|---|---|---|
+| 新增baseline branches | 不改变existing refs | exact SHA/tree验收 |
+| 新增project branch | 新primary开发线 | 只从0.24 snapshot创建 |
+| 改default branch | 新clone/PR默认目标变化 | 操作前报告；existing main URL/history仍可访问 |
+| Branch protection | 降低force/delete风险 | mutation后只读验证 |
+| 不merge两条diverged history | 避免混入v0.2.1-only commits | capability按新main重新gap确认 |
+
+## Alternative: separate v0.24 code repository
+
+可另建`vllm-plugin-FL-a3-flagos-v024`并精确复制official new main。它对existing repo零影响，但会分裂issue/PR/remote管理与项目身份。除非客户要求new repo的`main`必须就是0.24 baseline，否则不推荐。
+
+## Explicitly forbidden
+
+- force-push new main到existing `main`；
+- 删除或rename existing `main`；
+- merge/rebase divergent v0.2.1和new main以制造伪升级；
+- 把旧A2/capability代码cherry-pick到0.24 baseline而不重新审查；
+- 修改legacy repo、PR #1或official upstream；
+- 未经用户批准执行本提案。
+
+## Approval report required before mutation
+
+下一轮若获批准，执行前必须报告：实际official main SHA/tree、准备创建的branch名称、default branch变更、保护规则、existing main影响（应为零）和legacy影响（应为零）。

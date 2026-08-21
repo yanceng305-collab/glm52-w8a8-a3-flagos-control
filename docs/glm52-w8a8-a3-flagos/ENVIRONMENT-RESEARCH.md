@@ -1,17 +1,28 @@
 # FlagOS A3/910C 环境调查与证据链
 
 调查日期：2026-08-21
-当前复核 FL：`92a6f7670465922c60e88f06787b8f0923e761f3`（2026-08-21 official `main`）；早期CI调查固定SHA `38e7dbc20197e2db742c4e4c9687d36ea4df9900`仅保留其时间语境。
+Primary research freeze：official new `main@a9435a34dcd7d0a38e3a853535947371a6c62205` / tree`e5e073edf4b65c053e954d78d20365aab0e1f46b` / vLLM0.24。`92a6f767...`现为official `v0.2.1` / vLLM0.20.2 maintenance/reference；早期CI SHA`38e7dbc...`仅保留时间语境。
 
-## 当前Container边界决策
+## Official branch migration / primary environment reset
+
+- Developer notification与GitHub独立核验共同确认：`v0.2.1`是0.20.2维护线，`main`是0.24 current line；old `v0.3.0-dev`无独立active ref。
+- Existing formal code repo保持`main@92a6f767`零变化；new-main migration尚未执行。
+- Old `v0.20.2rc1-a3` A2 Ready/prompt已Paused，不得下发。
+- New primary carrier candidate为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`，source tuple与compiler conflict见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)。
+- Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，标记Upstream Conflict / stale candidate，不作为0.24 authority。
+- New v0.24 A2为Draft / Not Ready；先闭合repository migration、FlagTree replacement transaction和valid two-device pair。
+
+## Container边界决策（仍有效）
 
 本项目已明确采用容器化部署。Host CANN 8.5.0/9.0.1不参与R0 tuple选择，除非未来显式bind-mount Host Toolkit；原则上R0只依赖Host A3/910C、Driver/Firmware、container runtime、device/driver挂载、HCCN/HCCL网络、disk/model路径和NPU占用。
 
 `c70aa4b`曾把neutral CANN base和vllm-ascend package缺席设为唯一合法路线；该架构前提已被本次修正Superseded。Host/Container边界仍有效，但[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)中的R0-P1/R0-F1只保留兼容性reference evidence，不再是正式执行路线。
 
-## 总判定
+## v0.2.1 historical runtime-ownership findings
 
-- **Confirmed：** 官方 current Ascend Dockerfile直接以`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`作环境carrier；其中包含vllm-ascend distribution/custom artifacts，而非中性CANN-only底座。
+以下0.20.2 carrier/CI结论继续作为maintenance/reference证据，不再定义primary environment。
+
+- **Confirmed：** v0.2.1`@92a6f767` historical Ascend Dockerfile直接以`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`作环境carrier；其中包含vllm-ascend distribution/custom artifacts，而非中性CANN-only底座。
 - **Confirmed：** FL Docker/CI setup 不卸载、覆盖或移除 vllm-ascend；package/entry point仍 installed/discoverable。
 - **Confirmed：** Dockerfile设置`VLLM_PLUGINS=fl`与`VLLM_FL_PLATFORM=ascend`；公开CI log显示`Platform plugin fl`激活；静态源码把worker设为`WorkerFL`并构造`ModelRunnerFL`。
 - **Confirmed：** official `ascend.yaml`是per-op策略：attention/rms_norm为`vendor -> flagos -> reference`，silu为`flagos -> vendor -> reference`；不是一个统一vendor backend总接管。
@@ -19,7 +30,7 @@
 - **Unknown / deferred：** official coexistence进程中是否有任何`vllm_ascend`模块、native artifact或side effect实际参与执行；该问题由Post-Eager Runtime Provenance Audit按需验证，不阻塞A2、canary、first eager或Baseline Benchmark。
 - **Superseded：** “客户合规第一候选必须是neutral CANN base且从未安装vllm-ascend”的推断不再有效。
 
-## 官方实际 CI 证据链
+## v0.2.1官方实际 CI 证据链
 
 ```text
 Host A3/910C runner
@@ -50,7 +61,7 @@ CI setup: pip install --no-deps -e FL; no uninstall/replace
 - [FL 910C matrix](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/tests/platforms/ascend.yaml)
 - [Successful run 32287718197](https://github.com/flagos-ai/vllm-plugin-FL/actions/runs/32287718197)
 - [vllm-ascend A3 Dockerfile](https://github.com/vllm-project/vllm-ascend/blob/367b8e62da799870a7476ce34f5f7658589a8aad/Dockerfile.a3)
-- [Current FL Ascend Dockerfile](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/docker/ascend/Dockerfile)
+- [v0.2.1 historical FL Ascend Dockerfile](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/docker/ascend/Dockerfile)
 - [FL plugin entry points](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/pyproject.toml#L50-L54)
 - [`PlatformFL` worker selection](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/platform.py#L193-L220)
 - [`WorkerFL` constructs `ModelRunnerFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/worker/worker.py#L422-L431)
@@ -84,7 +95,7 @@ CI setup: pip install --no-deps -e FL; no uninstall/replace
 | `TRITON_ALL_BLOCKS_PARALLEL` | R0不先设；后续单变量 | README称必需，但成功CI没设置；GLM边界Unknown |
 | `FLAGCX_PATH` | baseline不设 | 默认HCCL；FlagCX后置 |
 
-## FlagTree / Triton / FlagGems 冲突
+## Historical v0.2.1-era FlagTree / Triton / FlagGems冲突
 
 | 来源 | 内容 |
 |---|---|
@@ -98,7 +109,7 @@ CI setup: pip install --no-deps -e FL; no uninstall/replace
 
 FlagCX在 current CI 未安装，`PlatformFL`默认回退HCCL。FlagCX有Ascend adaptor，但不是单机/TP canary前提。
 
-## 当前official-first路线（建议，不是安装脚本）
+## Historical v0.2.1 official-first路线（Superseded as primary）
 
 ```text
 A3/910C
@@ -121,7 +132,7 @@ Official Carrier FL-only Environment Smoke
 
 official carrier与静态ownership为 **Confirmed**。A2只验证卸载后的FL-only最小闭环；official coexistence的完整动态ownership仍为 **Unknown until Post-Eager Audit**。
 
-## A2 FL-only minimal evidence
+## Historical v0.20.2 A2 minimal evidence（Paused）
 
 - 使用本机已有且RepoDigest/image ID明确的official carrier；缺失或digest不确定时停止，不pull；
 - 仅在新建一次性实验container内卸载vllm-ascend，不修改原始image或其他carrier runtime；
@@ -148,8 +159,11 @@ official carrier与静态ownership为 **Confirmed**。A2只验证卸载后的FL-
 ## Unknown
 
 - 客户现场Driver/Firmware/ATB exact version；
-- official carrier在现场的exact digest与A2卸载后基础栈完整性；
+- v0.24 official carrier在现场的exact digest/image ID与actual package inventory；
+- valid A3 two-logical-device pair的Host映射和OC2占用；
+- FlagTree rc1 wheel identity、replacement transaction、RECORD/file ownership与single coherent provider；
+- formal code repo 0.24 branch migration时moving main的exact SHA/tree；
+- FL new main + FlagGems v5.3.4 + chosen provider的910C smoke；
 - `vllm_ascend`是否在目标进程中有任何实际import/call/side effect，以及若有是否属于客户允许边界；
-- active compiler究竟是FlagTree还是triton-ascend provider；
-- `TRITON_ALL_BLOCKS_PARALLEL=1`对GLM是否必需；
+- current-main Ascend MLA/DSA/Indexer/W8A8/MLA-cache closure；
 - 客户是否也禁止FL内historical adapted code。

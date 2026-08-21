@@ -1,5 +1,7 @@
 # 正式A3代码仓库基线
 
+状态更新：existing baseline保持完整，但现已重分类为official `v0.2.1` / vLLM0.20.2 maintenance/reference。Primary GLM development候选转向official new `main` / vLLM0.24；本轮没有执行任何repository mutation。迁移提案见[`CODE-REPOSITORY-MIGRATION-V024.md`](CODE-REPOSITORY-MIGRATION-V024.md)。
+
 记录日期：2026-08-21
 冻结时间：2026-08-21T15:18:31.5529156+08:00
 建仓授权所依据的control baseline：`ea59bdacf8a894ae8e5bfab61921132cb863c6bb`
@@ -18,6 +20,8 @@
 | New repository main tree | `e610bc5828b4a4a54a8f55429b40500ff4f5a0a7` |
 | Commit equality | PASS |
 | Tree equality | PASS |
+| 当前official语义 | `v0.2.1` maintenance/reference；不再是new-main primary |
+| New-main research freeze | `a9435a34dcd7d0a38e3a853535947371a6c62205` / tree`e5e073edf4b65c053e954d78d20365aab0e1f46b`；尚未进入正式repo |
 
 仓库创建时未初始化README、LICENSE、gitignore或任何额外commit；新`main`直接指向冻结official commit。
 
@@ -53,22 +57,22 @@ Legacy仓库：[yanceng305-collab/vllm-plugin-FL](https://github.com/yanceng305-
 
 PR #1仍为：[Freeze W8A8 Ascend gap and eager repro](https://github.com/yanceng305-collab/vllm-plugin-FL/pull/1)，base=`ascend-model-migration`，head=`audit/glm52-w8a8-stage0-gap`。
 
-## Main使用规则
+## Existing main使用规则
 
-- `main`只表示经control repo批准的official frozen baseline；禁止直接开发；
+- existing `main@92a6f767...`固定表示official `v0.2.1` maintenance/reference baseline；禁止直接开发或覆盖；
 - MLA、DSA/SFA、Indexer、W8A8等capability原则上使用独立branch和独立Draft PR；
 - 不得从legacy创建branch、merge、cherry-pick或导入tag；
 - 所有实现受control repo最新`PLAN.md`、`DECISIONS.md`和task contract约束。
 
-## Upstream同步策略
+## 历史Upstream同步策略（Superseded for new main migration）
 
 1. 不自动同步official，不使用GitHub fork sync按钮；
 2. 每次同步先由control repo形成明确决策，记录old baseline、candidate official SHA/tree和compatibility影响；
-3. 只接受指向经过批准的official `main` commit；
-4. 新仓库`main`只允许fast-forward到该精确official commit，不创建merge/squash/rebase baseline commit，不force-push；
+3. 原“只接受official main并fast-forward existing main”的规则已因official branch migration Superseded；new main与v0.2.1已diverged，不能fast-forward；
+4. 新策略是不改existing main，新增immutable v0.2.1 anchor、exact 0.24 main snapshot和project integration branch；详见migration proposal；
 5. 同步后重新验证commit/tree相等、branch/tag纯净度和mandatory tests；
 6. feature branch需要rebase/重建时单独治理，不把实验历史写入`main`。
 
 ## 当前停止点
 
-正式代码仓库落地已完成。尚未执行A2 FL-only Environment Smoke、Post-Eager Runtime Provenance Audit、服务器操作、DeepSeek任务、GLM适配、mandatory capability实现或性能测试。
+正式代码仓库existing main保持零变化。Old A2/prompt已暂停；new v0.24 branch migration、A2、服务器操作、GLM适配、mandatory capability实现和性能测试均未执行。

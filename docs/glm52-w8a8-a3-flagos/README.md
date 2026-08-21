@@ -11,10 +11,13 @@
 - `MINIMAL-EAGER-EXECUTION-CLOSURE.md`：首次正确GLM-5.2-W8A8 eager token的mandatory能力闭包。
 - `REPOSITORY-PLAN.md`：建仓前legacy保全与formal-fork/standalone路线分析；当前已被standalone决策取代。
 - `CODE-REPOSITORY-BASELINE.md`：正式standalone A3代码仓库、official冻结SHA/tree、remote与sync policy、legacy零变化验收。
+- `OFFICIAL-V024-BASELINE-RESEARCH.md`：official branch migration、new main/vLLM0.24、GLM partial、v0.24 carrier、双device与compiler证据。
+- `CODE-REPOSITORY-MIGRATION-V024.md`：不修改existing main的0.24 baseline/project branch迁移提案；尚未授权执行。
 - `R0-CONTAINER-TUPLE-RESOLUTION.md`：`c70aa4b`时期neutral-base tuple的兼容性研究；其强制路线已Superseded，仅保留reference evidence。
-- `tasks/STAGE-A-CLEAN-PROVENANCE.md`：按official carrier FL-only bring-up重定义后的Stage A父合同。
-- `tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：下一条建议Stage；一次性container受控卸载、minimal negative check与synthetic NPU operator smoke。
-- `tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`：A3-CP-A2 Ready执行提示词；严格受task contract约束。
+- `tasks/STAGE-A-CLEAN-PROVENANCE.md`：因branch migration重开的v0.24 baseline/carrier/provider Stage A父合同。
+- `tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：historical v0.20.2 A2；已Paused，不得执行。
+- `tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`：historical v0.20.2 prompt；已Paused，不得下发。
+- `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`：new-main/v0.24 A2草案；Draft / Not Ready / No prompt。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
 - `tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`：历史/补证用只读inventory合同；当前tuple决策已不以其为前置，状态Not Ready。
@@ -22,16 +25,16 @@
 
 ## 给用户的10条摘要
 
-1. 官方910C路线确实以vllm-ascend A3 image作环境carrier，package/custom artifacts仍在，CI没有卸载它；存在本身不再判违规。
-2. `VLLM_PLUGINS=fl`激活`PlatformFL`；静态代码继续进入`WorkerFL`、`ModelRunnerFL`与FlagOS Dispatch。
-3. 当前先做FL-only最小smoke；完整关键operator、`vllm_ascend`动态import/call和native provenance审计后置为Eager Correctness后的按需支线。
-4. `vendor.ascend`是`vllm_fl`自有backend，部分文件注明adapted来源但运行时直接调用torch_npu/CANN；它不是vllm-ascend backend wrapper。
-5. 首个严格910C-backed canary是Qwen3.6-27B TP2 eager，README里的更小Qwen不能写成官方910C已验证。
-6. GLM-5.2至少被vLLM0.20.2语义、sparse MLA/Indexer、W8A8 Linear和ModelSlim格式四类缺口阻塞。
-7. ModelSlim能生成A3 W8A8不等于FL能加载；AscendV1 reader当前只在vllm-ascend中找到，其是否需要迁入仍由artifact contract决定。
-8. 一台A3官方物理规格为8×128GB，当前Host边界确认16×64GB logical devices；full-model容量仍必须由container device trace与真实checkpoint manifest计算，现在不需要第二台。
-9. 正式代码仓库已采用personal standalone方案并精确复制official冻结main；legacy、PR #1、branches、tags和settings保持零变化。
-10. A3-CP-A2现为Ready；DeepSeek只能按已提交提示词执行，完成后立即停止并等待Codex验收。
+1. Official branch migration现定义`v0.2.1 = vLLM0.20.2 maintenance`、`main = vLLM0.24 current`；observed main为`a9435a34...`。
+2. Existing正式repo `main@92a6f767`保持零变化并重分类，不force、不merge divergent histories。
+3. Primary GLM contract改为FlagOS new main + vLLM0.24 + GLM-5.2-W8A8；0.20.2只作fallback evidence。
+4. `bb439d...`已在NVIDIA TP16双机完成GLM-5.2-Slim init/weight load并暴露MLA cache gap，但不是Ascend/W8A8 E2E。
+5. New primary carrier candidate为`vllm-ascend:v0.24.0rc1-a3`，source tuple是CANN9.0.1/Py3.12/torch2.10/torch-npu post2/vLLM0.24。
+6. A3至少需要两个logical devices；valid/same-card pair mapping必须现场只读确认，不能随意选ID。
+7. FlagGems pin为v5.3.4；FlagTree rc1与carrier triton-ascend共享`triton`namespace，是替代provider而非clean coexistence。
+8. Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，明确标记Upstream Conflict / stale candidate。
+9. Old A2 Ready/prompt已Paused且不得下发；new v0.24 A2仅Draft，先复核repository migration与compiler transaction。
+10. Legacy repo/PR #1、正式代码repo和服务器本轮均零变化；未生成新DeepSeek prompt。
 
 ## 状态标签
 

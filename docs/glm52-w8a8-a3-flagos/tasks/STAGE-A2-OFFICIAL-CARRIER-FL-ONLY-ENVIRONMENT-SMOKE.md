@@ -1,12 +1,14 @@
 # A3-CP-A2 — Official Carrier FL-only Environment Smoke
 
-状态：**Ready**
+状态：**Superseded / Paused by upstream branch migration / Do not execute**
 Parent：`Stage A — Official Carrier FL-only Bring-up`
-执行授权：用户已批准本task进入Ready并生成DeepSeek执行提示词；本轮Codex不代为操作服务器
+执行授权：已撤回；不得下发服务器
 执行对象：第一台Ascend A3/910C服务器
 第二台A3：不需要
 
 ## 工程意图
+
+> Pause notice：本合同冻结于official `v0.2.1` / vLLM0.20.2 / carrier `v0.20.2rc1-a3`路线。official branch migration后，它只保留历史审计价值，不再是当前A2。新的v0.24草案见[`STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`](STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md)。
 
 以official FL Ascend Dockerfile使用的A3 image作为环境carrier，在一次性实验container内移除`vllm-ascend` plugin，低成本验证其余Ascend软件栈与FlagOS最小执行链能否独立工作。该操作只是为首次bring-up减少变量，**不是**把“vllm-ascend image/package存在”重新定义为违规，也不否定official package coexistence路线。
 
@@ -24,7 +26,7 @@ Parent：`Stage A — Official Carrier FL-only Bring-up`
 
 执行前必须同时满足：
 
-1. **Satisfied：** 用户已批准A3-CP-A2 Ready task与DeepSeek执行提示词。
+1. **Superseded：** 原批准已因official branch migration暂停。
 2. 任务启动时冻结`WORKDIR="$(pwd -P)"`；该目录可写。不可写则停止，不得自行切换到`$HOME`、`/tmp`或其他目录。
 3. 重新检查当前NPU进程与logical-device占用；只允许选择明确空闲的最小device范围。任何device状态不确定即停止。
 4. 本机已有carrier的tag、RepoDigest和image ID可确认。若image不存在或digest不确定，只报告，不得`docker pull`。

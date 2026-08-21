@@ -1,12 +1,14 @@
 # FlagOS on Ascend 910C Runtime Ownership Map
 
-当前复核代码：FL `92a6f7670465922c60e88f06787b8f0923e761f3`（2026-08-21 official `main`）+ official vLLM `bc150f5`（v0.20.2）。早期`38e7dbc`证据链接保留其历史语境。
+Primary static review：FL observed new `main@a9435a34dcd7d0a38e3a853535947371a6c62205` / tree`e5e073ed...` + official vLLM0.24 `ee0da84...`。`92a6f767...`/vLLM0.20.2现为official v0.2.1 maintenance/reference；早期链接保留历史语境。
+
+Branch migration没有改变顶层ownership模型：current main仍注册`PlatformFL`、指定`WorkerFL`并构造`ModelRunnerFL`，operator仍进入FlagOS Dispatch。但0.20.2-era capability状态不能未经审查直接复制到0.24；W8A8 selector/API、GLM cache ops和compiler profile均须重新gap confirmation。
 
 ## 真实调用链
 
 ```text
-Environment carrier
-  quay.io/ascend/vllm-ascend:v0.20.2rc1-a3
+Environment carrier candidate
+  quay.io/ascend/vllm-ascend:v0.24.0rc1-a3
   (CANN / torch-npu / empty vLLM / compiler-provider / installed packages)
   + VLLM_PLUGINS=fl, VLLM_FL_PLATFORM=ascend
     ↓
@@ -46,43 +48,44 @@ vllm.LLM / vllm serve
 | API/LLM/serve | vLLM entrypoints | EngineCore | 否 | 间接 | 否 | Confirmed CI |
 | Scheduler/Engine/Executor | vLLM `v1/engine` | WorkerWrapper | 否 | 间接 | 否 | Confirmed CI |
 | Platform registration | FL `register` / `PlatformFL` | vLLM config/platform | 是 | 探测间接 | OOT设计相关 | Confirmed |
-| Worker | FL `WorkerFL` | ModelRunnerFL | FL-owned fork | 是 | 无direct import | Confirmed Qwen910C |
-| ModelRunner | FL `ModelRunnerFL` | vLLM model | FL-owned fork | 是 | 无direct import | Confirmed Qwen910C |
+| Worker | FL `WorkerFL` | ModelRunnerFL | FL-owned fork | 是 | 无direct import | Static current main；Qwen910C仅v0.2.1-era |
+| ModelRunner | FL `ModelRunnerFL` | vLLM model | FL-owned fork | 是 | 无direct import | Static current main；Qwen910C仅v0.2.1-era |
 | Loader/registry | vLLM | Model class | 否 | 间接 | 否 | Confirmed |
 | GLM config bridge | FL `GlmMoeDsaConfig` | transformers/vLLM | 是 | 否 | 否 | Implemented, no GLM E2E |
-| GLM model class | vLLM DeepSeekV2-derived | MLA/Indexer/MoE | 否 | 间接 | 否 | 5基础存在；5.2语义Missing |
+| GLM model class | vLLM0.24 `GlmMoeDsaForCausalLM` | MLA/Indexer/MoE | 否 | 间接 | 否 | Implemented；NVIDIA init/weight load PARTIAL |
 | OOT layers | FL `ops/custom_ops.py` | FL dispatch | 是 | 视op | 否 | Confirmed framework |
 | CachedOp dispatch | FL `dispatch` + `ascend.yaml` | flagos/vendor/reference | 是 | 视backend | 否 | Confirmed framework |
-| Environment carrier | official FL Ascend Dockerfile基于`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3` | CANN/torch-npu/empty vLLM/compiler/packages | 环境层，不判ownership | 是 | package存在 | Confirmed static；dynamic role Unknown |
-| Dense attention glue | FL `vendor/ascend/impl/attention.py` | torch-npu ops | adapter是 | 强 | 明确adapted | Confirmed Qwen910C |
-| Dense attention kernel | torch-npu/CANN | CANN/AICore | 否 | 核心 | API历史相关 | Confirmed Qwen910C |
+| Environment carrier | vLLM-Ascend v0.24 official documented A3 candidate | CANN9.0.1/torch-npu/empty vLLM0.24/compiler/packages | 环境层，不判ownership | 是 | package存在 | Source/docs Confirmed；artifact identity Unknown |
+| Dense attention glue | FL `vendor/ascend/impl/attention.py` | torch-npu ops | adapter是 | 强 | 明确adapted | v0.2.1 Qwen910C Confirmed；new main unverified |
+| Dense attention kernel | torch-npu/CANN | CANN/AICore | 否 | 核心 | API历史相关 | v0.2.1 Qwen910C Confirmed；new main unverified |
 | Dense MLA | 无usable owner；placeholder | — | 否 | — | 对照实现未迁入 | **Missing** |
 | Sparse MLA/DSA/SFA | Ascend selector显式拒绝 | — | 否 | — | 历史实现存在于vllm-ascend | **Missing** |
-| IndexShare logic | vLLM 0.23+；0.20.2缺 | Indexer | 否 | 间接 | 否 | **Missing baseline** |
-| Generic FL Indexer framework | FL `SparseAttnIndexerFL` / `SparseAttnIndexerBF16` + DeepSeek-V4 attention glue | CachedOp/custom-op dispatch | 是 | backend-dependent | 否 | **Implemented**；非GLM/910C E2E结论 |
+| IndexShare logic | vLLM0.24 model contract | Indexer | 否 | 间接 | 否 | Implemented structure；target unverified |
+| Generic Indexer framework | vLLM0.24 `deepseek_v2.Indexer` + upstream `SparseAttnIndexer`；FL cache/index schemas | model -> custom ops | 混合 | backend-dependent | 否 | **Implemented contract**；upstream native list不含Ascend |
 | Ascend/910C reachable Indexer backend/kernel closure | Generic framework存在，但Ascend backend、kernel owner与sparse MLA/DSA调用链未闭合 | — | 未闭合 | 预期依赖 | 否 | **Missing / Unwired** |
 | GLM-5.2 Ascend E2E Indexer | GLM sparse MLA/DSA -> Indexer完整链 | — | 未闭合 | 预期依赖 | 否 | **Missing**；无910C E2E |
+| MLA cache concat schemas | FL `_C_ops_schemas.py` | backend implementation | contract是 | 预期依赖 | `bb439d`真实gap | schema Implemented；Ascend `concat_and_cache_mla*` **Missing/Unwired** |
 | ATen replacement | FlagGems enable + blacklist | Triton/torch fallback | 是 | fallback依赖 | 否 | Worker confirmed；覆盖有限 |
 | RMSNorm/RoPE | FL Ascend adapter | torch-npu | adapter是 | 强 | RoPE有历史来源 | Confirmed链路 |
 | Router | vLLM + FL GateLinear/router patches | FlagGems/pure torch | 混合 | 间接 | 否 | BF16 MoE confirmed |
 | BF16 experts | FL `impl/fused_moe.py` | NPU grouped matmul/MoE | adapter是 | 强 | 未标direct | Qwen MoE confirmed；分支Unknown |
 | EP dispatch/combine | vLLM managers | HCCL/FlagCX | 否 | backend相关 | 否 | Implemented, unverified EP |
-| Compressed-tensors W8A8 config/checkpoint contract | FL validator + vLLM scheme | INT8 schemes | 混合 | 间接 | 否 | **Implemented**（canonical subset） |
-| FL packed W8A8 loading/glue | `CompressedTensorsPackedW8A8Int8` + scheme patch | vLLM native dynamic-token W8A8 | 是 | 间接 | 否 | **Implemented** |
+| Compressed-tensors W8A8 contract | upstream vLLM0.24 + compressed_tensors | INT8 schemes | 上游owner | 间接 | 否 | Implemented upstream；target artifact unverified |
+| FL packed W8A8 loading/glue | v0.2.1 `CompressedTensorsPackedW8A8Int8` | old vLLM scheme | maintenance-only | 间接 | 否 | **Absent current main**；0.24 replacement Unknown |
 | AscendV1 description | FL无人读取；reader当前仅在vllm-ascend找到 | — | 否 | — | carrier package中的实现可作contract reference | **Missing in FL**；是否需要迁入待ADR |
-| OOT/NPU INT8 Linear kernel candidate | FL把upstream candidate list复制给`PlatformEnum.OOT`，但现有CPU/CUDA/ROCm candidates均不支持Ascend NPU | — | glue存在、kernel缺失 | 预期依赖 | 否 | **Missing** |
+| OOT/NPU INT8 Linear kernel candidate | vLLM0.24 selector + FL/FlagGems/vendor paths | — | 待重审 | 预期依赖 | 否 | **Unknown on 0.24**；old Missing不能直接沿用 |
 | Ascend 910C W8A8 Linear runtime | contract + packed loading + NPU kernel +910C执行 | — | 未闭合 | 预期依赖 | 否 | **Missing**；无910C E2E |
 | W8A8 MoE | FL oracle + vLLM Triton experts | Triton provider | 混合 | 预期 | 否 | Implemented, unverified910C |
-| TP communication | torch distributed/HCCL | HCCL | 否 | 强 | 否 | TP2 Confirmed |
+| TP communication | torch distributed/HCCL | HCCL | 否 | 强 | 否 | v0.2.1 TP2 Confirmed；v0.24 A3至少2 devices待验 |
 | FlagCX collective | FL communicator + FlagCX | adaptor/HCCL | FlagOS组件 | adaptor依赖 | 否 | Optional, unverified910C |
 | P/D KV transfer | FL `FlagCXConnector` | libflagcx P2P | FlagOS组件 | adaptor依赖 | 否 | Implemented, unverified |
-| Triton compiler/provider | Triton API；active provider为triton-ascend或FlagTree | CANN codegen | provider相关 | 是 | 非backend代理 | CI package evidence confirmed；目标active provider Unknown |
+| Triton compiler/provider | Carrier triton-ascend3.2.1或README FlagTree rc1 | CANN codegen | provider相关 | 是 | 非backend代理 | 两者共享namespace、互斥；replacement transaction Unknown |
 | `vllm_ascend` dynamic participation | installed carrier distribution / entry point | Unknown until post-eager A/B audit | 不属于FlagOS ownership | 可能间接 | 核查对象 | **Unknown**；presence不等于call |
 | A3/910C FL extension | 无；`VLLM_VENDOR`只支持cuda | 下游二进制栈 | 否 | 依赖下游 | 否 | Not designed |
 
 ## Attention
 
-- Dense：`PlatformFL -> vendor.ascend -> torch_npu`；Qwen3.6 TP2 910C E2E Confirmed。
+- Dense：`PlatformFL -> vendor.ascend -> torch_npu`；Qwen3.6 TP2 910C E2E仅在v0.2.1-era Confirmed，new main/provider tuple待验。
 - MLA：Ascend返回构造即报错的placeholder；Missing。
 - DSA/SFA：`use_mla && use_sparse`直接 `NotImplementedError`；Missing。
 - FlagGems内有DSA相关kernel不等于plugin backend可达；selector/metadata/cache/backend必须闭合。
@@ -97,11 +100,11 @@ vllm.LLM / vllm serve
 
 ## W8A8
 
-- 固定树没有 `quant_model_description.json` reader。
-- **Compressed-tensors config/checkpoint contract — Implemented：** FL验证canonical dynamic-token W8A8 subset，[见validator](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/quantization/compressed_tensors.py#L83-L153)。
-- **Loading/packed glue — Implemented：** FL提供packed INT8参数创建、unpack和scheme selection patch，[见`packed.py`](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/quantization/w8a8/packed.py#L40-L149)。
-- **OOT/NPU INT8 Linear kernel candidate — Missing：** FL会把upstream INT8 candidate list复制到`PlatformEnum.OOT`，[见`quant_linear.py`](https://github.com/flagos-ai/vllm-plugin-FL/blob/38e7dbc20197e2db742c4e4c9687d36ea4df9900/vllm_fl/quantization/quant_linear.py#L11-L64)；但vLLM 0.20.2原始INT8表仅有CPU/CUDA/ROCm，[见selector表](https://github.com/vllm-project/vllm/blob/bc150f50299199599673614f80d12a196f377655/vllm/model_executor/kernels/linear/__init__.py#L151-L159)，各candidate的platform gate不接受Ascend OOT/NPU。
-- **Ascend 910C W8A8 Linear runtime — Missing：** contract和loading存在，但NPU kernel与910C E2E未闭合。
+- Current main未找到`quant_model_description.json` reader。
+- **Compressed-tensors contract — upstream-owned / target unverified：** current new main已移除v0.2.1-era FL custom validator，依赖vLLM0.24/compressed_tensors contract；必须用真实artifact审计。
+- **Historical packed glue — maintenance reference only：** v0.2.1有`CompressedTensorsPackedW8A8Int8`，但current main `vllm_fl/quantization/`仅剩`quant_linear.py`，不能假设old loading/packed glue仍生效。
+- **Historical 0.20.2 OOT/NPU INT8 candidate — Missing：** old selector仅有CPU/CUDA/ROCm。Primary已切换0.24，必须重新审查vLLM selector、FL glue、FlagGems v5.3.4 `matmul_int8`、vendor.ascend与NPU reference；当前状态为Unknown/unverified，不能把old表直接当0.24结论。
+- **Ascend 910C W8A8 Linear runtime — Missing/unverified closure：** contract/loading pieces存在，但new-main NPU kernel selection与910C E2E未闭合。
 - W8A8 MoE经FL oracle到vLLM functional Triton experts，只有unit/mock，无910C E2E。
 - ModelSlim是offline producer，不是当前runtime dependency；能量化不等于FL能加载。
 
@@ -116,8 +119,8 @@ vllm.LLM / vllm serve
 
 当前验收定义改为**运行时ownership**：`PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`必须真实激活；每个关键operator必须记录最终选择的FlagGems、`vllm_fl...vendor.ascend`或Reference实现及其torch_npu/CANN下游。vllm-ascend image/package存在只作environment inventory，不自动判合规或违规。
 
-static scan在FL `92a6f767...`中未发现direct `import vllm_ascend`，但这不能替代进程级import/call/library trace。A2只在卸载后的FL-only container中确认最小链；Eager Correctness后的A/B审计才回答coexistence动态参与。若发现实际参与，必须对具体调用的ownership、必要性与客户边界单独裁定；不能把整个carrier先验拒绝，也不能无证据宣布完全独立。
+static scan在FL v0.2.1与observed new main中未发现把`vendor.ascend`实现成vllm-ascend wrapper的证据，但这不能替代进程级trace。New v0.24 A2尚未Ready；Eager Correctness后的A/B审计才回答coexistence动态参与。若发现实际参与，必须对具体调用单独裁定；不能把整个carrier先验拒绝。
 
 部分`vendor.ascend`文件明确标注`Adapted from vllm-ascend`，但当前owner、module path和直接调用均位于`vllm_fl`。源码provenance继续遵守license/attribution；只有客户另行禁止official FL历史adapted来源时才扩大合规判断。
 
-当前关键源码证据：[official Ascend Dockerfile](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/docker/ascend/Dockerfile)、[FL entry points](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/pyproject.toml#L50-L54)、[`PlatformFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/platform.py#L69-L89)、[`WorkerFL -> ModelRunnerFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/worker/worker.py#L422-L431)、[Ascend per-op policy](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/config/ascend.yaml)、[`vendor.ascend` attention selector](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/backends/vendor/ascend/ascend.py#L116-L140)、[direct torch_npu attention implementation](https://github.com/flagos-ai/vllm-plugin-FL/blob/92a6f7670465922c60e88f06787b8f0923e761f3/vllm_fl/dispatch/backends/vendor/ascend/impl/attention.py)。
+当前关键源码证据：[new-main FL entry points](https://github.com/flagos-ai/vllm-plugin-FL/blob/a9435a34dcd7d0a38e3a853535947371a6c62205/pyproject.toml#L36-L40)、[`PlatformFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/a9435a34dcd7d0a38e3a853535947371a6c62205/vllm_fl/platform.py)、[`WorkerFL -> ModelRunnerFL`](https://github.com/flagos-ai/vllm-plugin-FL/blob/a9435a34dcd7d0a38e3a853535947371a6c62205/vllm_fl/worker/worker.py)、[Ascend per-op policy](https://github.com/flagos-ai/vllm-plugin-FL/blob/a9435a34dcd7d0a38e3a853535947371a6c62205/vllm_fl/dispatch/config/ascend.yaml)、[`vendor.ascend` attention selector](https://github.com/flagos-ai/vllm-plugin-FL/blob/a9435a34dcd7d0a38e3a853535947371a6c62205/vllm_fl/dispatch/backends/vendor/ascend/ascend.py)、[direct torch_npu attention implementation](https://github.com/flagos-ai/vllm-plugin-FL/blob/a9435a34dcd7d0a38e3a853535947371a6c62205/vllm_fl/dispatch/backends/vendor/ascend/impl/attention.py)。Current main `docker/ascend/Dockerfile`是stale conflict，不作为0.24 carrier证据。

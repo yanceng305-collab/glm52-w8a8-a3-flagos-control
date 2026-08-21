@@ -1,8 +1,8 @@
 # GLM-5.2-W8A8 × FlagOS × Ascend A3/910C 项目计划
 
-状态：Research Freeze与Repository PASS；runtime-ownership boundary保持；A3-CP-A2 FL-only Smoke Ready / not executed
+状态：Paused for official branch migration；v0.24 baseline refresh与repository migration proposal待复核；server execution prohibited
 基线调查日期：2026-08-21
-正式代码基线：`yanceng305-collab/vllm-plugin-FL-a3-flagos@92a6f7670465922c60e88f06787b8f0923e761f3`，精确对应建仓时`flagos-ai/vllm-plugin-FL`冻结`main`；历史调查SHA仅保留证据语境。
+当前正式代码repo `main`：`92a6f7670465922c60e88f06787b8f0923e761f3` / tree`e610bc58...`，现重分类为official `v0.2.1` / vLLM0.20.2 maintenance/reference baseline。Primary development候选改为本轮observed official new `main@a9435a34dcd7d0a38e3a853535947371a6c62205` / tree`e5e073ed...` / vLLM0.24；repository mutation前必须重新冻结actual main。
 
 ## 结果目标
 
@@ -11,23 +11,30 @@
 ## 硬约束
 
 - 新代码基线只从官方 current `main` 开始；legacy A2 仓库、branch、PR #1、Stage 0 结论只保留历史，不作新基线。
+- `92a6f767...`不得删除、force覆盖或与new main强行合并；official `v0.2.1`与new `main`已diverged。
 - vllm-ascend image/package的**存在性不再自动判违规**。official同款A3 image可以作为环境carrier；是否存在不可接受依赖必须依据runtime import/call、entry-point activation、operator/backend ownership和loaded-library trace判定。
 - 正式模型执行必须由FlagOS runtime/dispatch/backend ownership闭合。若trace发现`vllm_ascend`实际参与执行，先记录调用点、作用和必要性，再由control判断客户边界与是否替换；不得用“package已安装”或“未发现静态import”替代运行时证据。
 - A3-CP-A2允许只在新建的一次性实验container内卸载`vllm-ascend`，用于降低FL-only bring-up变量；这不是package-presence合规门禁，也不否定official coexistence路线。不得修改原始image或其他carrier runtime组件。
-- 本轮Codex不操作服务器；A3-CP-A2 Ready task与DeepSeek执行提示词已批准。执行不得超出A2合同，也不得编写GLM补丁或优化代码。
+- `118c314`中的old A2 Ready/prompt已Superseded / Paused，不得下发。本轮只做research/control；不操作服务器、不pull image、不创建container、不修改正式代码repo、不生成新DeepSeek prompt。
 - README、代码、Docker/CI、模型卡冲突必须保留；Unknown 不补猜测版本。
 - eager correctness 在先；graph、MTP、multistream、FlagCX、多机和组合优化在后。
 - 目标模型固定为GLM-5.2-W8A8；W8A8是首次目标模型eager correctness硬门禁，不是性能优化。BF16只允许operator/reference/debug microtest，不能替代目标bring-up。
 - FlagScale暂不作为首次模型bring-up前置；先直接闭合`vLLM -> vllm-plugin-FL -> PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`，模型推理链稳定后才在现有后期集成阶段验证FlagScale。
 - FlagGems是preferred实现来源而非mandatory依赖。Bring-up优先correctness和FlagOS Dispatch可达性，不以统一算子来源或FlagGems覆盖率作为首次eager门禁。
+- A3 v0.24路线至少需要两个logical devices；必须通过Host只读拓扑证据确认valid、完整空闲pair，不允许单device或任意拼接两个ID。
+- FlagTree rc1与carrier triton-ascend共享完整`triton`namespace；compiler replacement/overlay未闭合前，新A2不得Ready。
+- New-main FL安装必须从readonly source的writable `.git`副本执行`--no-build-isolation --no-deps -e`；缺build requirement时STOP，不得联网补包。
 - GitHub是唯一项目事实源：本控制仓库管理PLAN/DECISIONS/tasks，正式代码仓库及冻结关系以`CODE-REPOSITORY-BASELINE.md`为准。
 
 ## 当前关键路径
 
 ```text
-Research Freeze
-  -> Official Carrier FL-only Environment Smoke (A3-CP-A2)
-  -> 910C Canary (Qwen3.6-27B TP2 eager)
+Official v0.24 Branch/Runtime Research Freeze
+  -> Formal Code Repository v0.24 Migration Approval and Execution
+  -> FlagTree/triton-ascend Provider Transaction Closure
+  -> A3 Valid Two-Logical-Device Pair Contract
+  -> Official v0.24 Carrier + FlagOS main FL-only Smoke (A3-CP-A2-v024)
+  -> 910C Canary (v0.24 control-approved model TBD)
   -> GLM Contract Gate (vLLM语义 + quant format + Minimal Eager Execution Closure)
   -> Capability Microgates / Gap Confirmation
   -> Minimal Capability Implementation
@@ -50,10 +57,11 @@ Deferred / on-demand side branch after Eager Correctness:
 
 | Stage | 目标 | Ready gate | Exit / 验收 | 必存证据 | Owner | 第二台 A3 |
 |---|---|---|---|---|---|---|
-| **Research Freeze** | 冻结官方 main、CI oracle、冲突和 Unknown | 本轮研究完成 | 用户批准研究结论、仓库方案和“原生”定义 | source SHA、CI links、矩阵、决策 | Codex；用户批准 | 不需要 |
-| **Official Carrier FL-only Environment Smoke (A3-CP-A2)** | 用本机已有official A3 carrier创建一次性实验container，卸载vllm-ascend plugin并验证最小FlagOS链 | **Ready**；task/prompt已批准；carrier identity与空闲device在任务启动preflight确认，失败即STOP | minimal negative check通过；torch/torch-npu/NPU未破坏；`PlatformFL/WorkerFL/ModelRunnerFL/Dispatch`确认；至少一个NPU-resident synthetic op经FlagOS ownership成功 | image/container identity、pre/post package inventory、negative check、class/module origin、dispatch/selected impl、NPU tensor smoke、raw logs/checksum | DeepSeek执行；Codex验收 | 不需要 |
-| **910C Canary** | 用官方当前 910C CI-backed 模型隔离验证基础链 | A3-CP-A2 accepted；Qwen3.6-27B权重就绪 | TP2 eager offline + serving正确；FL/dense attention/HCCL dispatch可追溯 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
-| **GLM Contract Gate** | 决定vLLM语义基线与W8A8 artifact contract，并冻结Minimal Eager Execution Closure | Canary accepted；真实checkpoint manifest齐全 | ADR选择`0.23/0.24 uplift`或`0.20.2 backport`；ADR选择`AscendV1 native loader`或经证明等价的`compressed-tensors conversion`；确认首次closure必须含W8A8+MLA+DSA/SFA+Indexer | API/worker diff、IndexShare ownership、tensor/scale/layout、closure证据 | Codex决策；DeepSeek仅做授权spike | 不需要 |
+| **v0.24 Baseline Refresh** | 冻结branch语义、new main SHA/tree、carrier tuple、compiler冲突和GLM official partial证据 | developer通知 + official源码可读 | 用户批准research与repository migration方案；old A2保持Paused | branch/API/source links、SHA/tree、tuple、conflicts、Unknown | Codex；用户批准 | 不需要 |
+| **Formal Code Repository Migration** | 在不改existing main的条件下新增0.24 immutable baseline与project branch | migration proposal获批准；执行前重读official main | existing main仍92a6f；0.2.1 anchor、新0.24 anchor与project branch exact；default/protection/legacy验收 | refs/SHA/tree/default/protection/legacy快照 | Codex执行；用户批准 | 不需要 |
+| **Official v0.24 Carrier + FlagOS main FL-only Smoke (A3-CP-A2-v024)** | 用本机已有v0.24 carrier和new-main FL验证最小FlagOS链 | **Draft / Not Ready**；repo migration、provider transaction、carrier identity、valid free pair全部闭合后另行批准 | v0.24 stack、single coherent provider、`PlatformFL/WorkerFL/ModelRunnerFL/Dispatch`及一个NPU-resident synthetic op PASS | image/package/provider identity、pair topology、negative check、dispatch/device trace | DeepSeek未来执行；Codex验收 | 不需要；第一台至少2 logical devices |
+| **910C Canary** | 用new v0.24 stack上的control-approved小模型隔离验证基础链 | A3-CP-A2-v024 accepted；canary模型/权重重新冻结 | eager offline + serving正确；FL/dense attention/HCCL dispatch可追溯 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
+| **GLM Contract Gate** | 冻结`FlagOS new main + vLLM0.24 + GLM-5.2-W8A8`模型与artifact contract | Canary accepted；真实checkpoint manifest齐全 | 验证current-main GLM contract、W8A8 artifact、MLA/DSA/Indexer/W8A8 Linear/MoE、MLA cache ops与910C A/B/C closure；0.20.2仅fallback evidence | current-main code map、manifest/layout、gap contracts、closure证据 | Codex决策；DeepSeek仅做未来授权spike | 不需要 |
 | **Capability Microgates / Gap Confirmation** | 对每个mandatory capability按`FlagGems -> vendor.ascend -> Reference/PyTorch`依次审查，确认现有合法路径或形成gap contract | 两项contract ADR和Minimal Eager Execution Closure批准 | 路径在FlagOS Dispatch内可达、910C可执行、microgate correctness通过、接口支撑GLM forward；Reference须证明tensor留在NPU且无静默CPU fallback；任何`vllm_ascend`实际调用须可追踪并进入边界审查；三路都失败才标Missing/Unwired | path audit、gap contract、reference/tolerance、device/backend/import trace、failure signature | Codex定义/审查；DeepSeek仅在未来授权后执行repro | 不需要 |
 | **Minimal Capability Implementation** | 只补齐A/B/C三条现有路径全部不可用且属于首次eager mandatory closure的能力 | 对应gap contract证明三路均失败并获批准 | MLA、DSA/SFA、Indexer、W8A8等原则上独立小任务、独立branch、独立Draft PR；按FlagOS架构spec-first重新实现；不为FlagGems覆盖率或性能提前开发 | implementation contract、path audit、PR diff、license/reference disclosure、focused tests | DeepSeek未来实现；Codex contract/PR review | 不需要 |
 | **Corresponding Microgate PASS** | 对选定现有路径或最小新实现使用同一contract验收 | 对应合法路径可测试或独立Draft PR可测试 | backend可达、小shape correctness、checkpoint/runtime contract、GLM forward接口全部PASS；device/backend trace证明NPU执行且无静默CPU fallback；全部mandatory项PASS后才解锁Capacity | raw test、reference/tolerance、dispatch/device trace、contract audit | DeepSeek未来测试；Codex逐项验收 | 不需要 |
@@ -68,11 +76,26 @@ Deferred / on-demand side branch after Eager Correctness:
 | **Advanced Composition** | graph、MTP、multistream、FlagTree、FlagCX、FlagScale、TP/EP/DP独立后再组合 | eager与单变量结果稳定 | ablation能归因；组合无correctness/stability回归；FlagScale不反向成为模型bring-up依赖 | ablation matrix、fallback、稳定性 | DeepSeek；Codex阶段验收 | 仅 multi-node 项需要 |
 | **Scale-out Acceptance** | 两机 capacity/communication/生产负载验收（若需要） | 明确触发原因、网络与客户通信约束冻结 | HCCL baseline 和可选 FlagCX 分开验证；SLO、稳定性、故障恢复满足验收 | topology、collective、E2E benchmark、故障记录 | DeepSeek；Codex/用户验收 | **此阶段开始需要第二台 A3 服务器** |
 
-### A2与Runtime Provenance当前决策
+### Branch migration、A2与Runtime Provenance当前决策
 
-`c70aa4b`中的R0-P1/R0-F1及neutral-base-only门禁继续保持**Superseded**；本次不会恢复。A3-CP-A2优先使用本机已有exact `quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`作为carrier，仅在一次性实验container内卸载vllm-ascend plugin，先证明FL-only最小环境和synthetic operator链。若本机image缺失或digest不确定，停止并报告，不得pull。
+`c70aa4b`的neutral-base-only门禁继续保持Superseded，不因本轮版本迁移恢复。`118c314`中的v0.20.2 A2及其prompt现为**Superseded / Paused by upstream branch migration**，不得执行。
+
+Primary carrier candidate改为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`。source tuple见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)。实际本机image identity、valid device pair和FlagTree replacement transaction仍Unknown，因此new A2仅为[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md)，不生成prompt。
 
 完整coexistence/dynamic provenance不再阻塞Qwen、GLM mandatory closure、first eager或Baseline Benchmark；原trace设计移至[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，作为Eager Correctness后的Deferred / On-demand支线，按客户证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发。A/B仍比较“保留package + FL selectors”和“同carrier卸载package”。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
+
+## GLM Contract Gate — v0.24 primary
+
+旧问题“0.20.2 backport还是0.23/0.24 uplift”已被branch migration Superseded。Primary contract固定为：
+
+```text
+FlagOS official new main
+  + vLLM 0.24.0
+  + GLM-5.2-W8A8 actual checkpoint
+  + Ascend A3/910C
+```
+
+Gate必须重新核对：current-main model/config/IndexShare/MTP contract；真实W8A8 manifest与AscendV1/compressed-tensors格式；MLA；DSA/SFA；Indexer；W8A8 Linear/MoE；`concat_and_cache_mla`及fused RoPE variant；FlagGems/vendor.ascend/NPU-resident Reference三路可达性。`bb439d...`的NVIDIA PARTIAL只证明0.24构造/weight-load起点，不证明Ascend或W8A8 closure。
 
 ## Minimal Eager Execution Closure
 

@@ -1,79 +1,54 @@
-# Stage A Parent Contract — Official Carrier FL-only Bring-up
+# Stage A Parent Contract — v0.24 Baseline and Carrier Resolution
 
-状态：Parent Stage Active；A3-CP-A2 Ready / not yet executed
-当前执行边界：Ready task与DeepSeek提示词已批准；本轮Codex不操作server
+状态：**Paused for upstream branch migration / Research in progress**
+执行边界：不操作服务器、不修改正式代码repo、不生成DeepSeek prompt
 
-## 历史与当前边界
+## Supersession chain
 
-- `c70aa4b`的neutral-base-only与package-absence合规门禁继续保持Superseded。
-- `78b6eb06`确认的official carrier、FlagOS runtime ownership、`vendor.ascend`归属和FlagTree provider位置继续有效。
-- 原pre-canary完整Runtime Provenance Trace范围过重，已后置到Eager Correctness之后；其内容保存在[`POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)。
-- 当前A2只在一次性实验container中卸载vllm-ascend，用于减少FL-only bring-up变量；不代表official coexistence路线非法。
+1. `c70aa4b`的neutral-base-only路线已Superseded。
+2. `78b6eb06`的runtime-ownership边界仍有效。
+3. `118c314`的v0.20.2 A2 Ready/prompt已因official branch migration暂停，不得下发。
+4. 新primary line为official new `main` + vLLM0.24；`v0.2.1@92a6f767...`保留maintenance/reference。
 
-## Stage A目标
+## Current Stage A objective
 
-用本机已有、identity明确的official A3 carrier创建隔离实验container，在不加载任何模型的条件下证明：
-
-```text
-official A3 carrier
-  -> remove vllm-ascend plugin in disposable container only
-  -> vLLM + vllm-plugin-FL
-  -> PlatformFL -> WorkerFL -> ModelRunnerFL
-  -> FlagOS Dispatch
-  -> FlagGems / vllm_fl vendor.ascend / NPU-resident Reference
-  -> torch_npu / CANN -> Ascend 910C
-```
-
-只要求至少一个小shape synthetic operator成功；不要求完整attention、MoE、compiler或dynamic provenance。
-
-## 子任务顺序
+在服务器执行前完成四个控制面闭环：
 
 ```text
-Static official ownership review (Complete)
-  -> A3-CP-A1 historical/read-only host inventory (Dormant / Not Ready)
-  -> A3-CP-A2 Official Carrier FL-only Environment Smoke (Ready)
-  -> 910C Qwen canary (future, separate approval)
-  -> GLM contract and mandatory capability closure
-  -> GLM-5.2-W8A8 Eager Correctness
-
-Deferred / on-demand side branch after Eager Correctness:
-  -> Post-Eager Runtime Provenance Audit
+Official branch/current-main freeze
+  -> non-destructive formal code-repo migration approval
+  -> v0.24 A3 carrier/compiler/provider tuple resolution
+  -> valid two-logical-device A3 pair contract
+  -> A3-CP-A2-v024 task review
+  -> new prompt approval
 ```
 
-## Parent Ready gate
+## Current artifacts
 
-1. **Satisfied：** 用户已批准A3-CP-A2 Ready task与执行提示词。
-2. 本机已有carrier RepoDigest/image ID可确认；缺失或不确定时只报告，不pull。
-3. 重新检查OC2及其他任务占用，只选择明确空闲的最小logical device范围。
-4. WORKDIR与唯一Evidence目录规则冻结。
-5. 允许的唯一package变更是实验container内卸载vllm-ascend，以及必要时从container内部完整、保留`.git`且通过SHA/tree/clean校验的writable staging副本执行冻结FL baseline的`--no-deps` editable安装；正式repo只读。
-6. 不修改Host、原始image、正式代码repo或其他carrier runtime package。
+- Branch/environment research：[`../OFFICIAL-V024-BASELINE-RESEARCH.md`](../OFFICIAL-V024-BASELINE-RESEARCH.md)
+- Repository migration proposal：[`../CODE-REPOSITORY-MIGRATION-V024.md`](../CODE-REPOSITORY-MIGRATION-V024.md)
+- New A2 draft：[`STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`](STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md)
+- Historical paused A2：[`STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)
+- Historical paused prompt：[`DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`](DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md)
 
-## Parent Exit
+## New A2 Ready requirements
 
-Stage A在A3-CP-A2满足以下结果时结束：
+1. 用户批准并执行正式代码repo的非破坏性0.24 branch migration。
+2. mutation时重新冻结official main exact SHA/tree。
+3. `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`本机identity可验证；缺失/不确定时STOP且不pull。
+4. FlagTree rc1替换carrier triton-ascend的transaction形成single coherent provider；否则STOP。
+5. 第一台A3上通过只读拓扑证据确认至少两个logical devices构成valid working pair且完整空闲。
+6. FL安装规则冻结为readonly source -> writable staging with `.git` -> exact SHA/tree/clean -> `--no-build-isolation --no-deps -e`。
+7. 新A2 task通过用户复核后，才生成新的DeepSeek prompt。
 
-- official carrier从本机exact image启动；
-- container内vllm-ascend卸载完成，三项minimal negative check由卸载后的新Python process执行并通过；
-- 若安装FL，container staging的HEAD/tree/clean校验通过，生成artifact未回写正式repo；
-- torch/torch-npu/NPU仍可用；
-- PlatformFL、WorkerFL、ModelRunnerFL与FlagOS Dispatch确认；
-- 至少一个NPU-resident synthetic operator经FlagOS ownership成功；
-- Evidence与安全边界完整。
+## Unchanged boundaries
 
-详细task contract：[`STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。
+- FlagOS execution ownership仍为`PlatformFL -> WorkerFL -> ModelRunnerFL -> Dispatch -> FlagGems/vendor.ascend/Reference -> provider/torch_npu -> CANN`。
+- FlagGems preferred而非mandatory；FlagTree是compiler/provider，不是vllm-ascend backend代理。
+- FlagCX/FlagScale、graph、MTP、performance、multinode model execution均不进入A2。
+- GLM first eager仍必须使用真实W8A8 checkpoint并闭合MLA、DSA/SFA、Indexer、W8A8 Linear/MoE及必要runtime。
+- 第二台服务器不用于A2；A2只需第一台上的valid logical-device pair。
 
-## Stage A不覆盖
+## Stop condition
 
-- Qwen或GLM模型权重/服务；
-- MLA、DSA/SFA、Indexer、W8A8、完整MoE或attention；
-- 全operator provenance、coexistence dynamic audit、native library trace；
-- 深度FlagTree/triton-ascend provider识别；
-- benchmark/profile/性能优化；
-- 第二台服务器。
-
-## 资源与停止
-
-- 仅第一台A3，且只用明确空闲device；任何不确定即停止。
-- 不kill任务、不修改Driver/Firmware/CANN/network、不pull/build image、不删除已有image/container。
-- A2结束后立即停止，等待Codex验收；不得自行进入Qwen或GLM Stage。
+在上述Ready requirements关闭前，不得恢复old prompt、生成new prompt、创建container、pull image或启动Qwen/GLM。

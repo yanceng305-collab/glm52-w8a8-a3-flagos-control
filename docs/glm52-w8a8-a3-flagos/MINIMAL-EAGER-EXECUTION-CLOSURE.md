@@ -1,18 +1,18 @@
 # Minimal Eager Execution Closure
 
-状态：Proposed；evidence-defined；未执行服务器或实现
+状态：Proposed；closure unchanged；primary baseline refreshed to FlagOS new main / vLLM0.24；未执行服务器或实现
 
 目标：定义得到第一个**正确的 GLM-5.2-W8A8 eager token**所需的最小能力闭环。该闭环只服务首次目标模型forward/eager correctness，不提前追求完整性能实现。
 
 ## 结论
 
-**Confirmed within the frozen evidence set（GLM-5.2 config `b4734de`、Transformers `e0e7504`、vLLM 0.23.0 `0fc695f`）：当前不存在官方支持、代码可达且有correctness依据的Dense MLA fallback；GLM-5.2第一次eager bring-up不能绕过DSA与Indexer。**
+**Confirmed within the frozen evidence set（GLM-5.2 config `b4734de`、Transformers `e0e7504`、vLLM 0.23.0 `0fc695f`、vLLM0.24 `ee0da84`、FL new-main ancestor `bb439d`）：当前不存在官方支持、代码可达且有correctness依据的Dense MLA fallback；GLM-5.2第一次eager bring-up不能绕过DSA与Indexer。**
 
 因此第一次目标模型closure固定为：
 
 ```text
 GLM-5.2-W8A8 real checkpoint
-  + vLLM GLM-5.2 semantics (>=0.23-equivalent IndexShare behavior)
+  + vLLM 0.24 GLM-5.2 semantics / IndexShare behavior
   + MLA
   + DSA semantics / reachable sparse-attention backend (SFA or equivalent)
   + Indexer full/shared ownership and Ascend backend/kernel closure
@@ -40,7 +40,7 @@ Transformers v5.12.0 config把每层`layer_types`设为`deepseek_sparse_attentio
 
 证据：[GlmMoeDsaAttention与Indexer owner/shared](https://github.com/huggingface/transformers/blob/e0e7504bca2bfd1b85bb0eedb148f7b250226f06/src/transformers/models/glm_moe_dsa/modeling_glm_moe_dsa.py#L347-L470)。因此“使用eager attention implementation”只改变kernel/interface，不会把模型改成Dense Attention。
 
-### 3. vLLM 0.23同样把`index_topk`绑定到sparse MLA/Indexer
+### 3. vLLM 0.23与current primary 0.24都把`index_topk`绑定到sparse MLA/Indexer
 
 在官方最低支持版本vLLM 0.23.0：
 
@@ -49,6 +49,8 @@ Transformers v5.12.0 config把每层`layer_types`设为`deepseek_sparse_attentio
 - `index_topk_freq/offset`只决定owner/shared复用，不能关闭DSA。
 
 证据：[vLLM 0.23 GLM/DSA构造](https://github.com/vllm-project/vllm/blob/0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665/vllm/model_executor/models/deepseek_v2.py#L999-L1074)。
+
+Current primary vLLM0.24保留同一MLA/DSA/Indexer结构，并由FL [`bb439d...`](https://github.com/flagos-ai/vllm-plugin-FL/commit/bb439d028479475a965712e08ce0b955fe02aafb)在NVIDIA TP16双机完成GLM-5.2-Slim初始化与weight loading后进入MLA cache gap。该PARTIAL证据强化了mandatory closure，但不证明Ascend/W8A8实现。
 
 ### 4. `VLLM_MLA_DISABLE`不是合法的GLM-5.2 Dense MLA fallback
 

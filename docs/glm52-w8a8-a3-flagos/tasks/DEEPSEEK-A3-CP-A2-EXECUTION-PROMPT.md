@@ -1,6 +1,10 @@
-# DeepSeek执行提示词 — A3-CP-A2 Official Carrier FL-only Environment Smoke
+# PAUSED — DeepSeek执行提示词 — A3-CP-A2 v0.20.2 Historical Smoke
 
-你现在执行项目Ready任务：`A3-CP-A2 — Official Carrier FL-only Environment Smoke`。
+状态：**Superseded / Paused by upstream branch migration / DO NOT DISTRIBUTE OR EXECUTE**
+
+本提示词基于official `v0.2.1@92a6f767...`、vLLM0.20.2和carrier`v0.20.2rc1-a3`。它没有设计new main/vLLM0.24、FlagGems v5.3.4、FlagTree rc1或A3 valid logical-device pair，因此不得交给服务器。以下内容仅保留历史审计，不构成当前授权。
+
+历史原文（不得执行）曾将本任务描述为Ready：`A3-CP-A2 — Official Carrier FL-only Environment Smoke`。
 
 这是第一台Ascend A3/910C服务器上的受控环境smoke。目标仅是从本机已有official A3 carrier创建一次性实验container，在container内移除`vllm-ascend` plugin，然后证明基础Ascend软件栈与最小FlagOS执行链仍可工作。
 
