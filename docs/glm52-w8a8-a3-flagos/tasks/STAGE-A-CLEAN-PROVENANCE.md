@@ -1,81 +1,76 @@
-# Stage A Task Contract — FlagOS Runtime Provenance
+# Stage A Parent Contract — Official Carrier FL-only Bring-up
 
-状态：Parent Stage Proposed；runtime-ownership route corrected；execution Not Ready
-当前执行边界：本轮不允许DeepSeek或server操作；等待用户另行批准具体runtime trace任务
+状态：Parent Stage Proposed；A3-CP-A2 Prepared / Not Ready
+当前执行边界：本轮不允许DeepSeek或server操作；等待用户另行批准A2执行
 
-## Supersession
+## 历史与当前边界
 
-本父合同原先要求从neutral CANN base构建“从未安装vllm-ascend”的`R0-clean`。该presence-based门禁源自control commit `c70aa4b83b4d270ee1d920e807296d0b283cfab2`的错误前提，现已**Superseded**。历史commit与兼容性研究不删除；R0-P1/R0-F1只保留reference evidence。
+- `c70aa4b`的neutral-base-only与package-absence合规门禁继续保持Superseded。
+- `78b6eb06`确认的official carrier、FlagOS runtime ownership、`vendor.ascend`归属和FlagTree provider位置继续有效。
+- 原pre-canary完整Runtime Provenance Trace范围过重，已后置到Eager Correctness之后；其内容保存在[`POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)。
+- 当前A2只在一次性实验container中卸载vllm-ascend，用于减少FL-only bring-up变量；不代表official coexistence路线非法。
 
-当前Stage A的目标改为证明official FlagOS Ascend实际路线的运行时ownership。vllm-ascend image/distribution/module/entry point是否存在只作inventory；不得单凭存在判FAIL，也不得单凭静态无direct import判PASS。
+## Stage A目标
 
-## 目标
-
-在一台A3/910C上，以official FL Ascend Dockerfile的A3 carrier路线为优先候选，证明：
+用本机已有、identity明确的official A3 carrier创建隔离实验container，在不加载任何模型的条件下证明：
 
 ```text
-vLLM
-  -> vllm-plugin-FL entry point
-  -> PlatformFL
-  -> WorkerFL
-  -> ModelRunnerFL
+official A3 carrier
+  -> remove vllm-ascend plugin in disposable container only
+  -> vLLM + vllm-plugin-FL
+  -> PlatformFL -> WorkerFL -> ModelRunnerFL
   -> FlagOS Dispatch
   -> FlagGems / vllm_fl vendor.ascend / NPU-resident Reference
-  -> Triton provider -> CANN，或PyTorch/torch_npu -> CANN
-  -> Ascend 910C
+  -> torch_npu / CANN -> Ascend 910C
 ```
 
-本Stage不加载GLM、不实现GLM patch、不测试性能，不引入FlagCX/FlagScale作为前置，也不预先替换或卸载vllm-ascend package。
+只要求至少一个小shape synthetic operator成功；不要求完整attention、MoE、compiler或dynamic provenance。
 
 ## 子任务顺序
 
 ```text
 Static official ownership review (Complete)
   -> A3-CP-A1 historical/read-only host inventory (Dormant / Not Ready)
-  -> A3-CP-A2 FlagOS Runtime Provenance Trace (Proposed / Not Ready)
-  -> 910C Qwen canary (future, requires separate approval)
+  -> A3-CP-A2 Official Carrier FL-only Environment Smoke (Prepared / Not Ready)
+  -> 910C Qwen canary (future, separate approval)
+  -> GLM contract and mandatory capability closure
+  -> GLM-5.2-W8A8 Eager Correctness
+  -> Post-Eager Runtime Provenance Audit
 ```
 
-## Ready条件
+## Parent Ready gate
 
-1. 用户批准A3-CP-A2及其最小container/runtime操作边界。
-2. official carrier exact image reference/digest与允许的Host device/driver/network mounts冻结。
-3. trace方法能同时覆盖Python entry point/class origin、FlagOS per-op dispatch、module/import/native-library、compiler provider和torch_npu/CANN下游。
-4. raw evidence目录、停止条件、敏感信息过滤和结果报告格式冻结。
-5. 明确本任务不卸载package、不修改Driver/CANN/网络、不启动GLM、不进入capability实现。
+1. 用户明确批准A3-CP-A2服务器执行。
+2. 本机已有carrier RepoDigest/image ID可确认；缺失或不确定时只报告，不pull。
+3. 重新检查OC2及其他任务占用，只选择明确空闲的最小logical device范围。
+4. WORKDIR与唯一Evidence目录规则冻结。
+5. 允许的唯一package变更是实验container内卸载vllm-ascend，以及必要时对冻结FL baseline执行`--no-deps` editable安装。
+6. 不修改Host、原始image、正式代码repo或其他carrier runtime package。
 
-## Exit / 验收
+## Parent Exit
 
-1. `VLLM_PLUGINS=fl`与`VLLM_FL_PLATFORM=ascend`有效，唯一实际platform class为`vllm_fl.platform.PlatformFL`。
-2. 实际worker class为`vllm_fl.worker.worker.WorkerFL`，实际runner实例为`vllm_fl.worker.model_runner.ModelRunnerFL`。
-3. FlagOS Dispatch已注册；对代表性attention、RMSNorm、SiLU/MoE及后续mandatory capability记录候选顺序、selected implementation和module/function origin。
-4. FlagGems、`vendor.ascend`、Reference三类路径分开记录；Reference tensor留在NPU，无静默CPU fallback。
-5. Triton类实现记录`triton` distribution owner、active driver/provider（FlagTree或triton-ascend）与CANN下游；非Triton实现记录PyTorch/torch_npu/CANN调用。
-6. 完整记录vllm-ascend distribution/module/entry point/native artifacts的存在状态，并通过import/call/library trace回答目标进程是否实际使用`vllm_ascend`。
-7. 若存在实际调用，报告精确call site、职责、是否绕过FlagOS Dispatch、必要性与替换影响；本Stage不自行给客户合规结论。
-8. 结论只覆盖runtime provenance，不冒充Qwen/GLM correctness、W8A8或性能支持。
+Stage A在A3-CP-A2满足以下结果时结束：
 
-## 必存证据
+- official carrier从本机exact image启动；
+- container内vllm-ascend卸载与三项minimal negative check通过；
+- torch/torch-npu/NPU仍可用；
+- PlatformFL、WorkerFL、ModelRunnerFL与FlagOS Dispatch确认；
+- 至少一个NPU-resident synthetic operator经FlagOS ownership成功；
+- Evidence与安全边界完整。
 
-- Host/runtime/container与immutable image inventory；
-- Python distributions、entry points、module/class/function origins；
-- `current_platform`、worker、runner实例证据；
-- FlagOS registry/policy与per-op selected backend trace；
-- `sys.modules`、import audit、loaded Python/native modules和必要调用栈；
-- Triton active provider/driver与torch_npu/CANN trace；
-- commands、stdout/stderr、timestamps、environment hash；
-- Confirmed / Unknown / Conflict / Potential Blocker报告。
+详细task contract：[`STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。
 
-## 停止条件
+## Stage A不覆盖
 
-- 无法区分carrier package存在与实际runtime participation；
-- trace需要修改Driver/CANN/网络、卸载package、启动GLM或编写capability代码；
-- compiler/provider身份仍只能由package名猜测而无动态证据；
-- 发现`vllm_ascend`实际调用但无法冻结调用点/作用；
-- 任务越过当前服务器、container或证据写入授权。
+- Qwen或GLM模型权重/服务；
+- MLA、DSA/SFA、Indexer、W8A8、完整MoE或attention；
+- 全operator provenance、coexistence dynamic audit、native library trace；
+- 深度FlagTree/triton-ascend provider识别；
+- benchmark/profile/性能优化；
+- 第二台服务器。
 
-## 资源
+## 资源与停止
 
-- 一台A3/910C；第二台不需要。
-- 研究与验收owner：Codex；服务器执行owner尚未获本轮授权。
-- 下一任务见[`STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`](STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md)，当前Proposed / Not Ready。
+- 仅第一台A3，且只用明确空闲device；任何不确定即停止。
+- 不kill任务、不修改Driver/Firmware/CANN/network、不pull/build image、不删除已有image/container。
+- A2结束后立即停止，等待Codex验收；不得自行进入Qwen或GLM Stage。

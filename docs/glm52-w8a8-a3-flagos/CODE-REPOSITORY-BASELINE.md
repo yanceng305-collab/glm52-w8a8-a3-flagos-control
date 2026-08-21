@@ -71,4 +71,4 @@ PR #1仍为：[Freeze W8A8 Ascend gap and eager repro](https://github.com/yancen
 
 ## 当前停止点
 
-正式代码仓库落地已完成。尚未执行Runtime Provenance Trace、服务器操作、DeepSeek任务、GLM适配、mandatory capability实现或性能测试。
+正式代码仓库落地已完成。尚未执行A2 FL-only Environment Smoke、Post-Eager Runtime Provenance Audit、服务器操作、DeepSeek任务、GLM适配、mandatory capability实现或性能测试。

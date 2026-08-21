@@ -16,7 +16,7 @@
 - **Confirmed：** Dockerfile设置`VLLM_PLUGINS=fl`与`VLLM_FL_PLATFORM=ascend`；公开CI log显示`Platform plugin fl`激活；静态源码把worker设为`WorkerFL`并构造`ModelRunnerFL`。
 - **Confirmed：** official `ascend.yaml`是per-op策略：attention/rms_norm为`vendor -> flagos -> reference`，silu为`flagos -> vendor -> reference`；不是一个统一vendor backend总接管。
 - **Confirmed（静态）：** `vendor.ascend`返回`vllm_fl.dispatch.backends.vendor.ascend.impl.*`类/函数并直接调用torch_npu/PyTorch；FL树未发现direct `import vllm_ascend`。部分文件明确保留`Adapted from vllm-ascend`来源，这属于源码provenance，不等于动态runtime依赖。
-- **Unknown：** 在目标910C进程中是否有任何`vllm_ascend`模块、entry point、native artifact或side effect实际参与执行；必须由Runtime Provenance Trace验证，不能由package存在或静态grep单独裁定。
+- **Unknown / deferred：** official coexistence进程中是否有任何`vllm_ascend`模块、native artifact或side effect实际参与执行；该问题由Post-Eager Runtime Provenance Audit验证，不再阻塞A2、canary或first eager。
 - **Superseded：** “客户合规第一候选必须是neutral CANN base且从未安装vllm-ascend”的推断不再有效。
 
 ## 官方实际 CI 证据链
@@ -111,16 +111,30 @@ PlatformFL -> WorkerFL -> ModelRunnerFL
   ↓ FlagOS Dispatch per operator
 FlagGems / vllm_fl vendor.ascend / NPU-resident Reference
   ↓ Triton provider -> CANN，或PyTorch/torch_npu -> CANN
-Runtime Provenance Trace
+Official Carrier FL-only Environment Smoke
+  remove vllm-ascend only in disposable experiment container
+  minimal negative check + Platform/Worker/Runner/Dispatch + synthetic NPU op
   ↓ Qwen3.6-27B TP2 eager canary
 ```
 
 每层必要性：Driver/Firmware使设备可用；carrier复用official已验证的CANN/torch-npu/vLLM/编译器组合；empty vLLM提供API/engine；FL接管platform/worker/runner/dispatch；FlagGems、`vendor.ascend`与Reference按per-op policy提供实现；Triton provider只负责对应kernel编译链。FlagCX/FlagScale/ModelSlim均不默认进入第一次runtime provenance。
 
-official carrier与静态ownership为 **Confirmed**；目标服务器上的动态ownership闭包为 **Unknown until trace**。
+official carrier与静态ownership为 **Confirmed**。A2只验证卸载后的FL-only最小闭环；official coexistence的完整动态ownership仍为 **Unknown until Post-Eager Audit**。
 
-## Runtime Provenance验收证据
+## A2 FL-only minimal evidence
 
+- 使用本机已有且RepoDigest/image ID明确的official carrier；缺失或digest不确定时停止，不pull；
+- 仅在新建一次性实验container内卸载vllm-ascend，不修改原始image或其他carrier runtime；
+- negative check只覆盖distribution不存在、`find_spec("vllm_ascend") is None`、无有效`vllm_ascend:...` entry point；
+- torch/torch_npu/NPU仍可用；PlatformFL、WorkerFL、ModelRunnerFL与Dispatch可确认；
+- 至少一个小shape、NPU-resident synthetic operator经FlagOS selected impl成功；
+- compiler仅inventory，除非synthetic smoke自然触发，否则不扩张provider trace。
+
+这项受控卸载只用于减少变量，不恢复“package presence即违规”的旧规则，也不能证明official coexistence路线有问题。
+
+## Post-Eager Runtime Provenance验收证据
+
+- Eager Correctness后比较A组official coexistence与B组同carrier FL-only路线；
 - image digest、distribution/module/entry-point/native-library inventory完整；其中vllm-ascend的存在本身不判FAIL；
 - `current_platform`实际为`PlatformFL`，worker class实际为`WorkerFL`，runner实例实际为`ModelRunnerFL`；
 - FlagOS Dispatch已注册并对关键operator记录候选顺序、最终selected impl、module/class/function origin；
@@ -132,7 +146,7 @@ official carrier与静态ownership为 **Confirmed**；目标服务器上的动�
 ## Unknown
 
 - 客户现场Driver/Firmware/ATB exact version；
-- official carrier在现场的exact digest与完整package/native inventory；
+- official carrier在现场的exact digest与A2卸载后基础栈完整性；
 - `vllm_ascend`是否在目标进程中有任何实际import/call/side effect，以及若有是否属于客户允许边界；
 - active compiler究竟是FlagTree还是triton-ascend provider；
 - `TRITON_ALL_BLOCKS_PARALLEL=1`对GLM是否必需；

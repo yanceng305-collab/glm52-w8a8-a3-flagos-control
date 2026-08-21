@@ -27,7 +27,7 @@ vllm.LLM / vllm serve
   -> Ascend 910C
 ```
 
-`vllm-ascend` distribution may be installed in the carrier, but it is deliberately not drawn as a runtime hop: static FL source does not show such a hop. Whether the target process imports or calls any `vllm_ascend` code is **Unknown until Runtime Provenance Trace**.
+`vllm-ascend` distribution may be installed in the carrier, but it is deliberately not drawn as a runtime hop: static FL source does not show such a hop. Whether the official coexistence process imports or calls any `vllm_ascend` code is **Unknown until Post-Eager Runtime Provenance Audit**；A2的FL-only smoke不会回答该问题。
 
 ## 接管边界
 
@@ -77,7 +77,7 @@ vllm.LLM / vllm serve
 | FlagCX collective | FL communicator + FlagCX | adaptor/HCCL | FlagOS组件 | adaptor依赖 | 否 | Optional, unverified910C |
 | P/D KV transfer | FL `FlagCXConnector` | libflagcx P2P | FlagOS组件 | adaptor依赖 | 否 | Implemented, unverified |
 | Triton compiler/provider | Triton API；active provider为triton-ascend或FlagTree | CANN codegen | provider相关 | 是 | 非backend代理 | CI package evidence confirmed；目标active provider Unknown |
-| `vllm_ascend` dynamic participation | installed carrier distribution / entry point | Unknown until trace | 不属于FlagOS ownership | 可能间接 | 核查对象 | **Unknown**；presence不等于call |
+| `vllm_ascend` dynamic participation | installed carrier distribution / entry point | Unknown until post-eager A/B audit | 不属于FlagOS ownership | 可能间接 | 核查对象 | **Unknown**；presence不等于call |
 | A3/910C FL extension | 无；`VLLM_VENDOR`只支持cuda | 下游二进制栈 | 否 | 依赖下游 | 否 | Not designed |
 
 ## Attention
@@ -116,7 +116,7 @@ vllm.LLM / vllm serve
 
 当前验收定义改为**运行时ownership**：`PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`必须真实激活；每个关键operator必须记录最终选择的FlagGems、`vllm_fl...vendor.ascend`或Reference实现及其torch_npu/CANN下游。vllm-ascend image/package存在只作environment inventory，不自动判合规或违规。
 
-static scan在FL `92a6f767...`中未发现direct `import vllm_ascend`，但这不能替代进程级import/call/library trace。若后续发现实际参与，必须对具体调用的ownership、必要性与客户边界单独裁定；不能把整个carrier先验拒绝，也不能无证据宣布完全独立。
+static scan在FL `92a6f767...`中未发现direct `import vllm_ascend`，但这不能替代进程级import/call/library trace。A2只在卸载后的FL-only container中确认最小链；Eager Correctness后的A/B审计才回答coexistence动态参与。若发现实际参与，必须对具体调用的ownership、必要性与客户边界单独裁定；不能把整个carrier先验拒绝，也不能无证据宣布完全独立。
 
 部分`vendor.ascend`文件明确标注`Adapted from vllm-ascend`，但当前owner、module path和直接调用均位于`vllm_fl`。源码provenance继续遵守license/attribution；只有客户另行禁止official FL历史adapted来源时才扩大合规判断。
 

@@ -138,7 +138,7 @@ Codex可深入阅读official vLLM-Ascend并提取：
 - 实际模型执行必须由`PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`拥有；
 - 每个capability必须记录最终FlagGems、`vendor.ascend`或Reference owner及torch_npu/CANN下游；
 - 发现任何`vllm_ascend`动态import/call时，记录call site、职责、是否绕过Dispatch和必要性，由control单独判断客户边界/替换；
-- 不以先安装再卸载来制造缺席证据，也不在未trace时声称完全独立。
+- 不在正式环境中以先安装再卸载、手工删除残留来制造合规表象，也不在未trace时声称official coexistence完全独立。A3-CP-A2在新建一次性实验container内受控卸载属于减少bring-up变量的明确例外；其PASS不否定package coexistence合法性。
 
 允许的bring-up执行链为：
 

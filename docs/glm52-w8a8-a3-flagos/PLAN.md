@@ -1,6 +1,6 @@
 # GLM-5.2-W8A8 × FlagOS × Ascend A3/910C 项目计划
 
-状态：Research Freeze与Repository PASS；runtime-ownership correction已完成；Runtime Provenance Trace Proposed / Not Ready
+状态：Research Freeze与Repository PASS；runtime-ownership boundary保持；A3-CP-A2 FL-only Smoke Prepared / Not Ready
 基线调查日期：2026-08-21
 正式代码基线：`yanceng305-collab/vllm-plugin-FL-a3-flagos@92a6f7670465922c60e88f06787b8f0923e761f3`，精确对应建仓时`flagos-ai/vllm-plugin-FL`冻结`main`；历史调查SHA仅保留证据语境。
 
@@ -13,6 +13,7 @@
 - 新代码基线只从官方 current `main` 开始；legacy A2 仓库、branch、PR #1、Stage 0 结论只保留历史，不作新基线。
 - vllm-ascend image/package的**存在性不再自动判违规**。official同款A3 image可以作为环境carrier；是否存在不可接受依赖必须依据runtime import/call、entry-point activation、operator/backend ownership和loaded-library trace判定。
 - 正式模型执行必须由FlagOS runtime/dispatch/backend ownership闭合。若trace发现`vllm_ascend`实际参与执行，先记录调用点、作用和必要性，再由control判断客户边界与是否替换；不得用“package已安装”或“未发现静态import”替代运行时证据。
+- A3-CP-A2允许只在新建的一次性实验container内卸载`vllm-ascend`，用于降低FL-only bring-up变量；这不是package-presence合规门禁，也不否定official coexistence路线。不得修改原始image或其他carrier runtime组件。
 - 当前阶段不操作服务器、不下发 DeepSeek、不编写 GLM 补丁或优化代码。
 - README、代码、Docker/CI、模型卡冲突必须保留；Unknown 不补猜测版本。
 - eager correctness 在先；graph、MTP、multistream、FlagCX、多机和组合优化在后。
@@ -25,7 +26,7 @@
 
 ```text
 Research Freeze
-  -> Runtime Provenance Trace (official Ascend carrier + FL ownership)
+  -> Official Carrier FL-only Environment Smoke (A3-CP-A2)
   -> 910C Canary (Qwen3.6-27B TP2 eager)
   -> GLM Contract Gate (vLLM语义 + quant format + Minimal Eager Execution Closure)
   -> Capability Microgates / Gap Confirmation
@@ -35,6 +36,7 @@ Research Freeze
   -> First Eager Load
   -> Minimal Compatibility
   -> Eager Correctness
+  -> Post-Eager Runtime Provenance Audit
   -> Baseline Benchmark
   -> Profile & Bottleneck
   -> Single-variable Optimize
@@ -47,8 +49,8 @@ Research Freeze
 | Stage | 目标 | Ready gate | Exit / 验收 | 必存证据 | Owner | 第二台 A3 |
 |---|---|---|---|---|---|---|
 | **Research Freeze** | 冻结官方 main、CI oracle、冲突和 Unknown | 本轮研究完成 | 用户批准研究结论、仓库方案和“原生”定义 | source SHA、CI links、矩阵、决策 | Codex；用户批准 | 不需要 |
-| **Runtime Provenance Trace** | 在official Ascend carrier候选中证明FL runtime ownership与真实下游 | 用户批准独立只读/最小执行合同；exact image digest与trace方法冻结 | `PlatformFL`、`WorkerFL`、`ModelRunnerFL`和FlagOS Dispatch均有运行时证据；关键operator逐项记录FlagGems/`vendor.ascend`/Reference；compiler provider与torch_npu/CANN落点可追溯；任何`vllm_ascend` import/call被准确分类 | image/package/entry-point inventory、class/module origins、dispatch selection、import/audit trace、compiler provider、torch_npu/CANN trace、原始日志 | Codex设计/验收；DeepSeek尚未授权 | 不需要 |
-| **910C Canary** | 用官方当前 910C CI-backed 模型隔离验证基础链 | Runtime Provenance Trace accepted；Qwen3.6-27B 权重就绪 | TP2 eager offline + serving 正确；FL/dense attention/HCCL dispatch可追溯；carrier与runtime ownership记录完整 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
+| **Official Carrier FL-only Environment Smoke (A3-CP-A2)** | 用本机已有official A3 carrier创建一次性实验container，卸载vllm-ascend plugin并验证最小FlagOS链 | 用户批准执行；carrier RepoDigest/image ID确认；存在明确空闲logical device；Evidence目录冻结 | minimal negative check通过；torch/torch-npu/NPU未破坏；`PlatformFL/WorkerFL/ModelRunnerFL/Dispatch`确认；至少一个NPU-resident synthetic op经FlagOS ownership成功 | image/container identity、pre/post package inventory、negative check、class/module origin、dispatch/selected impl、NPU tensor smoke、raw logs/checksum | DeepSeek未来执行；Codex验收 | 不需要 |
+| **910C Canary** | 用官方当前 910C CI-backed 模型隔离验证基础链 | A3-CP-A2 accepted；Qwen3.6-27B权重就绪 | TP2 eager offline + serving正确；FL/dense attention/HCCL dispatch可追溯 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
 | **GLM Contract Gate** | 决定vLLM语义基线与W8A8 artifact contract，并冻结Minimal Eager Execution Closure | Canary accepted；真实checkpoint manifest齐全 | ADR选择`0.23/0.24 uplift`或`0.20.2 backport`；ADR选择`AscendV1 native loader`或经证明等价的`compressed-tensors conversion`；确认首次closure必须含W8A8+MLA+DSA/SFA+Indexer | API/worker diff、IndexShare ownership、tensor/scale/layout、closure证据 | Codex决策；DeepSeek仅做授权spike | 不需要 |
 | **Capability Microgates / Gap Confirmation** | 对每个mandatory capability按`FlagGems -> vendor.ascend -> Reference/PyTorch`依次审查，确认现有合法路径或形成gap contract | 两项contract ADR和Minimal Eager Execution Closure批准 | 路径在FlagOS Dispatch内可达、910C可执行、microgate correctness通过、接口支撑GLM forward；Reference须证明tensor留在NPU且无静默CPU fallback；任何`vllm_ascend`实际调用须可追踪并进入边界审查；三路都失败才标Missing/Unwired | path audit、gap contract、reference/tolerance、device/backend/import trace、failure signature | Codex定义/审查；DeepSeek仅在未来授权后执行repro | 不需要 |
 | **Minimal Capability Implementation** | 只补齐A/B/C三条现有路径全部不可用且属于首次eager mandatory closure的能力 | 对应gap contract证明三路均失败并获批准 | MLA、DSA/SFA、Indexer、W8A8等原则上独立小任务、独立branch、独立Draft PR；按FlagOS架构spec-first重新实现；不为FlagGems覆盖率或性能提前开发 | implementation contract、path audit、PR diff、license/reference disclosure、focused tests | DeepSeek未来实现；Codex contract/PR review | 不需要 |
@@ -57,15 +59,18 @@ Research Freeze
 | **First Eager Load** | 使用真实GLM-5.2-W8A8 checkpoint完成首次capacity-valid load，收敛首个真实故障 | placement accepted；**全部mandatory microgate PASS** | 模型构造/权重load成功，或只保留一个可复现first failure；实际走W8A8 Linear/MoE与MLA+DSA+Indexer；关闭MTP/graph/FlagCX/multistream | exact run config、first-error log、weight/scale-key audit、backend trace | DeepSeek；Codex定下一任务 | 仅Capacity明确触发；开始前必须通知 |
 | **Minimal Compatibility** | 只处理First Eager Load后新暴露的整模型问题，不接收已知mandatory capability补齐 | First Eager Load产生此前microgate无法暴露的单一failure | 一次一个新故障、最小patch、focused test、mandatory microgate与Qwen canary无回归、独立Draft PR | first-failure证据、diff、tests、provenance、rollback | DeepSeek；Codex PR review | 沿用批准布局 |
 | **Eager Correctness** | 用真实GLM-5.2-W8A8 checkpoint完成capacity-valid eager正确性 | load/forward blockers关闭 | 第一个正确token及固定数据集满足reference/tolerance；W8A8 Linear/MoE、MLA、DSA/Indexer owner/shared和quant scales均通过；BF16不得替代 | golden/tolerance、layer/backend trace、weight/scale audit、memory/KV | DeepSeek；Codex阶段验收 | 仅容量需要 |
-| **Baseline Benchmark** | 建立未优化基线 | Eager Correctness accepted | 固定输入分布/上下文/并发；给 TTFT、TPOT、吞吐、延迟分位、利用率、功耗、内存和方差 | raw results、env SHA、重复运行 | DeepSeek | 单机先 |
+| **Post-Eager Runtime Provenance Audit** | 对比official carrier coexistence与同carrier FL-only路线，完整审计动态ownership | Eager Correctness accepted；A/B exact环境与trace合同另行批准 | Platform/Worker/Runner/Dispatch、GLM关键operator、`vllm_ascend`动态参与、compiler/provider与native library路径均有范围限定结论 | A/B manifest、import/call/library trace、per-op backend、provider/CANN trace、审计矩阵 | DeepSeek未来执行；Codex审计/裁决 | 默认不需要 |
+| **Baseline Benchmark** | 建立未优化基线 | Eager Correctness与Post-Eager Runtime Provenance Audit accepted | 固定输入分布/上下文/并发；给 TTFT、TPOT、吞吐、延迟分位、利用率、功耗、内存和方差 | raw results、env SHA、重复运行 | DeepSeek | 单机先 |
 | **Profile & Bottleneck** | 证明首要瓶颈 | baseline稳定 | kernel/communication/host/调度归因；每项有可证伪假设 | profiler trace、timeline、算子/通信占比 | DeepSeek；Codex审查 | 仅证据指向 scale-out 时触发 |
 | **Single-variable Optimize** | 每次只改变一个算子或配置 | profile假设批准 | 正确性无回归，收益跨多轮成立；失败实验也留证 | before/after、方差、PR、rollback | DeepSeek；Codex验收 | 按实验合同 |
 | **Advanced Composition** | graph、MTP、multistream、FlagTree、FlagCX、FlagScale、TP/EP/DP独立后再组合 | eager与单变量结果稳定 | ablation能归因；组合无correctness/stability回归；FlagScale不反向成为模型bring-up依赖 | ablation matrix、fallback、稳定性 | DeepSeek；Codex阶段验收 | 仅 multi-node 项需要 |
 | **Scale-out Acceptance** | 两机 capacity/communication/生产负载验收（若需要） | 明确触发原因、网络与客户通信约束冻结 | HCCL baseline 和可选 FlagCX 分开验证；SLO、稳定性、故障恢复满足验收 | topology、collective、E2E benchmark、故障记录 | DeepSeek；Codex/用户验收 | **此阶段开始需要第二台 A3 服务器** |
 
-### Runtime Provenance当前决策
+### A2与Runtime Provenance当前决策
 
-`c70aa4b`中的`R0-P1-CANN901-PY312`、`R0-F1-CANN900-PY311`及neutral-base-only门禁已被本次runtime-ownership修正**Superseded**。其CANN/torch-npu/OCI兼容性数据继续作为reference evidence，但不再是正式环境强制路线。当前优先候选改为official FL Dockerfile的Ascend A3 carrier路线：`quay.io/ascend/vllm-ascend:v0.20.2rc1-a3` + `VLLM_PLUGINS=fl` + `VLLM_FL_PLATFORM=ascend`；exact digest与动态ownership仍Unknown，必须由下一条Runtime Provenance Trace验证。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
+`c70aa4b`中的R0-P1/R0-F1及neutral-base-only门禁继续保持**Superseded**；本次不会恢复。A3-CP-A2优先使用本机已有exact `quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`作为carrier，仅在一次性实验container内卸载vllm-ascend plugin，先证明FL-only最小环境和synthetic operator链。若本机image缺失或digest不确定，停止并报告，不得pull。
+
+完整coexistence/dynamic provenance不再阻塞Qwen、GLM mandatory closure或first eager；原trace设计移至[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，在Eager Correctness后比较“保留package + FL selectors”和“同carrier卸载package”的A/B路线。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
 
 ## Minimal Eager Execution Closure
 

@@ -48,7 +48,8 @@
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
-| FlagOS runtime provenance on official carrier | Partially Confirmed / runtime Unknown | static ownership与CI platform activation有证据；operator/import/compiler动态trace未做 |
+| Official carrier FL-only environment smoke | Unknown / A2 pending | disposable container卸载、minimal negative check、FL classes/Dispatch与synthetic NPU op尚未执行 |
+| Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace后置到Eager Correctness后 |
 | FlagTree profile | Unknown | CI没装 |
 | Dense MLA | Missing | placeholder |
 | Sparse MLA/DSA/SFA | Missing | 显式NotImplemented |

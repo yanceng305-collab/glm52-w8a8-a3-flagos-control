@@ -3,7 +3,7 @@
 状态：**Superseded / Dormant；Not Ready；embedded execution prompt MUST NOT be used**
 
 Task ID：`A3-CP-A1`
-Parent：`Stage A — FlagOS Runtime Provenance`
+Parent：`Stage A — Official Carrier FL-only Bring-up`
 执行对象：第一台Ascend A3/910C服务器
 执行者：DeepSeek
 验收者：Codex
@@ -261,6 +261,6 @@ DeepSeek结果返回后，Codex负责：
 2. 更新Confirmed、Unknown、Conflict、Potential Blocker；
 3. 重新判断Driver/Firmware/CANN/Python/torch/torch-npu/compiler profile；
 4. 决定R0-clean exact tuple；
-5. 只有用户批准后，生成下一条Runtime Provenance Trace执行任务。
+5. 只有用户批准后，生成下一条Official Carrier FL-only Environment Smoke执行任务。
 
 DeepSeek不得自行执行第3～5项。

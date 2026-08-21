@@ -13,7 +13,7 @@
 | D-007 | GLM vLLM 版本不在本轮猜测冻结；canary后设 Contract Gate | Required | FL 0.20.2 与 GLM-5.2 vLLM>=0.23硬冲突 | Contract Gate ADR完成 |
 | D-008 | AscendV1 与 compressed-tensors 的runtime artifact contract不在本轮猜测选择 | Required | FL compressed-tensors W8A8 contract和packed loading/glue已Implemented；但AscendV1 reader、OOT/NPU INT8 Linear kernel与真实checkpoint格式仍未闭合 | manifest/layout审计和spike完成 |
 | D-009 | “FlagOS原生”按package/runtime/environment independence定义 | **Superseded by D-044** | package/image存在性不能证明实际backend ownership；历史adapted来源与动态runtime调用必须分开判断 | 不再作为当前决策 |
-| D-010 | 第二台A3不是research、Runtime Provenance或canary前置 | Proposed | Host边界已确认16×64GB logical devices/1024GB aggregate；真实checkpoint footprint、container可用量和KV/workspace余量仍Unknown | Capacity gate或scale-out目标触发 |
+| D-010 | 第二台A3不是research、A2 smoke、Post-Eager Runtime Provenance或canary前置 | Proposed | Host边界已确认16×64GB logical devices/1024GB aggregate；真实checkpoint footprint、container可用量和KV/workspace余量仍Unknown | Capacity gate或scale-out目标触发 |
 | D-011 | repository mutation 必须在 owner/preflight/影响报告获确认后执行 | Required | 保护branches/tags/PR #1；rename-alone不释放fork slot | 用户明确确认操作序列 |
 | D-012 | Indexer状态按framework、Ascend可达闭环、GLM-5.2 E2E三层记录 | Evidence refinement | Generic FL Indexer framework已Implemented；Missing仅指Ascend/910C backend/kernel closure与GLM E2E | official main或目标E2E证据变化 |
 | D-013 | W8A8 Linear按contract、packed glue、OOT/NPU kernel、910C runtime四层记录 | Evidence refinement | 前两层Implemented；OOT/NPU candidate与910C runtime Missing | 新NPU kernel或E2E证据出现 |
@@ -46,19 +46,26 @@
 | D-040 | R0-primary继续使用official vLLM0.20.2 empty与FL`92a6f767` | **Partially superseded by D-045** | vLLM/FL接口基线证据保留；其来源应优先遵循official carrier并由trace验证 | GLM Contract Gate或official baseline变化 |
 | D-041 | 条件fallback为CANN900/Python311 CI-equivalent-minus-vllm-ascend tuple | **Superseded as formal fallback by D-045** | tuple兼容性数据保留，不再作为预先批准fallback | runtime trace/故障证据要求新决策 |
 | D-042 | CANN8.5.0不是R0 fallback | Required | Host已有版本不构成Container fallback理由 | 新的Container级official证据和control决策 |
-| D-043 | Candidate tag必须在执行前核对local RepoDigest并做container内vllm-ascend package/module absence audit | **Partially superseded by D-046** | digest固定仍Required；package absence不再是acceptance，改为inventory + runtime participation trace | provenance trace PASS |
+| D-043 | Candidate tag必须在执行前核对local RepoDigest并做container内vllm-ascend package/module absence audit | **Partially superseded by D-046、D-051、D-052** | digest固定仍Required；package absence不是合规acceptance，A2只对卸载后的实验container做minimal negative check | A2 smoke或Post-Eager Audit证据 |
 | D-044 | “FlagOS原生/客户路线”按**实际模型执行ownership**判定，不按vllm-ascend image/package存在性判定 | Required | official Dockerfile使用vllm-ascend A3 carrier并通过`VLLM_PLUGINS=fl`激活FL；FL静态链路进入`PlatformFL/WorkerFL/ModelRunnerFL/Dispatch` | 客户书面扩大边界或runtime trace反证 |
 | D-045 | 下一候选环境优先遵循official FL Ascend Dockerfile carrier路线；neutral CANN R0-P1/R0-F1降为reference evidence | Evidence-backed proposed / experiment pending | official current main `92a6f767`明确`FROM quay.io/ascend/vllm-ascend:v0.20.2rc1-a3`并设置FL selectors | exact digest、现场兼容或trace失败 |
 | D-046 | vllm-ascend distribution/module/entry point的installed/discoverable状态是inventory事实，不是单独的PASS/FAIL门禁 | Required | CI保留package但激活FL；只有动态import/call与backend ownership能证明是否参与执行 | trace发现实际参与 |
 | D-047 | Triton类路径必须追踪为`FL/FlagGems kernel -> Triton API -> FlagTree或triton-ascend provider -> CANN`；非Triton路径可直接`PyTorch/torch_npu -> CANN` | Required / provider Unknown | FL源码调用Triton API或torch_npu；实际provider不能由README/安装名猜测 | runtime provider trace |
 | D-048 | `vendor.ascend`是`vllm_fl` ownership下的backend，不是vllm-ascend runtime wrapper；adapted source provenance与runtime dependency分开记录 | Static-checked；runtime verification pending | class path位于`vllm_fl.dispatch.backends.vendor.ascend`，attention直接调用torch_npu；部分文件保留Adapted from声明 | runtime module/call trace反证或客户扩大源码边界 |
-| D-049 | Runtime Provenance Trace是910C Canary前的新门禁；若发现任何`vllm_ascend`实际参与，只对具体调用做客户边界/替换判断 | Proposed / Not Ready | 静态代码能证明预期ownership，不能证明目标进程动态闭包 | 用户批准执行并完成trace |
+| D-049 | Runtime Provenance Trace是910C Canary前的新门禁 | **Superseded by D-050～D-056** | 完整coexistence/import/native/provider审计信息价值存在，但作为pre-canary门禁范围过重 | 不再作为当前Stage位置 |
+| D-050 | A3-CP-A2改为`Official Carrier FL-only Environment Smoke`；完整Runtime Provenance Audit后置到Eager Correctness之后 | Required / task prepared | 先验证环境与最小FL链可用，再推进canary与mandatory closure；完整动态审计不阻塞first eager | A2 smoke失败或客户重新要求pre-eager审计 |
+| D-051 | A2可在新建的一次性实验container内卸载vllm-ascend，且只用于减少bring-up变量 | Required scope exception | 不修改原始image，不触碰其他carrier runtime；该实验不等于package presence违规或official coexistence非法 | 卸载影响非目标依赖或negative check失败 |
+| D-052 | A2对vllm-ascend只做distribution、`find_spec`和有效entry point三项minimal negative check | Required | 以低成本确认FL-only Python环境；残留时停止并保存origin，不手工删除源码/`.so`/`.pth` | Post-Eager Audit开始 |
+| D-053 | A2最小ownership只要求PlatformFL、WorkerFL、ModelRunnerFL、Dispatch及至少一个NPU-resident synthetic operator | Required | A2不是模型/capability验证；不覆盖Qwen、GLM、MLA、DSA、Indexer、W8A8或完整attention/MoE | A2所选operator无法在不扩大范围下构造 |
+| D-054 | A2 compiler范围仅为distribution/import-origin inventory；active provider只在synthetic smoke自然触发时记录 | Required | FlagTree与triton-ascend深度trace不会提前解锁模型bring-up | 对应Triton capability microgate或Post-Eager Audit |
+| D-055 | A2必须先重新检查OC2等现有任务的NPU占用，只使用明确空闲的最小logical device范围 | Required safety gate | 不确定或占用device不能使用；不得kill、改Host/network或访问第二台 | 现场资源状态改变 |
+| D-056 | Post-Eager Runtime Provenance Audit比较official coexistence与同carrier FL-only A/B路线，并完整追踪dynamic imports/calls、native libraries、per-op ownership和compiler provider | Deferred / Not Ready | source provenance与runtime dependency继续分离；发现实际参与后只裁定具体调用 | Eager Correctness accepted并另行批准审计 |
 
 ## 明确拒绝的路线
 
 - 仅因image/package名含`vllm-ascend`就判定不合规，或仅因FL静态树无direct import就宣称运行时独立；
 - 未经trace与control审查，让`vllm_ascend` backend绕过FlagOS Dispatch拥有目标模型关键执行；
-- 为制造“clean”表象而先安装/使用再卸载，且不保留来源与运行时证据；
+- 为制造合规表象而在正式环境中先装后卸、手工删除残留或不保留来源证据；A2在新建一次性实验container内、按D-051受控卸载属于明确例外；
 - force-push 官方 main 覆盖 legacy；
 - 删除、detach/recreate legacy；
 - 从 `ascend-model-migration` 或旧控制面继续新项目；
@@ -78,7 +85,7 @@
 
 ### ADR-P03：Compiler profile
 
-先在official carrier中记录`triton` distribution owner、active driver/provider及最小kernel下游，确认实际是FlagTree还是triton-ascend；不得由README或package名猜测。只有runtime provenance后，才决定是否需要独立compiler对照profile；FlagTree是provider，不是vllm-ascend backend代理。
+A2只inventory `triton` distribution、FlagTree/triton-ascend存在性与import origin；只有synthetic smoke自然触发时才顺手记录active provider。完整provider、kernel下游与A/B差异移至Post-Eager Runtime Provenance Audit或对应Triton capability microgate。FlagTree是provider，不是vllm-ascend backend代理。
 
 ### ADR-P04：Minimal Eager Execution Closure
 
