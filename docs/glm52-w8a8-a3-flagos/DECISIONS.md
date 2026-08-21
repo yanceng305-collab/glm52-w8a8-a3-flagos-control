@@ -12,7 +12,7 @@
 | D-006 | 首个严格官方 910C-backed canary 使用 Qwen3.6-27B TP2 eager | Evidence-backed proposed | current CI matrix 中最小真实成功模型 | 官方出现更小的同栈910C E2E |
 | D-007 | GLM vLLM 版本不在本轮猜测冻结；canary后设 Contract Gate | Required | FL 0.20.2 与 GLM-5.2 vLLM>=0.23硬冲突 | Contract Gate ADR完成 |
 | D-008 | AscendV1 与 compressed-tensors 的runtime artifact contract不在本轮猜测选择 | Required | FL compressed-tensors W8A8 contract和packed loading/glue已Implemented；但AscendV1 reader、OOT/NPU INT8 Linear kernel与真实checkpoint格式仍未闭合 | manifest/layout审计和spike完成 |
-| D-009 | “FlagOS原生”暂按 package/runtime independence 定义：允许官方FL维护的adapter与torch-npu/CANN下游 | Awaiting customer confirmation | 符合用户明确禁止项；当前FL含历史adapted源码 | 客户若也禁止历史来源，则项目需判定当前官方main不合规 |
+| D-009 | “FlagOS原生”当前按package/runtime/environment independence定义；允许研究vLLM-Ascend并允许official FL维护的adapter与torch-npu/CANN下游 | Working boundary | 客户明确禁止runtime/package/环境依赖，尚未禁止开发阶段研究或official FL历史adapted来源 | 仅当客户以后明确扩大到历史adapted来源时重审 |
 | D-010 | 第二台A3不是 research、Clean Provenance 或 canary 前置 | Proposed | 华为只直接确认单机物理规格8×128GB；runtime logical-device呈现、真实checkpoint footprint和可用余量均Unknown，必须在Stage A/Capacity gate实测重算 | Capacity gate或scale-out目标触发 |
 | D-011 | repository mutation 必须在 owner/preflight/影响报告获确认后执行 | Required | 保护branches/tags/PR #1；rename-alone不释放fork slot | 用户明确确认操作序列 |
 | D-012 | Indexer状态按framework、Ascend可达闭环、GLM-5.2 E2E三层记录 | Evidence refinement | Generic FL Indexer framework已Implemented；Missing仅指Ascend/910C backend/kernel closure与GLM E2E | official main或目标E2E证据变化 |
@@ -21,6 +21,13 @@
 | D-015 | W8A8是第一次目标模型eager correctness硬门禁 | Required | 目标固定为GLM-5.2-W8A8；BF16只允许operator/reference/debug microtest，不能替代full-model bring-up | 用户改变目标checkpoint（当前不允许） |
 | D-016 | Minimal Eager Execution Closure必须包含MLA + DSA/SFA + Indexer | Evidence-backed proposed | 固定证据集内：官方config固定index_topk/indexer_types；Transformers eager仍生成sparse mask；vLLM0.23没有合法Dense MLA fallback | 官方新增correctness-preserving fallback及目标平台证据 |
 | D-017 | Capability Microgates只证明首次eager mandatory能力最小可用 | Required | 验收限于backend可达、小规模correctness、checkpoint/runtime contract、目标forward接口 | Eager Correctness通过后进入更完整阶段 |
+| D-018 | 首次eager前采用`gap confirmation -> Minimal Capability Implementation -> corresponding Microgate PASS` | Required | MLA/DSA/Indexer/W8A8等mandatory能力已静态确认存在Missing/Unwired，不能只检查后直接进入First Eager | 全部mandatory microgate PASS |
+| D-019 | Minimal Capability Implementation只接收已确认Missing/Unwired的首次eager mandatory能力 | Required | 防止范围扩张和提前优化；First Eager后的Minimal Compatibility只处理新暴露故障 | 新证据改变mandatory closure |
+| D-020 | Mandatory capability原则上独立任务、独立branch、独立Draft PR | Required | 保持正确性归因、许可证/provenance和回滚边界 | 只有不可分割接口经Codex书面批准可合并 |
+| D-021 | vLLM-Ascend允许作为Ascend/910C技术reference，生产实现必须spec-first进入FlagOS ownership链 | Required | 需要其hardware contract与primitive经验，但正式环境和runtime依赖仍被禁止 | 客户扩大源码研究限制或上游许可变化 |
+| D-022 | 禁止通过改名、换目录或机械重构隐藏vLLM-Ascend源码来源 | Required | 技术参考不等于源码复制；实际复用/派生必须满足license与attribution | 对应上游license或法律审查变化 |
+| D-023 | 参考优先级为FlagOS跨平台实现 → official vLLM/Transformers → vLLM-Ascend硬件参考 | Required | 先保持FlagOS架构一致性和模型contract，再吸收910C硬件知识 | official ownership结构变化 |
+| D-024 | 正式环境继续要求vllm-ascend image/distribution/module/entry point/runtime dependency全部不存在，且禁止先安装再卸载 | Required | 参考策略不改变客户运行环境约束 | 客户明确变更正式环境要求 |
 
 ## 明确拒绝的路线
 
@@ -50,3 +57,7 @@ R0-clean 用 triton-ascend 3.2.1 复刻实际CI；R1 单独测试 FlagTree。不
 ### ADR-P04：Minimal Eager Execution Closure
 
 当前结论为“无合法Dense MLA fallback”。任何候选fallback必须同时满足：官方config/model code可达、不删除`index_topk/indexer_types`、与Transformers eager DSA输出在批准tolerance内一致、目标vLLM与910C backend有证据。在此之前，DSA/SFA与Indexer不得从第一次W8A8 eager closure后移。
+
+### ADR-P05：Mandatory Capability Closure与vLLM-Ascend Reference
+
+已知mandatory Missing/Unwired能力必须先经过gap contract，再在FlagOS ownership链中最小实现，最后通过对应microgate；不能以“已有参考代码”为理由跳过验收。Codex可研究vLLM-Ascend的行为和hardware contract；DeepSeek未来只能按implementation contract重新实现。若实际复用/派生源码，PR必须明确范围、许可证和attribution。详细任务规则见`tasks/GLM-MANDATORY-CAPABILITY-CLOSURE.md`。

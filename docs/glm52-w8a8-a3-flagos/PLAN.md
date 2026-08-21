@@ -25,7 +25,9 @@ Research Freeze
   -> Clean Provenance (R0-clean，无 vllm-ascend)
   -> 910C Canary (Qwen3.6-27B TP2 eager)
   -> GLM Contract Gate (vLLM语义 + quant format + Minimal Eager Execution Closure)
-  -> Capability Microgates (MLA/DSA/Indexer/W8A8)
+  -> Capability Microgates / Gap Confirmation
+  -> Minimal Capability Implementation
+  -> Corresponding Microgate PASS
   -> Capacity & Placement
   -> First Eager Load
   -> Minimal Compatibility
@@ -45,10 +47,12 @@ Research Freeze
 | **Clean Provenance** | 从中性 CANN base 零起建立 `R0-clean` | 用户授权服务器；base policy、driver/CANN compatibility、repo 已确认 | vllm-ascend package/module/entry point/native lib 全部不存在；FL platform、torch-npu、HCCL、FlagGems/Triton 最小链路通过；fresh rebuild 可复现 | inventory、negative audit、import/native trace、原始日志、环境 hash | DeepSeek 执行；Codex 验收 | 不需要 |
 | **910C Canary** | 用官方当前 910C CI-backed 模型隔离验证基础链 | Clean Provenance accepted；Qwen3.6-27B 权重就绪 | TP2 eager offline + serving 正确；FL/dense attention/HCCL dispatch 可追溯；无污染依赖 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
 | **GLM Contract Gate** | 决定vLLM语义基线与W8A8 artifact contract，并冻结Minimal Eager Execution Closure | Canary accepted；真实checkpoint manifest齐全 | ADR选择`0.23/0.24 uplift`或`0.20.2 backport`；ADR选择`AscendV1 native loader`或经证明等价的`compressed-tensors conversion`；确认首次closure必须含W8A8+MLA+DSA/SFA+Indexer | API/worker diff、IndexShare ownership、tensor/scale/layout、closure证据 | Codex决策；DeepSeek仅做授权spike | 不需要 |
-| **Capability Microgates** | 只验证首次正确eager token所需的W8A8 Linear/MoE、MLA、DSA/SFA、Indexer及必要MoE/runtime闭环 | 两项contract ADR和Minimal Eager Execution Closure批准 | backend可达、小规模correctness、checkpoint/runtime contract正确、接口可支撑目标forward；不要求性能完备 | dtype/shape/layout、reference/tolerance、可达性trace、contract audit、日志 | DeepSeek；Codex review | 不需要 |
-| **Capacity & Placement** | 基于真实artifact与Stage A实测logical-device topology确定布局 | checkpoint manifest、`npu-smi`/`torch.npu.device_count()`/device properties、目标上下文/并发、microgates通过 | 按真实packed weights/scales/float tensors/workspace/KV/communication headroom完成per-rank预算；冻结首次load的TP/EP候选与安全余量 | manifest audit、placement simulation、memory budget、实测topology | DeepSeek测算；Codex验收 | 默认不需要；不足则触发 |
-| **First Eager Load** | 使用真实GLM-5.2-W8A8 checkpoint完成首次capacity-valid load，收敛首个真实故障 | placement accepted；mandatory microgates已通过或有明确预期 | 模型构造/权重load成功，或只保留一个可复现first failure；实际走W8A8 Linear/MoE与MLA+DSA+Indexer；关闭MTP/graph/FlagCX/multistream | exact run config、first-error log、weight/scale-key audit、backend trace | DeepSeek；Codex定下一任务 | 仅Capacity明确触发；开始前必须通知 |
-| **Minimal Compatibility** | 一次修复一个已证实缺口 | First Eager Load 单一 failure | 最小 patch、focused test、Qwen canary 无回归、Draft PR | diff、tests、provenance、rollback | DeepSeek；Codex PR review | 沿用批准布局 |
+| **Capability Microgates / Gap Confirmation** | 对首次eager mandatory能力逐项执行最小repro，确认现有实现是PASS、Missing还是Unwired，并形成implementation contract | 两项contract ADR和Minimal Eager Execution Closure批准 | 每个mandatory capability都有可复现failure/PASS、FlagOS ownership、模型contract、shape/dtype/layout、NPU primitive和microgate标准；不因代码存在即判PASS | gap contract、reference/tolerance、backend trace、failure signature | Codex定义/审查；DeepSeek仅在未来授权后执行repro | 不需要 |
+| **Minimal Capability Implementation** | 只补齐上一阶段已确认Missing/Unwired且属于首次eager mandatory closure的能力 | 对应gap contract批准 | MLA、DSA/SFA、Indexer、W8A8等原则上独立小任务、独立branch、独立Draft PR；按FlagOS架构spec-first重新实现；不混入性能优化 | implementation contract、PR diff、license/reference disclosure、focused tests | DeepSeek未来实现；Codex contract/PR review | 不需要 |
+| **Corresponding Microgate PASS** | 对每个mandatory capability使用同一contract验收实现结果 | 对应独立Draft PR可测试 | backend可达、小shape correctness、checkpoint/runtime contract、GLM forward接口全部PASS；全部mandatory项PASS后才解锁Capacity | raw test、reference/tolerance、dispatch trace、contract audit | DeepSeek未来测试；Codex逐项验收 | 不需要 |
+| **Capacity & Placement** | 基于真实artifact与Stage A实测logical-device topology确定布局 | checkpoint manifest、`npu-smi`/`torch.npu.device_count()`/device properties、目标上下文/并发、**全部mandatory microgate PASS** | 按真实packed weights/scales/float tensors/workspace/KV/communication headroom完成per-rank预算；冻结首次load的TP/EP候选与安全余量 | manifest audit、placement simulation、memory budget、实测topology | DeepSeek测算；Codex验收 | 默认不需要；不足则触发 |
+| **First Eager Load** | 使用真实GLM-5.2-W8A8 checkpoint完成首次capacity-valid load，收敛首个真实故障 | placement accepted；**全部mandatory microgate PASS** | 模型构造/权重load成功，或只保留一个可复现first failure；实际走W8A8 Linear/MoE与MLA+DSA+Indexer；关闭MTP/graph/FlagCX/multistream | exact run config、first-error log、weight/scale-key audit、backend trace | DeepSeek；Codex定下一任务 | 仅Capacity明确触发；开始前必须通知 |
+| **Minimal Compatibility** | 只处理First Eager Load后新暴露的整模型问题，不接收已知mandatory capability补齐 | First Eager Load产生此前microgate无法暴露的单一failure | 一次一个新故障、最小patch、focused test、mandatory microgate与Qwen canary无回归、独立Draft PR | first-failure证据、diff、tests、provenance、rollback | DeepSeek；Codex PR review | 沿用批准布局 |
 | **Eager Correctness** | 用真实GLM-5.2-W8A8 checkpoint完成capacity-valid eager正确性 | load/forward blockers关闭 | 第一个正确token及固定数据集满足reference/tolerance；W8A8 Linear/MoE、MLA、DSA/Indexer owner/shared和quant scales均通过；BF16不得替代 | golden/tolerance、layer/backend trace、weight/scale audit、memory/KV | DeepSeek；Codex阶段验收 | 仅容量需要 |
 | **Baseline Benchmark** | 建立未优化基线 | Eager Correctness accepted | 固定输入分布/上下文/并发；给 TTFT、TPOT、吞吐、延迟分位、利用率、功耗、内存和方差 | raw results、env SHA、重复运行 | DeepSeek | 单机先 |
 | **Profile & Bottleneck** | 证明首要瓶颈 | baseline稳定 | kernel/communication/host/调度归因；每项有可证伪假设 | profiler trace、timeline、算子/通信占比 | DeepSeek；Codex审查 | 仅证据指向 scale-out 时触发 |
@@ -62,9 +66,21 @@ Research Freeze
 
 Microgates只证明backend可达、小规模correctness、checkpoint/runtime contract和目标forward接口；不要求graph、MTP、multistream、FlagCX、fusion或production性能。
 
+Mandatory capability的统一Stage任务合同见[`tasks/GLM-MANDATORY-CAPABILITY-CLOSURE.md`](tasks/GLM-MANDATORY-CAPABILITY-CLOSURE.md)。该合同把gap confirmation、spec-first最小实现、对应microgate PASS和vLLM-Ascend技术参考边界合并为一条治理规则。
+
+## vLLM-Ascend技术参考与实现边界
+
+- 允许Codex深入研究官方vLLM-Ascend，提取Ascend/910C contract、shape/dtype/layout、KV Cache、prefill/decode、NPU primitive和correctness行为。
+- 参考优先级固定为：FlagOS已有跨平台实现 → official vLLM/Transformers → vLLM-Ascend硬件实现参考。
+- 生产实现必须进入`vLLM -> vllm-plugin-FL -> FlagOS dispatch/backend -> FlagGems/vendor.ascend -> torch_npu/CANN` ownership链；不允许把vLLM-Ascend package/runtime带入正式环境。
+- 禁止机械复制vLLM-Ascend源码后改名、换目录或重构以隐藏来源。若确有源码复用/派生，必须遵守许可证并保留attribution，不能代码混淆规避声明。
+- 每个capability Draft PR必须说明当前缺口、模型contract、hardware primitive、FlagOS ownership/dispatch、correctness test和vLLM-Ascend仅作为reference的具体范围。
+- 当前客户边界解释为禁止vLLM-Ascend runtime/package/环境依赖，不扩大为禁止开发阶段研究源码。只有客户以后明确禁止official FlagOS仓库中的历史adapted来源时，才重新做合规判断。
+
 ## 阶段治理
 
 - 每个实现/实验 Stage 使用独立 branch 和 Draft PR；不得自动 merge 或跨 Stage。
+- Mandatory closure中的MLA、DSA/SFA、Indexer、W8A8等能力原则上分别使用独立任务、独立branch和独立Draft PR；不得把多个已知缺口打包成不可归因的大补丁。
 - DeepSeek 只能执行控制面中的 `ready` task，不能修改 PLAN/STATUS/DECISIONS，不能自行进入下一 Stage。
 - Codex 负责证据审查、技术决策、PR review、阶段验收与控制面更新。
 - 任一新事实推翻路线时，保留已验证成果并回退到相应 Contract/Capability/Capacity gate，不全量重启。
