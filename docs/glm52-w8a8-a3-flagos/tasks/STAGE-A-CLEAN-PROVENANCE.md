@@ -1,6 +1,6 @@
 # Stage A Parent Contract — v0.24 A2 Bring-up
 
-状态：**Active；A2 Ready — ordered environment preflight then shared-NPU tiny smoke**
+状态：**Active contract / A2 execution PAUSED**
 本轮Codex边界：代码repo/control操作已授权并完成；不操作A3服务器
 
 ## Completed prerequisites
@@ -16,14 +16,17 @@
 - Formal FL source可direct clone；服务器GitHub不可达时允许expected SHA256校验过的Git bundle relay，最终验证branch/HEAD/tree/clean。
 - Restricted network：carrier只接受exact digest；网络仅允许FlagTree official resource index和official FlagGems tag。
 
-## Ready task and prompt
+## Task and prompt
 
-- [`STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)
-- [`DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`](DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md)
+- [`STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)：Paused
+- [`DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`](DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md)：Do not execute
+- Latest immutable result：[A2-v024/20260824T025250Z](../results/A2-v024/20260824T025250Z.md)
 
 Historical v0.20.2 task/prompt继续Paused，不得使用。
 
 ## A2 execution chain
+
+以下chain仅保留合同定义；当前未授权执行。
 
 ```text
 Phase A: exact carrier without NPU mapping

@@ -1,5 +1,7 @@
 # A2-v024 Measured Runtime Tuple
 
+> Legacy supplemental file introduced by `e9999d25`. Canonical immutable run snapshot：`results/A2-v024/20260824T025250Z.md`。Future runs不得继续在docs root新增或更新runtime result文件。
+
 Timestamp: 2026-08-24T02:52Z
 Evidence: /data/tiankuan/zyg/evidence-a2-v024-20260824T025250Z
 

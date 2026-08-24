@@ -10,7 +10,7 @@ Primary research freeze：official new `main@a9435a34dcd7d0a38e3a853535947371a6c
 - Old `v0.20.2rc1-a3` A2 Ready/prompt已Paused，不得下发。
 - `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`只保留为official documented release tag，当前无可用artifact。A2 provisional carrier固定为exact digest `sha256:1c36469f...`的official `releases/v0.24.0rc` A3 nightly；不得称为rc1 image，内部runtime tuple以container preflight为准。
 - Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，标记Upstream Conflict / stale candidate，不作为0.24 authority。
-- Repository migration已PASS；new v0.24 A2现为Ready。Exact digest、Git bundle、actual compiler inventory、FlagTree replacement与共享NPU 12+13 safety均在task内执行并以失败STOP。
+- Repository migration已PASS；latest v0.24 A2在FlagTree gate STOP并已进入immutable result index。当前实验暂停，历史research不构成重试授权。
 
 ## Container边界决策（仍有效）
 

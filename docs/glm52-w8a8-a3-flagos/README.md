@@ -8,6 +8,8 @@
 - `PLAN.md`：新阶段、Ready/Exit、owner、证据和第二台服务器触发。
 - `STATUS.md`：当前状态、阻塞、GitHub状态与下一门禁。
 - `DECISIONS.md`：已提议/待确认/待ADR技术决策。
+- `REPOSITORY-AND-EVIDENCE-RULES.md`：Control/Code/Server Evidence、角色、commit与一任务三指针规则。
+- `results/INDEX.md`：DeepSeek immutable run snapshot索引与Codex acceptance状态。
 - `MINIMAL-EAGER-EXECUTION-CLOSURE.md`：首次正确GLM-5.2-W8A8 eager token的mandatory能力闭包。
 - `REPOSITORY-PLAN.md`：建仓前legacy保全与formal-fork/standalone路线分析；当前已被standalone决策取代。
 - `CODE-REPOSITORY-BASELINE.md`：正式standalone A3代码仓库、official冻结SHA/tree、remote与sync policy、legacy零变化验收。
@@ -18,8 +20,9 @@
 - `tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：historical v0.20.2 A2；已Paused，不得执行。
 - `tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`：historical v0.20.2 prompt；已Paused，不得下发。
 - `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`：v0.24 A2历史draft；已被final contract取代。
-- `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：当前Ready A2合同。
-- `tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`：当前Ready的完整A2有序执行提示词。
+- `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：A2合同；当前Paused。
+- `tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`：A2执行提示词；当前Paused，不得下发。
+- `tasks/DEEPSEEK-A3-HOST-DIRECTORY-INITIALIZATION-PROMPT.md`：下一项仅目录/repo初始化任务，不含实验。
 - `tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`：旧Phase-A-only提示词；已Superseded，不得执行。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
@@ -36,8 +39,8 @@
 6. Provisional carrier内部runtime tuple不预设，全部由container preflight实测；formal FL source在GitHub不可达时允许expected SHA256校验过的Git bundle relay。
 7. A2按实际compiler inventory安装exact FlagTree并证明single coherent provider；环境PASS后共享NPU 12+13执行tiny torch_npu与Dispatch op，状态恶化立即STOP。
 8. Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，明确标记Upstream Conflict / stale candidate。
-9. Old v0.20 A2/prompt继续Paused；new A2-v024与最终prompt现已Ready。
-10. 下一步按当前完整prompt执行carrier/bundle preflight → FlagTree → FlagGems → FL → tiny torch_npu → FlagOS Dispatch；禁止模型、serve、HCCL/TP、KV cache、完整Worker/ModelRunner runtime、benchmark/profile和大tensor。
+9. A2 run `20260824T025250Z`已形成immutable result snapshot；Experiment STOP、Control Sync和Codex Acceptance分开记录。
+10. New FlagOS/A2实验暂停；下一步只初始化A3 Host目录与两个长期Git working tree，不运行container/NPU。
 
 ## 状态标签
 
@@ -47,4 +50,4 @@
 - Missing：当前目标基线明确无实现、显式报错或缺必需接口。
 - Conflicting：可信来源在版本/路线/行为上不一致，尚未由实验消解。
 
-本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库已按`CODE-REPOSITORY-BASELINE.md`落地；A2上次在container创建前正确STOP，当前已按实际artifact/source/NPU共享决策更新，服务器重试尚未执行。
+本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库已按`CODE-REPOSITORY-BASELINE.md`落地；当前实验暂停，服务器目录整理尚未执行。

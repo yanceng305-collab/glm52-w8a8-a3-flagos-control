@@ -78,4 +78,4 @@ PR #1仍为：[Freeze W8A8 Ascend gap and eager repro](https://github.com/yancen
 
 ## 当前停止点
 
-Repository migration已PASS，existing main和legacy零变化。A3-CP-A2-v024上次在container创建前因artifact/source获取失败正确STOP，现已按exact nightly digest与Git bundle relay决策重新Ready；GLM适配、mandatory capability实现和性能测试尚未开始。
+Repository migration已PASS，existing main和legacy零变化。Latest A2-v024 run在FlagTree gate STOP，immutable result见`results/A2-v024/20260824T025250Z.md`；当前实验暂停，GLM适配、mandatory capability实现和性能测试尚未开始。

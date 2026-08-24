@@ -48,8 +48,8 @@ v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V02
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
-| A2 environment identity/preparation | **Ready / previous attempt STOP before container** | exact digest、Git bundle、actual inventory、provider/FlagGems/FL闭环 |
-| A2 shared-NPU tiny smoke | Ready after environment PASS | 同一任务使用共享NPU 12+13；仅tiny torch_npu与Dispatch op |
+| A2 environment identity/preparation | **STOP at FlagTree / execution paused** | exact digest、FL/FlagGems identity与negative check PASS；immutable result indexed |
+| A2 shared-NPU tiny smoke | Not reached / Not Ready | Phase A STOP；当前不授权实验 |
 | Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred on-demand | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace在Eager Correctness后按需触发，不阻塞Baseline Benchmark |
 | FlagTree profile | Ready experiment / runtime Unknown | A2卸载carrier compiler后安装rc1并审计ownership |
 | Dense MLA | Missing | placeholder |

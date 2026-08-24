@@ -1,8 +1,10 @@
 # DeepSeek执行提示词 — A3-CP-A2-v024
 
-状态：**Ready**
+状态：**PAUSED / Do not execute until user explicitly resumes A2**
 
 唯一合同：`docs/glm52-w8a8-a3-flagos/tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`。
+
+Latest run与Evidence指针见`docs/glm52-w8a8-a3-flagos/results/INDEX.md`。当前只允许执行Host目录初始化任务，不得继续本prompt。
 
 ## 目标
 
