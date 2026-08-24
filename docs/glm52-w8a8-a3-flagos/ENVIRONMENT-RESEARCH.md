@@ -1,6 +1,6 @@
 # FlagOS A3/910C 环境调查与证据链
 
-调查日期：2026-08-21
+调查日期：2026-08-21；A2 artifact decision更新：2026-08-24
 Primary research freeze：official new `main@a9435a34dcd7d0a38e3a853535947371a6c62205` / tree`e5e073edf4b65c053e954d78d20365aab0e1f46b` / vLLM0.24。`92a6f767...`现为official `v0.2.1` / vLLM0.20.2 maintenance/reference；早期CI SHA`38e7dbc...`仅保留时间语境。
 
 ## Official branch migration / primary environment reset
@@ -8,9 +8,9 @@ Primary research freeze：official new `main@a9435a34dcd7d0a38e3a853535947371a6c
 - Developer notification与GitHub独立核验共同确认：`v0.2.1`是0.20.2维护线，`main`是0.24 current line；old `v0.3.0-dev`无独立active ref。
 - Existing formal code repo保持`main@92a6f767`零变化；new-main migration尚未执行。
 - Old `v0.20.2rc1-a3` A2 Ready/prompt已Paused，不得下发。
-- New primary carrier candidate为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`，source tuple与compiler conflict见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)。
+- `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`只保留为official documented release tag，当前无可用artifact。A2 provisional carrier固定为exact digest `sha256:1c36469f...`的official `releases/v0.24.0rc` A3 nightly；不得称为rc1 image，内部runtime tuple以container preflight为准。
 - Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，标记Upstream Conflict / stale candidate，不作为0.24 authority。
-- Repository migration已PASS；new v0.24 A2现为Ready。Exact carrier pull、FlagTree replacement和valid two-device pair均在task内执行并以失败STOP。
+- Repository migration已PASS；new v0.24 A2现为Ready。Exact digest、Git bundle、actual compiler inventory、FlagTree replacement与共享NPU 12+13 safety均在task内执行并以失败STOP。
 
 ## Container边界决策（仍有效）
 

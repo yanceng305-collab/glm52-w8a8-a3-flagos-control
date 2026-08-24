@@ -1,39 +1,39 @@
 # 组件、910C 与 GLM-5.2-W8A8 兼容矩阵
 
-调查日期：2026-08-21
+调查日期：2026-08-24
 
 ## 组件版本矩阵
 
 | 组件 | 官方推荐/实际CI | 客户合规候选 | A3/910C专用 | GLM-5.2-W8A8必需 | 状态/边界 |
 |---|---|---|---:|---:|---|
 | Host OS/CANN | Host CANN版本不参与container tuple；只保留Host runtime条件 | 不bind-mount Host Toolkit | 是 | Driver/runtime层必需 | Boundary Confirmed；Host CANN差异不再分析 |
-| Container base/OS | `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | New primary；本机缺失允许pull唯一tag | 是 | 必需 | Official source/docs；A2冻结local identity |
+| Container base/OS | Docs：`v0.24.0rc1-a3`；artifact未建立 | Exact digest `sha256:1c36469f...` provisional carrier | 是 | 必需 | Official `releases/v0.24.0rc` A3 nightly；不是rc1 release image；实际OS/runtime preflight |
 | Architecture | aarch64 | 按现场aarch64复核 | 是 | 必需 | Confirmed job metadata |
-| Python | v0.24 A3 source base Python3.12 | 3.12；以actual carrier inventory复核 | 否 | 必需 | Source contract Confirmed；artifact Unknown |
+| Python | rc1 source recipe曾使用3.12 | actual carrier preflight | 否 | 必需 | 不从release recipe预设provisional artifact |
 | Driver | Host mounted | 产品/CANN兼容版本 | 是 | 必需 | exact Unknown |
 | Firmware | Host side | 与Driver/CANN匹配 | 是 | 必需 | exact Unknown |
-| Container CANN | v0.24 A3 source base CANN9.0.1 | 9.0.1 A3；Host CANN irrelevant | 是 | 必需 | Source contract Confirmed；artifact inventory Unknown |
-| Container ATB/NNAL | CANN9.0.1 family | actual carrier inventory冻结 | 是 | 部分native op必需 | Version family Confirmed；exact packages Unknown |
+| Container CANN | rc1 source recipe曾使用9.0.1 | actual carrier preflight；Host CANN irrelevant | 是 | 必需 | Provisional artifact exact version Unknown before preflight |
+| Container ATB/NNAL | rc1 source recipe有对应组件 | actual carrier inventory冻结 | 是 | 部分native op必需 | Exact packages Unknown before preflight |
 | HCCL | torch-npu/CANN内 | matching v0.24 stack | 是 | A3至少2 devices | v0.2.1 TP2 evidence；new-main A3未验证 |
-| torch | 2.10.0 | 2.10.0 first | 否 | 必需 | image recipe Confirmed |
-| torch-npu | old CI 2.10.0；newer A3 reference row 2.10.0.post2 | 以official carrier inventory冻结 | 是 | 必需 | official evidence有多个row；target exact Unknown |
-| vLLM | `v0.24.0`, empty | Primary fixed 0.24；0.20.2 maintenance/reference | 否 | 必需 | New-main pyproject/README + carrier source Confirmed |
+| torch | rc1 source recipe曾使用2.10.0 | actual carrier preflight | 否 | 必需 | Provisional artifact不预设 |
+| torch-npu | official evidence有多个2.10 family row | actual carrier preflight | 是 | 必需 | Target exact Unknown before preflight |
+| vLLM | FL contract固定`v0.24.0` | actual carrier preflight必须验证0.24 compatibility；0.20.2仅maintenance/reference | 否 | 必需 | 不由nightly名称预设embedded identity |
 | vLLM native ext | empty build无device ext | 无 | 否 | 非必需 | Confirmed |
 | vllm-plugin-FL | observed main`a9435a34...`/tree`e5e073ed...`；v0.2.1=`92a6f767...` | Primary new main；mutation时重冻结 | 否 | 必需 | Branch migration Confirmed；main moving |
 | `VLLM_VENDOR` | unset | unset | Ascend语义 | 必需配置 | Confirmed；`ascend`无效 |
 | FlagGems | README tag`v5.3.4@f7c55cb2...` | preferred非mandatory；exact tag | 否 | per-op可选 | Confirmed source pin；new-main A3 E2E Unknown |
-| triton-ascend | v0.24 carrier`3.2.1` | Carrier starting provider；是否保留待transaction decision | 是 | Triton路径需一个provider | Confirmed source constraint |
-| FlagTree | FL README`0.6.1rc1+ascend3.5@9a90fddf...` | A2 final provider；替换carrier triton-ascend | wheel是 | Triton路径需要 | Runtime transaction gate；single coherent provider或STOP |
+| triton/compiler provider | rc1 source recipe曾使用triton-ascend 3.2.1 | actual carrier inventory后执行FlagTree replacement | 是 | Triton路径需一个provider | 初始distribution/version Unknown；final需single coherent provider |
+| FlagTree | FL README`0.6.1rc1+ascend3.5@9a90fddf...` | A2 final provider；替换actual conflicting provider | wheel是 | Triton路径需要 | Runtime transaction gate；single coherent provider或STOP |
 | FlagCX | CI absent；README ref v0.13.0 | baseline absent | adaptor-specific | baseline非必需 | Optional；910C E2E Unknown |
 | msModelSlim | master`e1009c9`；GLM5.2 feature`f8e5bed` | runtime先不装 | 配方含A3 tag | 重新量化时producer必需 | 工具侧Confirmed；公开A3 log Unknown |
 | Quant format | CI无W8A8 | AscendV1 vs compressed-tensors待ADR | 模型/栈特定 | 必需 | Interface Missing/Conflicting |
-| compressed-tensors | v0.24 carrier constraint`>=0.11.0` | actual resolved version + artifact ADR | 否 | 选CT路线时必需 | Constraint Confirmed；exact Unknown |
-| transformers | v0.24 carrier`5.13.0` | 5.13.0 source contract，actual复核 | 否 | 必需 | Confirmed requirement；FL patches compatibility Unknown |
+| compressed-tensors | rc1 source constraint曾为`>=0.11.0` | actual resolved version + artifact ADR | 否 | 选CT路线时必需 | Provisional artifact exact Unknown |
+| transformers | rc1 source recipe曾使用5.13.0 | actual carrier preflight | 否 | 必需 | Provisional artifact exact Unknown；FL compatibility待验 |
 | NumPy | v0.24 requirements未exact pin | actual carrier inventory | 否 | 依赖 | Exact Unknown；不沿用old CI pin |
-| Mooncake | v0.24 A3 Dockerfile`0.3.11.post1` | baseline nonessential | 否 | 非必需 | Confirmed carrier source；optional for A2 |
+| Mooncake | rc1 source recipe曾使用`0.3.11.post1` | actual carrier preflight；baseline nonessential | 否 | 非必需 | Provisional artifact exact Unknown；optional for A2 |
 | Ray | >=2.47.1,<=2.48.0 | local-MP baseline absent | 否 | 单机TP非必需 | Optional |
 | FL Ascend custom ext | 无；Python-only | 无 | 是 | 非必需 | Confirmed |
-| vllm-ascend image/distribution | v0.24.0rc1 A3 official documented carrier | 允许作为carrier；FL-only smoke可在disposable container卸载 | 是 | Carrier candidate；FlagOS ownership必需 | Source/docs Confirmed；actual artifact/import Unknown |
+| vllm-ascend image/distribution | v0.24.0rc1 A3 official documented tag；artifact unavailable | Exact digest release-branch nightly允许作A2 provisional carrier；FL-only smoke可在disposable container卸载 | 是 | Carrier candidate；FlagOS ownership必需 | Digest Confirmed；内部distribution/version/import由preflight |
 
 v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)；历史neutral tuple见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。
 
@@ -48,8 +48,8 @@ v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V02
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
-| A2 Phase A No-NPU environment preparation | **Ready / not executed** | carrier/package/provider/FL静态闭环；无free pair不阻塞 |
-| A2 Phase B NPU runtime smoke | Waiting for valid free pair | Phase A accepted后用新NPU container重放并执行runtime smoke |
+| A2 environment identity/preparation | **Ready / previous attempt STOP before container** | exact digest、Git bundle、actual inventory、provider/FlagGems/FL闭环 |
+| A2 shared-NPU tiny smoke | Ready after environment PASS | 同一任务使用共享NPU 12+13；仅tiny torch_npu与Dispatch op |
 | Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred on-demand | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace在Eager Correctness后按需触发，不阻塞Baseline Benchmark |
 | FlagTree profile | Ready experiment / runtime Unknown | A2卸载carrier compiler后安装rc1并审计ownership |
 | Dense MLA | Missing | placeholder |

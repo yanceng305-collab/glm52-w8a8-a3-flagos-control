@@ -1,6 +1,6 @@
 # 技术决策记录
 
-更新时间：2026-08-21
+更新时间：2026-08-24
 
 | ID | 决策 | 状态 | 理由 / 证据 | 重审条件 |
 |---|---|---|---|---|
@@ -58,24 +58,24 @@
 | D-052 | A2对vllm-ascend只做distribution、`find_spec`和有效entry point三项minimal negative check；三项均由卸载后的新Python process执行 | Required | 避免pre-uninstall inventory的module/entry-point cache干扰；残留时停止并保存origin，不手工删除源码/`.so`/`.pth` | Post-Eager Audit开始 |
 | D-053 | A2最小ownership只要求PlatformFL、WorkerFL、ModelRunnerFL、Dispatch及至少一个NPU-resident synthetic operator | Required | A2不是模型/capability验证；不覆盖Qwen、GLM、MLA、DSA、Indexer、W8A8或完整attention/MoE | A2所选operator无法在不扩大范围下构造 |
 | D-054 | Old A2 compiler范围仅为inventory | **Superseded/refined by D-064** | v0.24 intended FlagTree会与carrier triton-ascend共享namespace；new A2必须先证明single coherent provider，不能只做浅inventory | provider transaction PASS |
-| D-055 | A2必须先重新检查OC2等现有任务占用，只使用明确空闲的最小合法device范围 | Required；refined by D-063 | “最小”现在至少是一个valid two-logical-device pair，不是单device；不得kill或随意拼ID | 现场资源/拓扑变化 |
+| D-055 | A2必须先重新检查OC2等现有任务占用，只使用明确空闲的最小合法device范围 | **Superseded/refined by D-063** | A2 tiny smoke现允许共享指定NPU 12+13；只读占用检查、不得kill/暂停现有任务及状态恶化立即STOP仍有效 | 现场资源/拓扑变化 |
 | D-056 | Post-Eager Runtime Provenance Audit比较official coexistence与同carrier FL-only A/B路线，并完整追踪dynamic imports/calls、native libraries、per-op ownership和compiler provider | Deferred / On-demand / Not Ready | Eager Correctness后仅由客户coexistence证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发；不默认阻塞Baseline Benchmark | 任一触发条件成立并另行批准审计 |
 | D-057 | FL frozen baseline的editable安装只允许从container内保留`.git`的disposable writable副本执行 | Required | `setuptools_scm.write_to=vllm_fl/_version.py`可能写source tree；正式repo保持readonly，副本安装前必须验证HEAD`92a6f767...`、tree`e610bc58...`与clean worktree，所有生成artifact仅留副本 | 安装方式或upstream build metadata变化 |
 | D-058 | v0.20.2 A3-CP-A2 task与DeepSeek提示词进入Ready | **Superseded / Paused by D-059** | prompt尚未执行；upstream branch migration在server下发前改变primary baseline | 不得恢复旧prompt |
 | D-059 | 立即暂停`118c314`中的old A2 Ready与DeepSeek prompt | Required / Implemented in control | 原task基于v0.2.1/vLLM0.20.2/carrier0.20；不得下发服务器 | new v0.24 A2另行通过review |
 | D-060 | Branch语义冻结为`v0.2.1 = vLLM0.20.2 maintenance`、`main = vLLM0.24 current` | Confirmed | developer通知 + current branches/pyproject/README；observed main`a9435a34...`/tree`e5e073ed...` | mutation前重读moving main |
 | D-061 | Existing `main@92a6f767`保持不变；新增v0.2.1 anchor、0.24 immutable baseline与project integration branch | **Implemented / PASS** | 三个refs atomic push；SHA/tree exact；existing main/default/legacy零变化 | 无 |
-| D-062 | New A2 primary carrier为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | Required / A2 Ready | official source/docs定义0.24 A3 tuple；本机缺失时允许pull唯一tag并冻结identity | exact pull/identity失败则A2 STOP |
-| D-063 | A3 A2至少需要两个logical devices组成经只读拓扑证明的valid、完整空闲pair | Required | official v0.24 Quick Start明确A3至少2 NPU；同physical-card ID映射未官方定义 | Host preflight冻结pair mapping |
-| D-064 | FlagTree rc1与carrier triton-ascend共享namespace；A2在disposable container执行package-manager replacement并验证single provider | Required runtime gate | 禁止手工rm；post-install审计distribution/RECORD/module/native/driver ownership | 失败则A2 STOP |
+| D-062 | Official文档定义的A3 release tag仍为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`，但当前未建立可用artifact；A2允许exact digest`quay.io/ascend/vllm-ascend@sha256:1c36469fe1cd2335850eb2318bd3562471c34d5fd8f9f2affb0afc745ce39585`作provisional carrier | Required / A2 Ready | 该digest身份仅为official `releases/v0.24.0rc` A3 nightly，不得称为rc1 release image；不得由release源码或tag名预设其CANN/torch-npu/triton-ascend等内部tuple，全部以container preflight为准 | digest缺失/不匹配、preflight不闭合或official发布新的可用release artifact |
+| D-063 | A2 tiny runtime smoke允许共享NPU 12+13，不再要求完全空闲pair | Required / A2 Ready | 只允许极小`torch_npu` tensor与FlagOS Dispatch operator smoke；禁止模型加载、vLLM serve、HCCL/TP、KV cache、完整WorkerFL/ModelRunnerFL runtime、benchmark/profile和大tensor；共享资源状态恶化立即STOP | NPU 12+13占用、显存、AICore或现有任务状态变化 |
+| D-064 | FlagTree rc1可能与provisional carrier内实际compiler/provider共享namespace；A2先inventory再在disposable container执行package-manager replacement并验证single provider | Required runtime gate | 不预设初始distribution/version；禁止手工rm；post-install审计distribution/RECORD/module/native/driver ownership | 失败则A2 STOP |
 | D-065 | GLM primary Contract固定为`FlagOS new main + vLLM0.24 + GLM-5.2-W8A8` | Required | `bb439d...`已完成NVIDIA TP16双机init/weight load并暴露真实MLA cache gap；0.20.2不再primary | strong blocker证明必须fallback |
 | D-066 | current main `docker/ascend/Dockerfile`标记Upstream Conflict / stale candidate | Required | 文件最后相关更新早于0.24 upgrade/README refresh，仍为0.19/CANN8.5/old compiler tuple | upstream修复或developer说明 |
 | D-067 | New-main FL editable安装必须使用writable staging + exact SHA/tree/clean + `--no-build-isolation --no-deps -e` | Required | build-system.requires含torch等依赖；默认isolation可能联网解析，setuptools_scm还需写`_version.py` | build metadata contract变化 |
 | D-068 | 新A2初始为Draft / Not Ready | **Superseded by D-069** | 用户决定把carrier pull、provider replacement和valid pair转为task内PASS/STOP gate | 不再阻塞Ready |
-| D-069 | `A3-CP-A2-v024`与最终DeepSeek prompt进入Ready；允许严格受限network | User-approved / Ready | 仅exact carrier、FlagTree official resource index、FlagGems v5.3.4；禁止resolver升级核心runtime | task PASS/STOP结果 |
+| D-069 | `A3-CP-A2-v024`与最终DeepSeek prompt进入Ready；允许严格受限network与校验过的source relay | User-approved / Ready | Carrier只接受D-062 exact digest；网络仅用于FlagTree official resource index和FlagGems v5.3.4；FL可按D-071通过direct clone或Git bundle relay取得；禁止resolver升级核心runtime | task PASS/STOP结果 |
 | D-070 | FlagGems v5.3.4禁止使用`setup.sh`、`flaggems-setup`或任何bootstrap profile | Required | ascend-cann900 bootstrap会引入Python3.11、不同torch-npu/FlagTree tuple；A2只允许current Python + exact source + no-build-isolation/no-deps | build requirement缺失则STOP |
-| D-071 | 服务器缺formal FL source时允许clone唯一formal repo的唯一project branch到Evidence `source/` | Required scoped network | clone后必须验证exact HEAD/tree/clean；禁止其他repo/branch | clone/identity失败则STOP |
-| D-072 | A2拆为Phase A无NPU环境准备与Phase B NPU runtime smoke | Required / Phase A Ready | container/package/compiler/FL准备不需要NPU；无free pair不得阻止Phase A；Phase A完成后必须STOP | Phase A结果与free pair availability |
+| D-071 | 服务器缺formal FL source时，允许direct clone唯一formal repo/project branch；GitHub不可达时允许使用经SHA256校验的Git bundle relay到Evidence `source/` | Required scoped source relay | 最终必须验证branch=`project/glm52-w8a8-v024`、HEAD=`a9435a34dcd7d0a38e3a853535947371a6c62205`、tree=`e5e073edf4b65c053e954d78d20365aab0e1f46b`、worktree clean；禁止普通目录拷贝、无校验archive及其他repo/branch | bundle SHA256缺失/不匹配或任一Git identity失败则STOP |
+| D-072 | A2保留“environment preflight → tiny NPU smoke”的顺序门禁，但允许在同一执行任务中连续完成 | Required / A2 Ready | Carrier/source/compiler/FlagGems/FL全部PASS后，无需再次确认即可新建受限NPU container并在共享NPU 12+13执行D-063 tiny smoke；环境门禁失败不得进入NPU步骤 | A2 PASS/STOP结果或共享资源状态变化 |
 
 ## 明确拒绝的路线
 
@@ -101,7 +101,7 @@ Primary已由branch migration固定为official new main + vLLM0.24。Contract Ga
 
 ### ADR-P03：Compiler profile
 
-v0.24 carrier以triton-ascend3.2.1起步，FL new-main README intended profile为FlagTree`0.6.1rc1+ascend3.5`。两者共享完整`triton`namespace，必须先定义replacement/overlay transaction并证明single coherent provider；不能叠装后仅凭import成功继续。性能与完整dynamic provenance仍后置。FlagTree是provider，不是vllm-ascend backend代理。
+Documented rc1 source recipe曾以triton-ascend3.2.1起步，但不得外推到A2 provisional nightly。FL new-main README intended profile为FlagTree`0.6.1rc1+ascend3.5`；A2必须先审计actual provider，再定义replacement transaction并证明single coherent provider，不能叠装后仅凭import成功继续。性能与完整dynamic provenance仍后置。FlagTree是provider，不是vllm-ascend backend代理。
 
 ### ADR-P04：Minimal Eager Execution Closure
 

@@ -1,6 +1,6 @@
 # GLM-5.2-W8A8 × FlagOS × Ascend A3/910C 项目计划
 
-状态：A3-CP-A2-v024 Phase A Ready；Phase B waits for valid free pair
+状态：A3-CP-A2-v024 Ready；ordered environment preflight then shared-NPU tiny smoke
 基线调查日期：2026-08-21
 正式代码repo existing `main@92a6f767...`保持v0.2.1 maintenance/reference；immutable 0.24 baseline与`project/glm52-w8a8-v024`已创建于`a9435a34...`/tree`e5e073ed...`。
 
@@ -21,21 +21,22 @@
 - 目标模型固定为GLM-5.2-W8A8；W8A8是首次目标模型eager correctness硬门禁，不是性能优化。BF16只允许operator/reference/debug microtest，不能替代目标bring-up。
 - FlagScale暂不作为首次模型bring-up前置；先直接闭合`vLLM -> vllm-plugin-FL -> PlatformFL -> WorkerFL -> ModelRunnerFL -> FlagOS Dispatch`，模型推理链稳定后才在现有后期集成阶段验证FlagScale。
 - FlagGems是preferred实现来源而非mandatory依赖。Bring-up优先correctness和FlagOS Dispatch可达性，不以统一算子来源或FlagGems覆盖率作为首次eager门禁。
-- A3 Phase B runtime smoke至少需要两个logical devices组成valid free pair；Phase A environment preparation不映射NPU，不受当前全占用阻塞。
-- FlagTree rc1与carrier triton-ascend共享完整`triton`namespace；A2在disposable container内执行package-manager replacement并验证single coherent provider，失败即STOP。
+- A2 environment preflight不映射NPU；通过后允许共享NPU 12+13做极小`torch_npu` tensor与FlagOS Dispatch operator smoke，不要求完全空闲pair。共享资源状态恶化立即STOP。
+- FlagTree rc1可能与carrier内实际compiler/provider共享`triton`namespace；A2必须先做实际inventory，再在disposable container内执行package-manager replacement并验证single coherent provider，失败即STOP。不得预设carrier初始provider或版本。
 - New-main FL安装必须从readonly source的writable `.git`副本执行`--no-build-isolation --no-deps -e`；缺build requirement时STOP，不得联网补包。
-- A2网络只允许exact v0.24 carrier、FlagTree official resource index和official FlagGems v5.3.4；禁止其他image/tag/index和核心runtime升级。
+- A2 carrier只接受D-062 exact digest；网络只允许FlagTree official resource index和official FlagGems v5.3.4，禁止其他image/tag/index和核心runtime升级。
 - FlagGems只允许exact source + current container Python + `--no-build-isolation --no-deps`安装；禁止`setup.sh`、`flaggems-setup`和任何bootstrap/独立环境流程。
-- 服务器缺少formal FL source时，只允许clone唯一repo的`project/glm52-w8a8-v024`到Evidence source目录并验证exact HEAD/tree/clean。
+- 服务器缺少formal FL source时可direct clone唯一repo/project branch；GitHub不可达时允许expected SHA256校验过的Git bundle relay到Evidence source目录，最终验证exact branch/HEAD/tree/clean。
 - GitHub是唯一项目事实源：本控制仓库管理PLAN/DECISIONS/tasks，正式代码仓库及冻结关系以`CODE-REPOSITORY-BASELINE.md`为准。
 
 ## 当前关键路径
 
 ```text
-A3-CP-A2-v024 Phase A No-NPU Environment Preparation (Ready)
+A3-CP-A2-v024 environment identity/preparation (Ready)
+  -> exact carrier digest + Git bundle identity
+  -> FlagTree -> FlagGems -> FL
+  -> shared NPU 12+13 tiny torch_npu + Dispatch smoke
   -> STOP + Codex review
-  -> wait for valid free pair
-  -> Phase B NPU Runtime Smoke
   -> 910C Canary (v0.24 control-approved model TBD)
   -> GLM Contract Gate (vLLM语义 + quant format + Minimal Eager Execution Closure)
   -> Capability Microgates / Gap Confirmation
@@ -61,8 +62,8 @@ Deferred / on-demand side branch after Eager Correctness:
 |---|---|---|---|---|---|---|
 | **v0.24 Baseline Refresh** | 冻结branch语义、new main SHA/tree、carrier tuple、compiler冲突和GLM evidence | developer通知 + official源码 | **PASS**；official refs frozen | SHA/tree、tuple、conflicts、Unknown | Codex | 不需要 |
 | **Formal Code Repository Migration** | 不改existing main，新增0.24 immutable baseline与project branch | 用户批准 | **PASS**；三个refs exact，existing main/default/legacy零变化 | refs/SHA/tree/legacy hashes | Codex | 不需要 |
-| **A3-CP-A2-v024 Phase A** | 无NPU映射完成carrier/package/compiler/FlagGems/FL准备与静态验证 | **Ready**；NPU全占用不阻塞 | Phase A environment PASS并STOP；保存独立Evidence | image/package/provider/source/static origin | DeepSeek执行；Codex验收 | 不需要NPU |
-| **A3-CP-A2-v024 Phase B** | 新NPU container重放Phase A并完成最小runtime smoke | Phase A accepted；完整valid free pair可用 | pair、Platform/Worker/Runner/Dispatch及一个NPU op PASS | Phase A引用 + 独立runtime Evidence | DeepSeek未来执行；Codex验收 | 第一台至少2 logical devices |
+| **A3-CP-A2-v024 environment gate** | 无NPU映射完成carrier/source/package/compiler/FlagGems/FL准备与静态验证 | **Ready**；exact digest与bundle relay已获授权 | environment gate PASS后同一任务继续tiny smoke；失败STOP | image/package/provider/source/static origin | DeepSeek执行；Codex验收 | 不需要NPU |
+| **A3-CP-A2-v024 shared-NPU tiny smoke** | 在受限新container完成最小NPU/Dispatch验证 | environment gate PASS；共享NPU 12+13状态安全 | tiny torch_npu与一个Dispatch op PASS；不含Worker/ModelRunner完整runtime | environment引用 + NPU pre/post + Dispatch/device result | DeepSeek同一任务执行；Codex验收 | 第一台NPU 12+13 |
 | **910C Canary** | 用new v0.24 stack上的control-approved小模型隔离验证基础链 | A3-CP-A2-v024 accepted；canary模型/权重重新冻结 | eager offline + serving正确；FL/dense attention/HCCL dispatch可追溯 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
 | **GLM Contract Gate** | 冻结`FlagOS new main + vLLM0.24 + GLM-5.2-W8A8`模型与artifact contract | Canary accepted；真实checkpoint manifest齐全 | 验证current-main GLM contract、W8A8 artifact、MLA/DSA/Indexer/W8A8 Linear/MoE、MLA cache ops与910C A/B/C closure；0.20.2仅fallback evidence | current-main code map、manifest/layout、gap contracts、closure证据 | Codex决策；DeepSeek仅做未来授权spike | 不需要 |
 | **Capability Microgates / Gap Confirmation** | 对每个mandatory capability按`FlagGems -> vendor.ascend -> Reference/PyTorch`依次审查，确认现有合法路径或形成gap contract | 两项contract ADR和Minimal Eager Execution Closure批准 | 路径在FlagOS Dispatch内可达、910C可执行、microgate correctness通过、接口支撑GLM forward；Reference须证明tensor留在NPU且无静默CPU fallback；任何`vllm_ascend`实际调用须可追踪并进入边界审查；三路都失败才标Missing/Unwired | path audit、gap contract、reference/tolerance、device/backend/import trace、failure signature | Codex定义/审查；DeepSeek仅在未来授权后执行repro | 不需要 |
@@ -83,7 +84,7 @@ Deferred / on-demand side branch after Eager Correctness:
 
 `c70aa4b`的neutral-base-only门禁继续保持Superseded，不因本轮版本迁移恢复。`118c314`中的v0.20.2 A2及其prompt现为**Superseded / Paused by upstream branch migration**，不得执行。
 
-Primary carrier为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`。Phase A不映射NPU并完成环境准备后STOP；Phase B等待valid free pair并使用新container快速重放。Ready task：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)；当前prompt：[`tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md)。
+Official documented release tag `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`当前无可用artifact。A2 provisional carrier固定为`quay.io/ascend/vllm-ascend@sha256:1c36469fe1cd2335850eb2318bd3562471c34d5fd8f9f2affb0afc745ce39585`，仅称official `releases/v0.24.0rc` A3 nightly；内部runtime tuple必须由container preflight实测。Ready task：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)；当前prompt：[`tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md)。
 
 完整coexistence/dynamic provenance不再阻塞Qwen、GLM mandatory closure、first eager或Baseline Benchmark；原trace设计移至[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，作为Eager Correctness后的Deferred / On-demand支线，按客户证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发。A/B仍比较“保留package + FL selectors”和“同carrier卸载package”。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
 

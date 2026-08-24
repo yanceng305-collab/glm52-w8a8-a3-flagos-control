@@ -1,6 +1,6 @@
 # Official v0.24 Baseline Refresh Research
 
-研究冻结时间：2026-08-21
+研究冻结时间：2026-08-21；artifact decision更新：2026-08-24
 执行边界：仅official源码/文档/GitHub元数据；未访问服务器、未pull image、未修改正式代码repo
 
 ## 结论
@@ -73,9 +73,11 @@ Commit [`bb439d028479475a965712e08ce0b955fe02aafb`](https://github.com/flagos-ai
 
 结论：primary起点前移到0.24，但MLA/DSA/SFA/Indexer/W8A8与MLA cache ops仍必须进入新的mandatory capability gap confirmation。
 
-## Recommended A3 carrier candidate
+## Documented A3 release tag and provisional A2 carrier
 
-Primary candidate：`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`。
+Official文档定义`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`，但当前registry未建立可用artifact。对应[tag-push image workflow](https://github.com/vllm-project/vllm-ascend/actions/runs/30890938662) cancelled，不能把文档tag当作可拉取或已冻结的release image。
+
+A2当前唯一provisional carrier为`quay.io/ascend/vllm-ascend@sha256:1c36469fe1cd2335850eb2318bd3562471c34d5fd8f9f2affb0afc745ce39585`；其[A3 official workflow](https://github.com/vllm-project/vllm-ascend/actions/runs/30602986508)成功完成。该artifact身份只能写为official `releases/v0.24.0rc` A3 nightly，不得称为rc1 release image或其alias。
 
 Official vLLM-Ascend source tag：
 
@@ -83,7 +85,7 @@ Official vLLM-Ascend source tag：
 - commit `412cda26814ff70c326f6eb6510f1b610f67bbc0`
 - tree `92a290701c2df5ec62bc92c19923aaadab27c7c9`
 
-### Source-defined tuple
+### Documented rc1 source-defined tuple
 
 | Component | Value | Status |
 |---|---|---|
@@ -101,11 +103,11 @@ Official vLLM-Ascend source tag：
 | compressed_tensors | `>=0.11.0` | Confirmed constraint；exact resolved version Unknown |
 | NNAL/ATB | CANN 9.0.1 family | Version contract known；actual carrier inventory Unknown |
 
-Sources：[Dockerfile.a3](https://github.com/vllm-project/vllm-ascend/blob/412cda26814ff70c326f6eb6510f1b610f67bbc0/Dockerfile.a3)、[requirements.txt](https://github.com/vllm-project/vllm-ascend/blob/412cda26814ff70c326f6eb6510f1b610f67bbc0/requirements.txt)。
+Sources：[Dockerfile.a3](https://github.com/vllm-project/vllm-ascend/blob/412cda26814ff70c326f6eb6510f1b610f67bbc0/Dockerfile.a3)、[requirements.txt](https://github.com/vllm-project/vllm-ascend/blob/412cda26814ff70c326f6eb6510f1b610f67bbc0/requirements.txt)。该表只描述documented rc1 source contract，不定义provisional nightly的实际filesystem/package tuple。
 
 ### Artifact evidence boundary
 
-Official versioned docs列出该image，但tag-push workflow曾cancelled、release checklist artifact项未闭合且无GitHub Release object。它们不能证明image不存在，但意味着registry digest和实际filesystem/package内容不能由GitHub源码冻结。后续server preflight只允许检查本机已有image；缺失或identity不确定时STOP，不得pull。
+Official versioned docs列出release tag，但tag-push image workflow cancelled，registry当前无该artifact。服务器本地已有上述exact nightly digest；A2只接受该digest并冻结image ID/architecture。其OS/Python/CANN、torch/torch-npu、vLLM、compiler/provider及其他package版本必须由container preflight实测，不得从rc1 source contract外推；digest缺失或不匹配即STOP。
 
 ## A3 device requirement
 
@@ -113,7 +115,7 @@ Official versioned docs列出该image，但tag-push workflow曾cancelled、relea
 - **Confirmed project topology：** 8 physical cards -> 16 logical devices -> 16×64GB -> 1024GB；不重新打开该事实。
 - **Inferred：** 新A2至少暴露两个logical devices，并应选择已知有效组合。
 - **Unknown：** official文档没有定义logical ID到physical card/die的通用映射，也没有明确最小pair必须是同一physical card。`davinci0/1`只是示例。
-- **Required preflight：** 通过目标Host支持的只读拓扑证据确认合法pair；优先同物理卡pair但不得猜ID。没有完整、明确空闲的valid pair即STOP。
+- **A2 current decision：** tiny smoke固定共享NPU 12+13；不再要求完全空闲pair。只允许极小torch_npu tensor与FlagOS Dispatch operator，开始/结束只读记录占用；状态恶化或可能干扰现有任务立即STOP。
 
 ## FlagTree / triton-ascend relationship
 
@@ -127,7 +129,7 @@ Official versioned docs列出该image，但tag-push workflow曾cancelled、relea
 
 ### Replacement/overlay assessment
 
-在carrier的`triton-ascend==3.2.1`上安装FlagTree应理解为compiler replacement/overlay transaction，而非clean coexistence。FlagTree source install hook只检查/卸载distribution名`triton`，不显式卸载`triton-ascend`；预编译wheel安装也未必运行source install hook。因此可能出现两个dist-info与混合`triton/*`文件ownership。
+若provisional carrier实际含与FlagTree共享namespace的provider，安装FlagTree应理解为compiler replacement/overlay transaction，而非clean coexistence。A2必须先inventory实际distribution/version/RECORD；不得把rc1 recipe中的`triton-ascend==3.2.1`当作该nightly的既定starting state。
 
 ### Unknown / A2 runtime gate
 
@@ -148,21 +150,21 @@ FlagGems v5.3.4 generic `ascend-cann900` profile仍列Python3.11和FlagTree`0.6.
 
 | Layer | Candidate | Status |
 |---|---|---|
-| Carrier | exact `quay.io/ascend/vllm-ascend:v0.24.0rc1-a3` | Local absent时允许pull唯一tag；随后冻结identity |
-| Base runtime | Ubuntu22.04 / Python3.12 / CANN9.0.1 / torch2.10 / torch-npu2.10.post2 | Source contract Confirmed |
-| vLLM | 0.24.0 empty build | Confirmed source contract |
+| Carrier | exact `quay.io/ascend/vllm-ascend@sha256:1c36469f...` | Official release-branch A3 nightly；provisional only |
+| Base runtime | 不预设 | Container preflight冻结actual OS/Python/CANN/torch/torch-npu |
+| vLLM | FL要求0.24 contract；carrier actual identity待验 | Container preflight gate |
 | FL | `project/glm52-w8a8-v024` | Frozen`a9435a34...`/tree`e5e073ed...` |
 | FlagGems | v5.3.4 / `f7c55cb2...` | Confirmed README pin；preferred |
 | Compiler | exactly one coherent Ascend provider | Required |
 | Intended compiler | FlagTree`0.6.1rc1+ascend3.5` after controlled replacement | A2执行并验证single provider；失败STOP |
-| Carrier compiler before replacement | triton-ascend3.2.1 | Confirmed starting state；not final coexistence |
+| Carrier compiler before replacement | 不预设 | Container inventory后按实际distribution做replacement |
 | Env | `VLLM_PLUGINS=fl`, `VLLM_FL_PLATFORM=ascend`, `TRITON_ALL_BLOCKS_PARALLEL=1`, `VLLM_VENDOR`unset | Confirmed FL contract |
 | Execution | eager | Confirmed README requirement |
-| Communication | HCCL baseline | Existing architecture；new-main A3 smoke Unknown |
+| Communication | A2禁止HCCL/TP | Tiny smoke不执行collective |
 | FlagCX/FlagScale | absent/not active | Deferred |
-| Device scope | one valid free pair, at least 2 logical devices | Required；mapping Unknown |
+| Device scope | shared logical NPU 12+13 | 只允许tiny tensor/Dispatch；状态恶化STOP |
 
-“FlagTree + triton-ascend并存”仍不是合法终态；A2必须卸载carrier compiler distributions并形成single coherent FlagTree provider。Local artifact和valid pair由task preflight处理，不再阻止Ready。
+“FlagTree + 其他同namespace provider并存”仍不是合法终态；A2按actual inventory用package manager处理冲突distribution并形成single coherent FlagTree provider。Exact digest、source bundle与共享NPU状态由task preflight处理。
 
 ## Upstream Conflict: current Ascend Dockerfile
 

@@ -7,9 +7,9 @@ Branch migration没有改变顶层ownership模型：current main仍注册`Platfo
 ## 真实调用链
 
 ```text
-Environment carrier candidate
-  quay.io/ascend/vllm-ascend:v0.24.0rc1-a3
-  (CANN / torch-npu / empty vLLM / compiler-provider / installed packages)
+Environment provisional carrier
+  quay.io/ascend/vllm-ascend@sha256:1c36469fe1cd2335850eb2318bd3562471c34d5fd8f9f2affb0afc745ce39585
+  (official releases/v0.24.0rc A3 nightly; internal tuple from preflight)
   + VLLM_PLUGINS=fl, VLLM_FL_PLATFORM=ascend
     ↓
 vllm.LLM / vllm serve
@@ -55,7 +55,7 @@ vllm.LLM / vllm serve
 | GLM model class | vLLM0.24 `GlmMoeDsaForCausalLM` | MLA/Indexer/MoE | 否 | 间接 | 否 | Implemented；NVIDIA init/weight load PARTIAL |
 | OOT layers | FL `ops/custom_ops.py` | FL dispatch | 是 | 视op | 否 | Confirmed framework |
 | CachedOp dispatch | FL `dispatch` + `ascend.yaml` | flagos/vendor/reference | 是 | 视backend | 否 | Confirmed framework |
-| Environment carrier | vLLM-Ascend v0.24 official documented A3 candidate | CANN9.0.1/torch-npu/empty vLLM0.24/compiler/packages | 环境层，不判ownership | 是 | package存在 | Source/docs Confirmed；artifact identity Unknown |
+| Environment carrier | Exact digest official `releases/v0.24.0rc` A3 nightly；provisional | Actual CANN/torch-npu/vLLM/compiler/packages由preflight冻结 | 环境层，不判ownership | 是 | package存在 | Digest Confirmed；不得称rc1 release image或预设tuple |
 | Dense attention glue | FL `vendor/ascend/impl/attention.py` | torch-npu ops | adapter是 | 强 | 明确adapted | v0.2.1 Qwen910C Confirmed；new main unverified |
 | Dense attention kernel | torch-npu/CANN | CANN/AICore | 否 | 核心 | API历史相关 | v0.2.1 Qwen910C Confirmed；new main unverified |
 | Dense MLA | 无usable owner；placeholder | — | 否 | — | 对照实现未迁入 | **Missing** |

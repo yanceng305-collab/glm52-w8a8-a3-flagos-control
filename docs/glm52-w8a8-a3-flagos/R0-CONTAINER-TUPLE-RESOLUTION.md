@@ -8,7 +8,7 @@
 
 本文件记录control commit `c70aa4b83b4d270ee1d920e807296d0b283cfab2`在“vllm-ascend image/package存在本身即违规”前提下形成的neutral-base tuple研究。该前提已被后续official runtime ownership复核推翻：R0-P1/R0-F1不再是当前正式路线，neutral CANN base也不是唯一合法选择。下列OCI digest、CANN/torch-npu兼容性与Host/Container边界可继续作为reference evidence；所有“必须从未安装”“negative audit为合规验收”“primary/fallback已冻结”的表述均按本notice视为**Superseded**。
 
-后续`92a6f767...` / `v0.20.2rc1-a3`优先候选也已被official branch migration Superseded为maintenance/reference。New primary candidate见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)：FlagOS new main/vLLM0.24 + `v0.24.0rc1-a3`。carrier/package存在仍不是单独PASS/FAIL条件。
+后续`92a6f767...` / `v0.20.2rc1-a3`优先候选也已被official branch migration Superseded为maintenance/reference。当前A2 artifact决策见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)：documented `v0.24.0rc1-a3` tag无可用artifact，使用exact digest的official release-branch A3 nightly作provisional carrier且runtime tuple由preflight冻结。carrier/package存在仍不是单独PASS/FAIL条件。
 
 ## 决策边界
 

@@ -1,7 +1,7 @@
 # 项目状态
 
-更新时间：2026-08-21
-总体状态：A3-CP-A2-v024 Phase A Ready；Phase B resource-waiting
+更新时间：2026-08-24
+总体状态：A3-CP-A2-v024 Ready；等待exact carrier/source identity preflight后连续执行environment与shared-NPU tiny smoke
 
 ## 当前快照
 
@@ -15,8 +15,8 @@
 | Formal A3 code repository | Migration PASS | existing main不变；v0.2.1 anchor、v0.24 anchor、project branch exact |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
-| A2 Phase A | **Ready / not executed** | 不映射NPU；完成environment/package/compiler/FL与静态验证后STOP |
-| A2 Phase B | Waiting for valid free pair | 新NPU container重放Phase A后执行runtime/Dispatch/synthetic smoke |
+| A2 environment gate | **Ready / previous attempt STOP before container** | exact digest、Git bundle、实际runtime inventory、compiler/FlagGems/FL与静态验证 |
+| A2 shared-NPU tiny smoke | **Ready after environment PASS** | 仅共享NPU 12+13执行极小torch_npu tensor与FlagOS Dispatch operator；无需再次确认 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -30,8 +30,10 @@
 - official current `main`本轮冻结为`a9435a34...`/tree`e5e073ed...`，pyproject/README固定vLLM0.24；`main`未来可能前进。
 - official `v0.2.1`与new `main`已diverged，不能fast-forward或merge成伪升级。
 - `bb439d...`在NVIDIA A800上完成GLM-5.2-Slim TP16双机init和weight loading后因MLA cache op缺失而PARTIAL；不是Ascend/W8A8 E2E。
-- new primary carrier candidate为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`；source tuple为CANN9.0.1/Py3.12/vLLM0.24/torch2.10/torch-npu post2/triton-ascend3.2.1。
-- A3 official v0.24 docs要求至少两个logical devices；valid/same-card pair映射需Host证据，不能猜ID。
+- Official文档定义的A3 release tag仍为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`，但当前未建立可用artifact；该tag不得用于本次A2。
+- A2唯一provisional carrier为`quay.io/ascend/vllm-ascend@sha256:1c36469fe1cd2335850eb2318bd3562471c34d5fd8f9f2affb0afc745ce39585`，身份仅为official `releases/v0.24.0rc` A3 nightly，不是rc1 release image。
+- 不预设该carrier内部CANN、torch-npu、vLLM、triton-ascend或其他runtime tuple；实际版本由container preflight冻结。
+- A2 tiny smoke允许共享NPU 12+13；现有任务继续运行，状态恶化或可能干扰时立即STOP。
 - current README选择FlagGems v5.3.4与FlagTree`0.6.1rc1+ascend3.5`；FlagTree与triton-ascend共享完整`triton`namespace，是替代provider而非clean coexistence。
 - current main Ascend Dockerfile仍为0.19/CANN8.5/old compiler tuple，标记Upstream Conflict / stale candidate。
 - `VLLM_PLUGINS=fl`使实际platform为FL；静态链路继续到`WorkerFL`、`ModelRunnerFL`与FlagOS Dispatch。
@@ -44,17 +46,17 @@
 - FL new main使用vLLM0.24并已包含GLM model/Indexer结构；v0.2.1维护线仍是0.20.2。Target Ascend/W8A8 closure仍未验证。
 - v0.2.1-era FL compressed-tensors validator与packed W8A8 glue不在observed new main；0.24 W8A8 loading owner必须从upstream/runtime与真实artifact重审。
 - A2 FlagGems安装禁止setup/bootstrap profile，只能使用current container Python对exact v5.3.4 source执行no-build-isolation/no-deps安装。
-- 服务器缺formal FL source时允许唯一repo/唯一project branch clone到Evidence `source/`并验证exact HEAD/tree/clean。
+- 服务器缺formal FL source时可direct clone唯一repo/project branch；GitHub不可达时允许expected SHA256校验过的Git bundle relay。最终必须验证branch=`project/glm52-w8a8-v024`、HEAD=`a9435a34...`、tree=`e5e073ed...`、worktree clean。
 - Current-main FL Ascend上MLA、DSA/SFA、wired Indexer与MLA cache closure仍Missing/Unwired；W8A8 Linear必须基于vLLM0.24重新gap confirmation，当前无910C PASS。
 - 默认通信 backend 是 HCCL；FlagCX optional。
 - 当前 FL Ascend 不构建自身 native extension；`VLLM_VENDOR` 必须 unset，设置 `ascend` 会失败。
 
 ## 执行时必须验证 / 后续待决策
 
-1. A2 task内需冻结carrier RepoDigest/image ID；本机缺失时只允许pull exact v0.24 tag。
-2. Phase A需完成FlagTree replacement并证明single coherent static provider；失败STOP。
-3. Valid two-logical-device pair只阻塞Phase B，不阻止Phase A。
-4. FlagGems v5.3.4 + FlagTree + FL project branch的910C synthetic smoke尚待执行。
+1. A2首先验证exact carrier RepoDigest；缺失或不匹配即STOP，不使用release tag或mutable nightly tag替代。
+2. Git bundle必须有relay端提供的expected SHA256，并验证formal FL branch/HEAD/tree/clean。
+3. 根据carrier实际inventory完成FlagTree replacement并证明single coherent provider；不得按历史release recipe预设初始compiler。
+4. 环境门禁PASS后直接在共享NPU 12+13执行tiny torch_npu与FlagOS Dispatch smoke；禁止模型、serve、HCCL/TP、KV cache、完整Worker/ModelRunner runtime、benchmark/profile和大tensor。
 5. target GLM-5.2-W8A8 checkpoint manifest、format、SHA、tensor/scale layout尚未提供，但不阻塞A2。
 6. current-main Ascend MLA、DSA/SFA、Indexer、W8A8 Linear/MoE及`concat_and_cache_mla*` closure归后续GLM gate，不阻塞A2。
 
@@ -76,10 +78,10 @@
 
 ## 下一门禁
 
-当前Ready服务器任务是A2 Phase A：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。执行提示词：[`tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md)。Full A2 prompt已Superseded；Phase B prompt尚未生成。
+当前Ready服务器任务是完整A2有序执行：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。唯一执行提示词：[`tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md)。旧Phase-A-only prompt已Superseded。
 
 Old v0.20 task/prompt继续Paused，不得下发。
 
 原完整trace设计已后置到[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，定义为Eager Correctness后的Deferred / On-demand审计支线，不是Baseline Benchmark硬门禁。
 
-本轮未操作服务器。代码repo branch migration与control/prompt已完成；下一步直接执行A2-v024。
+本轮未操作服务器。上次A2-v024在container创建前因carrier tag与formal source获取失败正确STOP；当前control已允许exact nightly digest与Git bundle relay，下一步按新prompt重试完整A2。
