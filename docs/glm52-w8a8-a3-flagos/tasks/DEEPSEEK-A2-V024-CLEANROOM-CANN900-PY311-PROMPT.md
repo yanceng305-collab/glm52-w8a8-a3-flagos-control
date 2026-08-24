@@ -109,7 +109,7 @@ FlagTree是本任务正式compiler provider。不要预装独立triton-ascend路
 - FlagGems + FL + Dispatch smoke PASS；
 - tensor保持NPU且无silent CPU fallback；
 - 3个历史问题均有clean baseline重现/未重现证据；
-- 必要patch具有正式provenance，FL patch已进入task branch/commit/PR；
+- 必要patch具有正式provenance；若实际需要修改vllm-plugin-FL，则FL patch必须进入task branch/commit/PR；若原始exact FL无需修改即可通过，则PR=N/A，同样满足PASS；
 - 环境有可重放Dockerfile/script/manifest/lock或derived image digest；
 - actual execution code identity与Git指针一致；
 - Code、Control、Evidence三指针完整。
