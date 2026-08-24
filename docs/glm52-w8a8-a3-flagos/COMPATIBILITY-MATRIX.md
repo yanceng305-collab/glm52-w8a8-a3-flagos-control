@@ -7,7 +7,7 @@
 | 组件 | 官方推荐/实际CI | 客户合规候选 | A3/910C专用 | GLM-5.2-W8A8必需 | 状态/边界 |
 |---|---|---|---:|---:|---|
 | Host OS/CANN | Host CANN版本不参与container tuple；只保留Host runtime条件 | 不bind-mount Host Toolkit | 是 | Driver/runtime层必需 | Boundary Confirmed；Host CANN差异不再分析 |
-| Container base/OS | AscendHub tag`9.0.0-a3-ubuntu22.04-py3.11-devel`；official Dockerfile存在 | 从AscendHub官方pull信息取得exact ref/digest；fallback official repo`aec636189a23...`local build | 是 | 必需 | D-075 clean-room；不猜registry，不切9.0.1 |
+| Container base/OS | AscendHub tag`9.0.0-a3-ubuntu22.04-py3.11-devel` | Exact digest`sha256:5f20011b2c55...` | 是 | 必需 | D-075 clean-room；用户已pull，registry/source fallback为历史 |
 | Architecture | aarch64 | 按现场aarch64复核 | 是 | 必需 | Confirmed job metadata |
 | Python | Official CANN Dockerfile原生3.11.15 | **Clean Python3.11** | 否 | 必需 | 不从Qwen image或其他container复制 |
 | Driver | Host mounted | 产品/CANN兼容版本 | 是 | 必需 | exact Unknown |

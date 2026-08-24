@@ -5,11 +5,10 @@
 
 ## 目标
 
-从全新的Ascend官方CANN 9.0.0 A3 Python3.11 devel基础环境开始，独立安装并验证：
+从已冻结的Ascend官方CANN 9.0.0 A3 Python3.11 devel image开始，在全新disposable container中独立安装并验证：
 
 ```text
-Python 3.11
-  -> CANN 9.0.0 A3
+Python 3.11 / CANN 9.0.0 A3
   -> torch / torch_npu 2.10.x
   -> vLLM 0.24
   -> FlagTree 0.6.1+ascend3.5
@@ -19,24 +18,14 @@ Python 3.11
   -> tiny NPU smoke
 ```
 
-上一轮`A2-V024-PY311-FIRST-FLAGTREE-ENV/20260824T065902Z`只作feasibility evidence，不是正式环境acceptance，也不是本任务的runtime来源。
+上一轮copied-runtime PY311 PASS只作feasibility evidence，不是本任务runtime来源或正式acceptance。
 
-## Official clean base
+## Frozen base
 
-优先使用用户已在AscendHub确认存在的官方tag：
-
-`9.0.0-a3-ubuntu22.04-py3.11-devel`
-
-- DeepSeek必须从AscendHub官方页面或官方pull说明取得实际完整image ref；Control不猜registry地址。
-- Pull后冻结完整image ref、RepoDigest、image ID、architecture、created metadata和实际OS/Python/CANN/toolkit/ops/NNAL inventory。
-- 如果官方tag经合理排障仍无法取得，可从Ascend官方repo exact source本地build同一CANN 9.0.0基线，不得切换到9.0.1：
-  - Repo：`https://github.com/Ascend/cann-container-image`
-  - Commit：`aec636189a2304f704871460e9fcaa0b7f22dde3`
-  - Dockerfile：`cann/9.0.0-a3-ubuntu22.04-py3.11/Dockerfile`
-  - Dockerfile Git blob：`e1abd27dfa72e0c7e6a8f666253acb585a02af99`
-- Local build必须从clean exact commit执行，并冻结derived image digest、build command、source tree及下载artifact provenance。
-
-Official Dockerfile source contract为Ubuntu22.04、Python3.11.15、CANN9.0.0 toolkit、A3 ops与NNAL；实际环境仍以pull/build后的inventory为准。
+- Image：`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b2c5509ca4716393e66fc7aa07016629bce36a7f6c32c1bf31f30433f`
+- User-confirmed source tag：`9.0.0-a3-ubuntu22.04-py3.11-devel`
+- DeepSeek只需验证服务器本地image的RepoDigest、image ID、architecture、created metadata和实际Python/CANN/A3 ops/NNAL/toolchain inventory。
+- Registry发现、pull排障和Dockerfile fallback build不属于本任务执行路径；历史official Dockerfile只保留为source背景。
 
 ## Identity与目录
 
@@ -48,58 +37,37 @@ Official Dockerfile source contract为Ubuntu22.04、Python3.11.15、CANN9.0.0 to
 - Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311/<run-id>/`
 - Work：`/data/tiankuan/zyg/work/A2-V024-CLEANROOM-CANN900-PY311/<run-id>/`
 
-## 首选兼容组合
+## Clean-room边界
 
-第一优先参考FlagGems当前`ascend-cann900`组合：
+- 禁止使用上一轮container、runtime、work、venv、site-packages、wheelhouse、derived image或patched文件。
+- 禁止从任何其他image/container复制Python、site-packages、FlagTree或vLLM。
+- 禁止跨Python版本复制package。
+- FlagTree是本任务正式compiler provider；不得预装或保留独立triton-ascend distribution路线，最终必须是single coherent provider。
 
-- Python 3.11
-- torch 2.10.0+cpu
-- torch-npu 2.10.0
-- triton 3.5.0
-- triton-ascend 3.2.1
-- FlagTree`0.6.1+ascend3.5`
+上一轮3个问题必须在clean unmodified环境自然验证，禁止提前patch：
 
-这是首选实验基线，不是死限制。若CANN/Driver/vLLM0.24存在冲突，DeepSeek先调查并合理适配。最终FlagTree必须是single coherent provider，不得留下FlagTree/triton-ascend混杂文件或双重ownership。
+1. Triton`do_bench_npu`circular import；
+2. FlagGems DSA缺失`__init__.py`；
+3. FL`patch_mamba_config`/`cbor2`。
 
-## 强制clean-room边界
+问题未出现时保存未复现证据；稳定复现后保存baseline repro，再调查和适配。
 
-- 禁止从此前FlagOS Qwen image复制Python、site-packages、FlagTree、vLLM、torch/torch_npu、FlagGems、FL或其他runtime。
-- 禁止从任何其他container直接复制site-packages或FlagTree。
-- 禁止跨Python版本复制vLLM package。
-- 禁止复用上一轮container、work runtime、venv、site-packages、wheelhouse或derived image。
-- 只允许读取上一轮immutable result/Evidence理解历史问题，禁止复制其runtime和patched文件。
+## 安装与Code规则
 
-上一轮3处临时patch不得提前应用：
-
-1. Triton`do_bench_npu`circular-import patch；
-2. FlagGems DSA缺失`__init__.py`patch；
-3. FL`patch_mamba_config`/`cbor2`patch。
-
-这些问题必须在clean unmodified source/package中自然重新验证。未出现则保存未复现证据；稳定复现则保存baseline repro后再作为真实适配缺口处理。
-
-## 安装与排障原则
-
-- torch/torch_npu、vLLM0.24、FlagTree、FlagGems和FL必须从可解释的正式source/package路线独立安装。
-- vLLM0.24不得从py312 site-packages或其他container复制。
-- DeepSeek拥有现场排障与合理联网自主权，可使用官方/可信GitHub、GitCode、AscendHub、package index、CI artifact、文档和镜像。
-- 可在clean disposable container/work/artifacts中pip/source install、安装build/debug依赖、检查ABI/native extension、构建wheel、生成Dockerfile/script/lock/manifest、创建唯一tag derived image和临时patch third-party source。
-- 所有source/artifact必须记录URL、repo、commit/tag/version、SHA256/image digest、适用Python/architecture及重放方法。
-- 单个dependency、ABI、build、toolchain、import或native-extension问题先调查适配，不立即STOP。
-
-## Code与Patch规则
-
-- 如果需要修改vllm-plugin-FL，必须创建`task/A2-V024-CLEANROOM-CANN900-PY311`，commit、push并创建base=`project/glm52-w8a8-v024`的PR。
-- 不得临时patch FL后仍声明Code clean或PR=N/A；正式smoke必须绑定actual task commit/tree。
-- FlagTree/FlagGems/Triton third-party patch可保存在work/artifacts，但必须保存patch文件、unmodified source identity、patched artifact SHA256及重放方法。
-- Exploratory dirty允许；正式PASS/STOP必须绑定actual execution code和全部patched dependency identity。
+- 从零安装torch/torch_npu、vLLM0.24、FlagTree、FlagGems和FL；vLLM必须来自可解释的正式source/package路线。
+- DeepSeek可自主联网调查、pip/source install、安装build/debug依赖、检查ABI/native extension、构建wheel、生成Dockerfile/script/lock/manifest、创建唯一tag derived image和临时patch third-party source。
+- 所有来源记录URL、repo、commit/tag/version、SHA256/image digest、适用Python/architecture和重放方法。
+- 如果需要修改vllm-plugin-FL，必须创建`task/A2-V024-CLEANROOM-CANN900-PY311`，commit、push并创建base=`project/glm52-w8a8-v024`的PR。原始FL直接通过时PR=`N/A`。
+- 不得临时patch FL后仍声明Code clean/PR=N/A。
+- Third-party patch必须保存patch、unmodified source identity、patched artifact SHA256和重放方法。
 
 ## 验证顺序
 
-1. 获取并冻结官方CANN 9.0.0 A3 py3.11-devel image identity。
-2. 创建全新container，inventory Python/CANN/toolchain。
+1. 验证本地exact digest image identity。
+2. 创建全新disposable container并inventory Python/CANN/A3 ops/NNAL/toolchain。
 3. 安装并验证torch + torch_npu。
-4. 从正式source/package安装并验证vLLM0.24。
-5. 安装FlagTree`0.6.1+ascend3.5`并审计single-provider ownership。
+4. 安装并验证vLLM0.24。
+5. 安装FlagTree`0.6.1+ascend3.5`并审计provider。
 6. 安装FlagGems v5.3.4。
 7. 安装exact FL source并激活FlagOS Dispatch。
 8. 静态闭合后重新检查共享NPU资源。
@@ -109,28 +77,28 @@ Official Dockerfile source contract为Ubuntu22.04、Python3.11.15、CANN9.0.0 to
 
 只有全部满足才PASS：
 
-- 官方CANN 9.0.0 A3 py3.11 devel base identity明确；
-- clean container从零构建，不依赖上一轮runtime复制；
+- local base image精确匹配frozen digest；
+- clean container从零建立且未复制上一轮/其他image runtime；
 - torch/torch_npu在NPU可运行；
-- vLLM0.24 source/package identity明确；
-- FlagTree`0.6.1+ascend3.5`single coherent provider，无混杂残留；
+- vLLM0.24身份明确；
+- FlagTree`0.6.1+ascend3.5`single coherent provider，无triton-ascend混杂；
 - FlagTree kernel在Ascend compile + execute PASS；
 - FlagGems + FL + Dispatch smoke PASS；
 - tensor保持NPU且无silent CPU fallback；
-- 上一轮3个问题均有clean baseline重现/未重现证据；
-- 所有必要patch具有正式provenance，FL patch已进入task branch/commit/PR；
+- 3个历史问题均有clean baseline重现/未重现证据；
+- 必要patch具有正式provenance，FL patch已进入task branch/commit/PR；
 - 环境有可重放Dockerfile/script/manifest/lock或derived image digest；
 - actual execution code identity与Git指针一致；
 - Code、Control、Evidence三指针完整。
 
 ## STOP
 
-如果CANN 9.0.0本身出现明确且无法合理适配的版本blocker，或合理调查后仍无法闭合，STOP并报告完成阶段、root cause、repro、尝试过的适配、已PASS门禁、剩余blocker、patch状态和推荐下一路线。未经Decision不得切换到CANN9.0.1。
+CANN9.0.0出现明确且无法合理适配的版本blocker，或合理调查后仍无法闭合时，STOP并报告完成阶段、root cause、repro、已尝试适配、已PASS门禁、剩余blocker、3个历史问题状态和推荐下一路线。未经Decision不得切换到CANN9.0.1。
 
-## 非目标与安全
+## 非目标
 
-- 不修改Host全局Python/CANN/Driver，不覆盖official base，不影响现有任务。
-- 不加载GLM/Qwen，不serve，不HCCL/TP，不KV cache，不运行完整Worker/ModelRunner，不benchmark/profile。
+- 不修改Host全局Python/CANN/Driver，不覆盖frozen base，不影响现有任务。
+- 不加载模型、不运行vLLM serve、HCCL/TP、KV cache、完整Worker/ModelRunner、benchmark/profile。
 - 不删除/覆盖现有Evidence、legacy、artifacts或长期repo。
 - 不direct push integration branch、不force push、不把exploratory dirty或uncommitted FL patch当正式Evidence。
 

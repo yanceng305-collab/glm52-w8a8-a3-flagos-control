@@ -77,7 +77,7 @@
 | D-071 | 服务器缺formal FL source时，允许direct clone唯一formal repo/project branch；GitHub不可达时允许使用经SHA256校验的Git bundle relay到Evidence `source/` | Required scoped source relay | 最终必须验证branch=`project/glm52-w8a8-v024`、HEAD=`a9435a34dcd7d0a38e3a853535947371a6c62205`、tree=`e5e073edf4b65c053e954d78d20365aab0e1f46b`、worktree clean；禁止普通目录拷贝、无校验archive及其他repo/branch | bundle SHA256缺失/不匹配或任一Git identity失败则STOP |
 | D-072 | A2保留“environment preflight → tiny NPU smoke”的顺序门禁，但允许在同一执行任务中连续完成 | Contract retained / execution paused | Carrier/source/compiler/FlagGems/FL全部PASS后，获授权的任务可直接进入D-063 tiny smoke；当前latest run在环境gate STOP | 用户重新授权A2且环境gate blocker有新事实 |
 | D-074 | Python3.11-first copied-runtime路线完成tiny smoke | **Feasibility proven / formal acceptance withheld；superseded by D-075** | Run `20260824T065902Z`复制Qwen image Python/FlagTree/vLLM并使用3处临时patch，证明方向可行但不足以证明正式环境clean、独立、可重复 | D-075 clean-room结果 |
-| D-075 | 正式A2基础环境必须从Ascend官方CANN 9.0.0 A3 Python3.11 devel clean-room独立构建全栈 | Required / clean-room task Ready | 先从AscendHub官方实际pull信息解析tag`9.0.0-a3-ubuntu22.04-py3.11-devel`并冻结digest，不猜registry；必要时以`Ascend/cann-container-image@aec636189a23...`目标Dockerfile本地build。禁止Qwen image/runtime复制、上一轮环境复用和预应用临时patch | Clean-room tiny torch_npu + FlagTree kernel + Dispatch结果 |
+| D-075 | 正式A2基础环境固定为Ascend官方CANN9.0.0 A3 Python3.11 devel exact digest，并在clean-room独立安装全栈 | Required / clean-room task Ready | Base=`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b...`；用户已现场pull成功。Registry发现与Dockerfile fallback退出执行路径，仅保留历史source背景；禁止Qwen/runtime复制、上一轮环境复用和预应用patch | Clean-room tiny torch_npu + FlagTree kernel + Dispatch结果 |
 
 ## Reclassified execution record
 

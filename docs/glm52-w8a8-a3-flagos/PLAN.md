@@ -25,7 +25,7 @@
 - A2 environment preflight不映射NPU；通过后允许共享NPU 12+13做极小`torch_npu` tensor与FlagOS Dispatch operator smoke，不要求完全空闲pair。共享资源状态恶化立即STOP。
 - FlagTree与triton-ascend共享namespace时必须形成single coherent provider；clean-room目标FlagTree`0.6.1+ascend3.5`，禁止混杂ownership。
 - New-main FL安装必须从readonly source的writable `.git`副本执行`--no-build-isolation --no-deps -e`；缺build requirement时STOP，不得联网补包。
-- D-075 clean-room从AscendHub官方pull信息取得CANN9.0.0 A3 py311 devel image identity，不猜registry；允许任务相关的官方/可信网络排障并记录provenance。
+- D-075 clean-room base固定为用户已pull的CANN9.0.0 A3 py311 devel exact digest；任务不再处理registry发现或Dockerfile fallback。
 - FlagGems v5.3.4从exact source独立安装；允许clean container内安装对齐依赖、build wheel和保存third-party patch provenance。
 - 服务器缺少formal FL source时可direct clone唯一repo/project branch；GitHub不可达时允许expected SHA256校验过的Git bundle relay到Evidence source目录，最终验证exact branch/HEAD/tree/clean。
 - GitHub是唯一项目事实源：本控制仓库管理PLAN/DECISIONS/tasks，正式代码仓库及冻结关系以`CODE-REPOSITORY-BASELINE.md`为准。

@@ -20,7 +20,7 @@
 | A2 environment gate | **STOP at FlagTree (Phase A) / execution paused** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；Codex technical acceptance PENDING |
 | A2 shared-NPU tiny smoke | **Not reached (Phase A STOP)** | 未进入Phase B；NPU 12+13状态未采集 |
 | PY311 copied-runtime smoke | **Feasibility proven / not formally accepted** | Qwen image复制Python/FlagTree/vLLM并使用3处临时patch；immutable PASS保留，但不能作为正式环境acceptance |
-| CANN 9.0.0 A3 clean-room | **Ready after user dispatch** | AscendHub official pull ref first；fallback official Dockerfile`aec636189a23...`；禁止复用上一轮runtime |
+| CANN 9.0.0 A3 clean-room | **Ready after user dispatch** | Frozen base digest`sha256:5f20011b...`已现场pull；禁止复用上一轮runtime |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -57,8 +57,8 @@
 
 ## 执行时必须验证 / 后续待决策
 
-1. 从AscendHub官方pull信息取得CANN9.0.0 A3 py311 devel完整image ref并冻结digest；不得猜registry。
-2. 无法取得official image时，只允许从`Ascend/cann-container-image@aec636189a23...`目标Dockerfileclean build同一9.0.0基线并冻结digest。
+1. 验证本地image精确匹配frozen digest`sha256:5f20011b2c55...`并记录image ID/architecture/runtime inventory。
+2. 从frozen digest创建全新disposable container；registry与Dockerfile fallback不再是执行步骤。
 3. 全栈必须独立安装；禁止Qwen image/runtime复制、跨Python复制vLLM和复用上一轮container/work。
 4. 上一轮3处patch必须先在clean unmodified source中重现/未重现；FL patch需要task branch/commit/PR。
 5. FlagTree必须single coherent provider；环境闭合后仅用NPU 12+13执行tiny tensor/kernel/Dispatch。
@@ -87,4 +87,4 @@
 - Task：[`tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md)
 - Prompt：[`tasks/DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md`](tasks/DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md)
 
-Clean-room固定CANN 9.0.0 A3 Python3.11 devel基线，不猜registry地址、不复制Qwen image/runtime、不复用上一轮container/work、不预应用3处patch。完成独立安装与tiny smoke后再决定是否正式接受为A2基础环境。
+Clean-room base已冻结为`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b2c5509ca4716393e66fc7aa07016629bce36a7f6c32c1bf31f30433f`。任务只验证本地identity并从零安装；不再做registry/Dockerfile fallback，不复制上一轮runtime，不预应用3处patch。
