@@ -26,6 +26,7 @@
 1. 本机不存在exact carrier时，pull上述唯一tag；禁止其他image/tag和自动fallback。
 2. Container内从FlagOS official resource index获取exact FlagTree版本。
 3. Container内从official `flagos-ai/FlagGems`获取tag v5.3.4，并验证exact commit/tree。
+4. 若服务器不存在formal FL source，允许只从`yanceng305-collab/vllm-plugin-FL-a3-flagos` clone唯一branch `project/glm52-w8a8-v024`，建议放入Evidence目录的`source/`；禁止其他repo/branch。
 
 禁止`pip install -U`、通用依赖补齐和resolver升级核心runtime。所有目标安装使用`--no-deps`；source/editable build同时使用`--no-build-isolation`。精确依赖无法获取、需要换tag/index或改变torch、torch-npu、vLLM、CANN、transformers、compressed-tensors等核心版本时STOP。
 
@@ -75,12 +76,15 @@ Official rule：`A3 requires at least 2 NPUs to work together`。
 
 - 若container中已有FlagGems，先验证是否精确对应tag/commit；不能证明则不用该副本。
 - 必要时从official FlagGems获取v5.3.4，保留`.git`并验证commit/tree/clean。
-- 使用`--no-build-isolation --no-deps`安装；不得升级runtime。
+- 必须使用当前container Python执行等价`python -m pip install --no-build-isolation --no-deps <FlagGems-source>`；不得升级runtime。
+- 明确禁止运行`setup.sh`、`flaggems-setup`或任何会创建独立venv/Python、自动安装backend dependencies/compiler的bootstrap流程。
+- 当前container缺少FlagGems build requirement时STOP；不得运行bootstrap绕过，也不得联网补装backend profile。
 - FlagGems是正式组件但synthetic operator不强制走FlagGems。
 
 ### 5. FL new-main installation
 
-- 使用formal repo的`project/glm52-w8a8-v024`作为source，Host repo始终readonly。
+- 优先使用服务器已有formal repo的`project/glm52-w8a8-v024`，Host repo始终readonly。
+- 若服务器不存在该repo，允许从唯一GitHub repo `yanceng305-collab/vllm-plugin-FL-a3-flagos` clone唯一branch `project/glm52-w8a8-v024`到Evidence `source/`；clone后必须验证exact HEAD/tree/clean。不得clone其他branch/repo。
 - 完整复制到container writable staging并保留`.git`。
 - 安装前验证HEAD=`a9435a34dcd7d0a38e3a853535947371a6c62205`、tree=`e5e073edf4b65c053e954d78d20365aab0e1f46b`、working tree clean。
 - 只允许等价`python -m pip install --no-build-isolation --no-deps -e <writable-staging>`。
@@ -107,6 +111,7 @@ Official rule：`A3 requires at least 2 NPUs to work together`。
 - control/code repo修改、commit、push或PR；
 - 完整coexistence provenance audit；
 - 手工删除package文件制造PASS。
+- FlagGems `setup.sh`、`flaggems-setup`或其他bootstrap/独立环境流程。
 
 ## Evidence
 
@@ -123,6 +128,7 @@ Evidence目录：`$WORKDIR/a3-cp-a2-v024-fl-only-smoke-<hostname>-<UTC timestamp
 - vllm-ascend fresh-process negative check；
 - compiler distribution/RECORD/module/native/driver/provider证据；
 - FlagGems与FL source SHA/tree/clean/install evidence；
+- 若使用formal FL clone fallback，保存唯一repo/branch/remote/HEAD/tree/clean证据；
 - Platform/Worker/ModelRunner/Dispatch origin；
 - synthetic operator selected impl、tensor device和结果。
 

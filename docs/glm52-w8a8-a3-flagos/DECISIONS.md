@@ -73,6 +73,8 @@
 | D-067 | New-main FL editable安装必须使用writable staging + exact SHA/tree/clean + `--no-build-isolation --no-deps -e` | Required | build-system.requires含torch等依赖；默认isolation可能联网解析，setuptools_scm还需写`_version.py` | build metadata contract变化 |
 | D-068 | 新A2初始为Draft / Not Ready | **Superseded by D-069** | 用户决定把carrier pull、provider replacement和valid pair转为task内PASS/STOP gate | 不再阻塞Ready |
 | D-069 | `A3-CP-A2-v024`与最终DeepSeek prompt进入Ready；允许严格受限network | User-approved / Ready | 仅exact carrier、FlagTree official resource index、FlagGems v5.3.4；禁止resolver升级核心runtime | task PASS/STOP结果 |
+| D-070 | FlagGems v5.3.4禁止使用`setup.sh`、`flaggems-setup`或任何bootstrap profile | Required | ascend-cann900 bootstrap会引入Python3.11、不同torch-npu/FlagTree tuple；A2只允许current Python + exact source + no-build-isolation/no-deps | build requirement缺失则STOP |
+| D-071 | 服务器缺formal FL source时允许clone唯一formal repo的唯一project branch到Evidence `source/` | Required scoped network | clone后必须验证exact HEAD/tree/clean；禁止其他repo/branch | clone/identity失败则STOP |
 
 ## 明确拒绝的路线
 

@@ -25,6 +25,8 @@
 - FlagTree rc1与carrier triton-ascend共享完整`triton`namespace；A2在disposable container内执行package-manager replacement并验证single coherent provider，失败即STOP。
 - New-main FL安装必须从readonly source的writable `.git`副本执行`--no-build-isolation --no-deps -e`；缺build requirement时STOP，不得联网补包。
 - A2网络只允许exact v0.24 carrier、FlagTree official resource index和official FlagGems v5.3.4；禁止其他image/tag/index和核心runtime升级。
+- FlagGems只允许exact source + current container Python + `--no-build-isolation --no-deps`安装；禁止`setup.sh`、`flaggems-setup`和任何bootstrap/独立环境流程。
+- 服务器缺少formal FL source时，只允许clone唯一repo的`project/glm52-w8a8-v024`到Evidence source目录并验证exact HEAD/tree/clean。
 - GitHub是唯一项目事实源：本控制仓库管理PLAN/DECISIONS/tasks，正式代码仓库及冻结关系以`CODE-REPOSITORY-BASELINE.md`为准。
 
 ## 当前关键路径

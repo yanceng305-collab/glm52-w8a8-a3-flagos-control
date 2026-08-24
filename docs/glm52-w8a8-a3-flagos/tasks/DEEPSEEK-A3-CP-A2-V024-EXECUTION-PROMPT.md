@@ -76,6 +76,7 @@ Official rule：`A3 requires at least 2 NPUs to work together`。
 - pull唯一指定carrier；
 - 从FlagOS official resource index获取exact FlagTree；
 - 从official `flagos-ai/FlagGems`获取exact v5.3.4 source。
+- 若服务器缺少formal FL source，只允许从`yanceng305-collab/vllm-plugin-FL-a3-flagos` clone唯一branch `project/glm52-w8a8-v024`，建议放在Evidence `source/`。
 
 禁止`pip install -U`、依赖自动升级、其他index/tag/image或通用联网补包。安装优先`--no-deps`；source/editable安装必须加`--no-build-isolation`。如果exact artifact无法获取或要求改变torch、torch-npu、vLLM、CANN、transformers、compressed-tensors等核心runtime，STOP。
 
@@ -125,11 +126,26 @@ Official rule：`A3 requires at least 2 NPUs to work together`。
 
 ### D. FlagGems v5.3.4
 
-已有安装必须能证明exact tag/commit，否则从official repo获取v5.3.4。保留`.git`，验证HEAD/tree/clean后用`--no-build-isolation --no-deps`安装。不得升级runtime。
+已有安装必须能证明exact tag/commit，否则从official repo获取v5.3.4。保留`.git`，验证HEAD/tree/clean后，使用当前container Python执行等价：
+
+`python -m pip install --no-build-isolation --no-deps <FlagGems-source>`
+
+明确禁止执行：
+
+- `setup.sh`；
+- `flaggems-setup`；
+- 任何会创建独立venv/Python的bootstrap；
+- 任何自动安装backend dependencies/compiler的bootstrap流程。
+
+如果当前container不满足FlagGems build requirement，STOP；不得运行setup/bootstrap绕过，也不得联网安装其ascend-cann900 profile。不得升级runtime。
 
 ### E. FL new-main
 
-Formal repo保持readonly。将`project/glm52-w8a8-v024`完整复制到container writable staging，保留`.git`，安装前验证exact HEAD/tree/clean。
+服务器已有formal repo且exact project branch存在时，保持该repo readonly。
+
+若服务器不存在formal repo，允许从唯一GitHub repo `yanceng305-collab/vllm-plugin-FL-a3-flagos` clone唯一branch `project/glm52-w8a8-v024`，建议clone到Evidence目录下`source/`。不得clone其他branch/repo。Clone后必须验证exact HEAD、tree和clean；不匹配即STOP。
+
+将`project/glm52-w8a8-v024`完整复制到container writable staging，保留`.git`，安装前验证exact HEAD/tree/clean。
 
 只允许等价：
 
@@ -158,6 +174,7 @@ Formal repo保持readonly。将`project/glm52-w8a8-v024`完整复制到container
 - MLA、DSA/SFA、Indexer、W8A8、完整attention/MoE；
 - benchmark/profile/性能优化；
 - 手工删除package文件；
+- FlagGems `setup.sh`、`flaggems-setup`或任何bootstrap/独立环境流程；
 - 未授权image/tag/index/package；
 - 自行进入下一Stage。
 
@@ -173,6 +190,7 @@ Formal repo保持readonly。将`project/glm52-w8a8-v024`完整复制到container
 - vllm-ascend fresh-process negative check；
 - compiler distribution/RECORD/module/native/driver/provider ownership；
 - FlagGems与FL SHA/tree/clean/install；
+- 若使用formal FL clone fallback，记录唯一repo、branch、remote、HEAD/tree/clean；
 - Platform/Worker/ModelRunner/Dispatch origins；
 - synthetic op、selected impl、tensor device与结果。
 
