@@ -1,7 +1,7 @@
 # 项目状态
 
 更新时间：2026-08-24
-总体状态：A3 Host目录初始化**ACCEPTED with deviation**；下一技术任务聚焦vLLM0.24 Python3.12 carrier × FlagTree ascend3.5 integration gap
+总体状态：A3 Host目录初始化**ACCEPTED with deviation**；当前Ready路线为exact carrier上的Python3.11-first FlagOS环境闭环
 
 ## 当前快照
 
@@ -80,9 +80,9 @@
 
 ## 下一门禁
 
-Host目录初始化已验收。下一项Ready task仅调查并解决vLLM0.24 Python3.12 carrier × FlagTree ascend3.5 integration gap：
+Host目录初始化已验收。下一项Ready task采用Python3.11-first路线：
 
-- Task：[`tasks/STAGE-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP.md`](tasks/STAGE-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP.md)
-- Prompt：[`tasks/DEEPSEEK-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP-PROMPT.md`](tasks/DEEPSEEK-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP-PROMPT.md)
+- Task：[`tasks/STAGE-A2-V024-PY311-FIRST-FLAGTREE-ENV.md`](tasks/STAGE-A2-V024-PY311-FIRST-FLAGTREE-ENV.md)
+- Prompt：[`tasks/DEEPSEEK-A2-V024-PY311-FIRST-FLAGTREE-ENV-PROMPT.md`](tasks/DEEPSEEK-A2-V024-PY311-FIRST-FLAGTREE-ENV-PROMPT.md)
 
-该任务不预选Python3.11/3.12路线，允许合理联网、build/debug依赖和disposable container排障；完整A2、模型加载、serve、HCCL/TP和性能工作仍不在范围内。
+该任务不再要求Python3.12兼容；在exact carrier的disposable范围重建Python3.11、vLLM0.24、torch/torch_npu、FlagTree`0.6.1+ascend3.5`、FlagGems、FL和Dispatch。允许合理联网、依赖重装、wheel构建、临时patch与现场排障；完整模型、serve、HCCL/TP和性能工作仍不在范围内。
