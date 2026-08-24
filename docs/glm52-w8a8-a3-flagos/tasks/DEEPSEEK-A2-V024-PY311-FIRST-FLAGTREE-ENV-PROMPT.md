@@ -1,8 +1,10 @@
 # DeepSeek Prompt — A2-V024-PY311-FIRST-FLAGTREE-ENV
 
-状态：**Ready after user dispatch**
+状态：**COMPLETED — feasibility evidence only / Do not rerun**
 
 唯一合同：`docs/glm52-w8a8-a3-flagos/tasks/STAGE-A2-V024-PY311-FIRST-FLAGTREE-ENV.md`
+
+当前clean-room prompt：[`DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md`](DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md)。
 
 ## 目标
 

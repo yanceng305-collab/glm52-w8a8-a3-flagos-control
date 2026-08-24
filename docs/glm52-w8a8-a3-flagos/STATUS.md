@@ -1,7 +1,7 @@
 # 项目状态
 
 更新时间：2026-08-24
-总体状态：A3 Host目录初始化**ACCEPTED with deviation**；当前Ready路线为exact carrier上的Python3.11-first FlagOS环境闭环
+总体状态：上一轮PY311 smoke为**feasibility proven / formal clean-room validation required**；当前Ready任务为Ascend官方CANN 9.0.0 A3 clean-room复现
 
 ## 当前快照
 
@@ -19,6 +19,8 @@
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
 | A2 environment gate | **STOP at FlagTree (Phase A) / execution paused** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；Codex technical acceptance PENDING |
 | A2 shared-NPU tiny smoke | **Not reached (Phase A STOP)** | 未进入Phase B；NPU 12+13状态未采集 |
+| PY311 copied-runtime smoke | **Feasibility proven / not formally accepted** | Qwen image复制Python/FlagTree/vLLM并使用3处临时patch；immutable PASS保留，但不能作为正式环境acceptance |
+| CANN 9.0.0 A3 clean-room | **Ready after user dispatch** | AscendHub official pull ref first；fallback official Dockerfile`aec636189a23...`；禁止复用上一轮runtime |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -47,7 +49,7 @@
 - v0.2.1-era 910C成功证据是Qwen3.6-27B/35B-A3B TP2；new main/v0.24 carrier/FlagTree profile尚无对应FL A3 E2E，canary需重冻。
 - FL new main使用vLLM0.24并已包含GLM model/Indexer结构；v0.2.1维护线仍是0.20.2。Target Ascend/W8A8 closure仍未验证。
 - v0.2.1-era FL compressed-tensors validator与packed W8A8 glue不在observed new main；0.24 W8A8 loading owner必须从upstream/runtime与真实artifact重审。
-- A2 FlagGems安装禁止setup/bootstrap profile，只能使用current container Python对exact v5.3.4 source执行no-build-isolation/no-deps安装。
+- Old A2 FlagGems`no-deps`/禁止bootstrap限制不适用于D-075 clean-room；允许clean container内安装对齐依赖、build wheel和保存patch provenance。
 - 服务器缺formal FL source时可direct clone唯一repo/project branch；GitHub不可达时允许expected SHA256校验过的Git bundle relay。最终必须验证branch=`project/glm52-w8a8-v024`、HEAD=`a9435a34...`、tree=`e5e073ed...`、worktree clean。
 - Current-main FL Ascend上MLA、DSA/SFA、wired Indexer与MLA cache closure仍Missing/Unwired；W8A8 Linear必须基于vLLM0.24重新gap confirmation，当前无910C PASS。
 - 默认通信 backend 是 HCCL；FlagCX optional。
@@ -55,12 +57,12 @@
 
 ## 执行时必须验证 / 后续待决策
 
-1. A2首先验证exact carrier RepoDigest；缺失或不匹配即STOP，不使用release tag或mutable nightly tag替代。
-2. Git bundle必须有relay端提供的expected SHA256，并验证formal FL branch/HEAD/tree/clean。
-3. 根据carrier实际inventory完成FlagTree replacement并证明single coherent provider；不得按历史release recipe预设初始compiler。
-4. 环境门禁PASS后直接在共享NPU 12+13执行tiny torch_npu与FlagOS Dispatch smoke；禁止模型、serve、HCCL/TP、KV cache、完整Worker/ModelRunner runtime、benchmark/profile和大tensor。
-5. target GLM-5.2-W8A8 checkpoint manifest、format、SHA、tensor/scale layout尚未提供，但不阻塞A2。
-6. current-main Ascend MLA、DSA/SFA、Indexer、W8A8 Linear/MoE及`concat_and_cache_mla*` closure归后续GLM gate，不阻塞A2。
+1. 从AscendHub官方pull信息取得CANN9.0.0 A3 py311 devel完整image ref并冻结digest；不得猜registry。
+2. 无法取得official image时，只允许从`Ascend/cann-container-image@aec636189a23...`目标Dockerfileclean build同一9.0.0基线并冻结digest。
+3. 全栈必须独立安装；禁止Qwen image/runtime复制、跨Python复制vLLM和复用上一轮container/work。
+4. 上一轮3处patch必须先在clean unmodified source中重现/未重现；FL patch需要task branch/commit/PR。
+5. FlagTree必须single coherent provider；环境闭合后仅用NPU 12+13执行tiny tensor/kernel/Dispatch。
+6. CANN9.0.0明确无法合理适配时STOP，不得自行切换到9.0.1。
 
 当前“FlagOS原生”工作边界按实际模型执行ownership判定，不按carrier image/package存在性判定。若trace发现`vllm_ascend`实际参与，只对具体调用进入客户边界/替换判断；只有客户以后明确扩大到official FL历史adapted来源时才另行重审源码合规。
 
@@ -80,9 +82,9 @@
 
 ## 下一门禁
 
-Host目录初始化已验收。下一项Ready task采用Python3.11-first路线：
+上一轮PY311 PASS只保留feasibility价值，不解锁正式A2。下一项Ready task：
 
-- Task：[`tasks/STAGE-A2-V024-PY311-FIRST-FLAGTREE-ENV.md`](tasks/STAGE-A2-V024-PY311-FIRST-FLAGTREE-ENV.md)
-- Prompt：[`tasks/DEEPSEEK-A2-V024-PY311-FIRST-FLAGTREE-ENV-PROMPT.md`](tasks/DEEPSEEK-A2-V024-PY311-FIRST-FLAGTREE-ENV-PROMPT.md)
+- Task：[`tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md)
+- Prompt：[`tasks/DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md`](tasks/DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md)
 
-该任务不再要求Python3.12兼容；在exact carrier的disposable范围重建Python3.11、vLLM0.24、torch/torch_npu、FlagTree`0.6.1+ascend3.5`、FlagGems、FL和Dispatch。允许合理联网、依赖重装、wheel构建、临时patch与现场排障；完整模型、serve、HCCL/TP和性能工作仍不在范围内。
+Clean-room固定CANN 9.0.0 A3 Python3.11 devel基线，不猜registry地址、不复制Qwen image/runtime、不复用上一轮container/work、不预应用3处patch。完成独立安装与tiny smoke后再决定是否正式接受为A2基础环境。

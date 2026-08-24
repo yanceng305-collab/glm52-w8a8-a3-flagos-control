@@ -1,7 +1,9 @@
 # A2-V024-PY311-FIRST-FLAGTREE-ENV — Maintainable FlagOS A3 Environment
 
-状态：**Ready after user dispatch**
+状态：**COMPLETED — feasibility evidence only / formal clean-room validation required / Do not rerun**
 执行对象：第一台Ascend A3/910C服务器
+
+Immutable result：`../results/A2-V024-PY311-FIRST-FLAGTREE-ENV/20260824T065902Z.md`。当前task：[`STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`](STAGE-A2-V024-CLEANROOM-CANN900-PY311.md)。
 
 ## 目标
 

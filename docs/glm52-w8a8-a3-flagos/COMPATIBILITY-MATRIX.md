@@ -7,23 +7,23 @@
 | 组件 | 官方推荐/实际CI | 客户合规候选 | A3/910C专用 | GLM-5.2-W8A8必需 | 状态/边界 |
 |---|---|---|---:|---:|---|
 | Host OS/CANN | Host CANN版本不参与container tuple；只保留Host runtime条件 | 不bind-mount Host Toolkit | 是 | Driver/runtime层必需 | Boundary Confirmed；Host CANN差异不再分析 |
-| Container base/OS | Docs：`v0.24.0rc1-a3`；artifact未建立 | Exact digest `sha256:1c36469f...` provisional carrier | 是 | 必需 | Official `releases/v0.24.0rc` A3 nightly；不是rc1 release image；实际OS/runtime preflight |
+| Container base/OS | AscendHub tag`9.0.0-a3-ubuntu22.04-py3.11-devel`；official Dockerfile存在 | 从AscendHub官方pull信息取得exact ref/digest；fallback official repo`aec636189a23...`local build | 是 | 必需 | D-075 clean-room；不猜registry，不切9.0.1 |
 | Architecture | aarch64 | 按现场aarch64复核 | 是 | 必需 | Confirmed job metadata |
-| Python | Carrier实测3.12.13；FlagOS artifact已有3.11路径 | **Python3.11-first disposable runtime** | 否 | 必需 | D-074 Required；不再要求保留/解决Python3.12 |
+| Python | Official CANN Dockerfile原生3.11.15 | **Clean Python3.11** | 否 | 必需 | 不从Qwen image或其他container复制 |
 | Driver | Host mounted | 产品/CANN兼容版本 | 是 | 必需 | exact Unknown |
 | Firmware | Host side | 与Driver/CANN匹配 | 是 | 必需 | exact Unknown |
-| Container CANN | rc1 source recipe曾使用9.0.1 | actual carrier preflight；Host CANN irrelevant | 是 | 必需 | Provisional artifact exact version Unknown before preflight |
-| Container ATB/NNAL | rc1 source recipe有对应组件 | actual carrier inventory冻结 | 是 | 部分native op必需 | Exact packages Unknown before preflight |
+| Container CANN | Official clean base CANN9.0.0 A3 | exact image/build inventory；Host CANN irrelevant | 是 | 必需 | D-075固定9.0.0；明确blocker才STOP，不自行切9.0.1 |
+| Container ATB/NNAL | Official 9.0.0 Dockerfile安装NNAL/A3 ops | actual image inventory冻结 | 是 | 部分native op必需 | Source contract Confirmed；runtime待验 |
 | HCCL | torch-npu/CANN内 | matching v0.24 stack | 是 | A3至少2 devices | v0.2.1 TP2 evidence；new-main A3未验证 |
-| torch | rc1 source recipe曾使用2.10.0 | Python3.11/CANN对齐组合由D-074 task实测 | 否 | 必需 | 允许disposable container内重装/build |
-| torch-npu | official evidence有多个2.10 family row | Python3.11/CANN/Driver对齐组合由D-074 task实测 | 是 | 必需 | exact version/runtime closure Unknown |
-| vLLM | FL contract固定`v0.24.0` | Python3.11 runtime内恢复vLLM0.24 | 否 | 必需 | 安装/构建方式由D-074 task验证 |
+| torch | FlagGems ascend-cann900 ref`2.10.0+cpu` | 2.10.x首选；clean install | 否 | 必需 | 非死限制；CANN/Driver冲突时合理适配 |
+| torch-npu | FlagGems ascend-cann900 ref`2.10.0` | 2.10.x首选；clean install | 是 | 必需 | NPU runtime closure待验 |
+| vLLM | FL contract固定`v0.24.0` | Official source/package clean install | 否 | 必需 | 禁止跨Python复制site-packages |
 | vLLM native ext | empty build无device ext | 无 | 否 | 非必需 | Confirmed |
 | vllm-plugin-FL | observed main`a9435a34...`/tree`e5e073ed...`；v0.2.1=`92a6f767...` | Primary new main；mutation时重冻结 | 否 | 必需 | Branch migration Confirmed；main moving |
 | `VLLM_VENDOR` | unset | unset | Ascend语义 | 必需配置 | Confirmed；`ascend`无效 |
 | FlagGems | README tag`v5.3.4@f7c55cb2...` | preferred非mandatory；exact tag | 否 | per-op可选 | Confirmed source pin；new-main A3 E2E Unknown |
 | triton/compiler provider | rc1 source recipe曾使用triton-ascend 3.2.1 | actual carrier inventory后执行FlagTree replacement | 是 | Triton路径需一个provider | 初始distribution/version Unknown；final需single coherent provider |
-| FlagTree | Prior rc1研究；当前Python3.11 artifact路线 | **`0.6.1+ascend3.5` final provider target** | wheel是 | Triton路径需要 | D-074 runtime gate；single coherent provider |
+| FlagTree | FlagGems ascend-cann900 ref`0.6.1+ascend3.5` | **`0.6.1+ascend3.5` final provider target** | wheel是 | Triton路径需要 | D-075 clean install；single coherent provider |
 | FlagCX | CI absent；README ref v0.13.0 | baseline absent | adaptor-specific | baseline非必需 | Optional；910C E2E Unknown |
 | msModelSlim | master`e1009c9`；GLM5.2 feature`f8e5bed` | runtime先不装 | 配方含A3 tag | 重新量化时producer必需 | 工具侧Confirmed；公开A3 log Unknown |
 | Quant format | CI无W8A8 | AscendV1 vs compressed-tensors待ADR | 模型/栈特定 | 必需 | Interface Missing/Conflicting |
@@ -33,7 +33,7 @@
 | Mooncake | rc1 source recipe曾使用`0.3.11.post1` | actual carrier preflight；baseline nonessential | 否 | 非必需 | Provisional artifact exact Unknown；optional for A2 |
 | Ray | >=2.47.1,<=2.48.0 | local-MP baseline absent | 否 | 单机TP非必需 | Optional |
 | FL Ascend custom ext | 无；Python-only | 无 | 是 | 非必需 | Confirmed |
-| vllm-ascend image/distribution | v0.24.0rc1 A3 official documented tag；artifact unavailable | Exact digest release-branch nightly允许作A2 provisional carrier；FL-only smoke可在disposable container卸载 | 是 | Carrier candidate；FlagOS ownership必需 | Digest Confirmed；内部distribution/version/import由preflight |
+| vllm-ascend image/distribution | Prior release-branch nightly | Feasibility evidence only | 是 | 非clean-room base | Copied-runtime PY311 smoke已RETURNED for clean-room |
 
 v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V024-BASELINE-RESEARCH.md)；历史neutral tuple见[`R0-CONTAINER-TUPLE-RESOLUTION.md`](R0-CONTAINER-TUPLE-RESOLUTION.md)。
 
@@ -49,10 +49,11 @@ v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V02
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
 | Previous A2 Python3.12 environment | **STOP at FlagTree** | exact digest、FL/FlagGems identity与negative check PASS；immutable result indexed |
-| Python3.11-first environment closure | **Ready after user dispatch** | 重建vLLM0.24/torch_npu/FlagTree/FlagGems/FL/Dispatch；合理适配后仍失败才STOP |
-| A2 shared-NPU tiny smoke | Not reached | D-074 task闭合后可执行最小kernel/Dispatch，不恢复完整A2 |
+| Copied-runtime Python3.11 smoke | **Feasibility PASS / not formally accepted** | Qwen image/runtime复制与临时patch；不能证明可重复 |
+| CANN9.0.0 clean-room closure | **Ready after user dispatch** | Official base + independent installs + patch baseline + tiny smoke |
+| A2 shared-NPU tiny smoke | Clean-room pending | D-075仅执行tiny tensor/kernel/Dispatch，不恢复完整A2 |
 | Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred on-demand | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace在Eager Correctness后按需触发，不阻塞Baseline Benchmark |
-| FlagTree profile | Python3.11-first / runtime Unknown | 目标`0.6.1+ascend3.5`，允许重建依赖并审计ownership |
+| FlagTree profile | CANN9.0.0 clean-room / runtime Unknown | 目标`0.6.1+ascend3.5`，独立安装并审计ownership |
 | Dense MLA | Missing | placeholder |
 | Sparse MLA/DSA/SFA | Missing | 显式NotImplemented |
 | GLM-5 on 910C | Unknown/Missing backend | README非交叉矩阵 |
