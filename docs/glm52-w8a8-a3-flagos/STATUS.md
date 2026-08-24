@@ -1,7 +1,7 @@
 # 项目状态
 
 更新时间：2026-08-21
-总体状态：v0.24 repository migration PASS；A3-CP-A2-v024 Ready / not executed
+总体状态：A3-CP-A2-v024 Phase A Ready；Phase B resource-waiting
 
 ## 当前快照
 
@@ -15,7 +15,8 @@
 | Formal A3 code repository | Migration PASS | existing main不变；v0.2.1 anchor、v0.24 anchor、project branch exact |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
-| New v0.24 A2 | **Ready / not executed** | exact carrier/network/compiler replacement/valid pair纳入task PASS/STOP；prompt已生成 |
+| A2 Phase A | **Ready / not executed** | 不映射NPU；完成environment/package/compiler/FL与静态验证后STOP |
+| A2 Phase B | Waiting for valid free pair | 新NPU container重放Phase A后执行runtime/Dispatch/synthetic smoke |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -51,8 +52,8 @@
 ## 执行时必须验证 / 后续待决策
 
 1. A2 task内需冻结carrier RepoDigest/image ID；本机缺失时只允许pull exact v0.24 tag。
-2. A2 task内需完成FlagTree replacement并证明single coherent provider；失败STOP。
-3. A2 preflight需冻结valid two-logical-device pair与OC2占用；没有完整free pair即STOP。
+2. Phase A需完成FlagTree replacement并证明single coherent static provider；失败STOP。
+3. Valid two-logical-device pair只阻塞Phase B，不阻止Phase A。
 4. FlagGems v5.3.4 + FlagTree + FL project branch的910C synthetic smoke尚待执行。
 5. target GLM-5.2-W8A8 checkpoint manifest、format、SHA、tensor/scale layout尚未提供，但不阻塞A2。
 6. current-main Ascend MLA、DSA/SFA、Indexer、W8A8 Linear/MoE及`concat_and_cache_mla*` closure归后续GLM gate，不阻塞A2。
@@ -75,7 +76,7 @@
 
 ## 下一门禁
 
-当前Ready服务器任务：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。执行提示词：[`tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md)。
+当前Ready服务器任务是A2 Phase A：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。执行提示词：[`tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md)。Full A2 prompt已Superseded；Phase B prompt尚未生成。
 
 Old v0.20 task/prompt继续Paused，不得下发。
 

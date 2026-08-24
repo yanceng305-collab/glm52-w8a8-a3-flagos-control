@@ -1,5 +1,9 @@
 # DeepSeek执行提示词 — A3-CP-A2-v024
 
+状态：**Superseded by Phase split / Do not execute**
+
+该prompt把free valid pair作为整个A2的前置门禁，现已被Phase A/Phase B拆分取代。当前只允许使用[`DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`](DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md)。以下内容仅保留历史审计。
+
 执行Ready任务：`Official v0.24 Carrier + FlagOS main FL-only Environment Smoke`。
 
 唯一控制合同：`docs/glm52-w8a8-a3-flagos/tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`。本提示词与合同冲突时立即STOP并报告，不自行解释扩大权限。

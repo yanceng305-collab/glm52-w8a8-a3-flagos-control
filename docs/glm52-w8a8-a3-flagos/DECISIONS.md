@@ -75,6 +75,7 @@
 | D-069 | `A3-CP-A2-v024`与最终DeepSeek prompt进入Ready；允许严格受限network | User-approved / Ready | 仅exact carrier、FlagTree official resource index、FlagGems v5.3.4；禁止resolver升级核心runtime | task PASS/STOP结果 |
 | D-070 | FlagGems v5.3.4禁止使用`setup.sh`、`flaggems-setup`或任何bootstrap profile | Required | ascend-cann900 bootstrap会引入Python3.11、不同torch-npu/FlagTree tuple；A2只允许current Python + exact source + no-build-isolation/no-deps | build requirement缺失则STOP |
 | D-071 | 服务器缺formal FL source时允许clone唯一formal repo的唯一project branch到Evidence `source/` | Required scoped network | clone后必须验证exact HEAD/tree/clean；禁止其他repo/branch | clone/identity失败则STOP |
+| D-072 | A2拆为Phase A无NPU环境准备与Phase B NPU runtime smoke | Required / Phase A Ready | container/package/compiler/FL准备不需要NPU；无free pair不得阻止Phase A；Phase A完成后必须STOP | Phase A结果与free pair availability |
 
 ## 明确拒绝的路线
 

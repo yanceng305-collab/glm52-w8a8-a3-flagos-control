@@ -19,7 +19,8 @@
 - `tasks/DEEPSEEK-A3-CP-A2-EXECUTION-PROMPT.md`：historical v0.20.2 prompt；已Paused，不得下发。
 - `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`：v0.24 A2历史draft；已被final contract取代。
 - `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：当前Ready A2合同。
-- `tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`：当前Ready DeepSeek执行提示词。
+- `tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`：已被Phase split取代的历史full prompt。
+- `tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`：当前Ready的No-NPU Phase A提示词。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
 - `tasks/STAGE-A1-A3-READ-ONLY-ENVIRONMENT-INVENTORY.md`：历史/补证用只读inventory合同；当前tuple决策已不以其为前置，状态Not Ready。
@@ -36,7 +37,7 @@
 7. A2在disposable container内卸载carrier compiler distributions并安装exact FlagTree，必须证明single coherent provider；失败STOP。
 8. Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，明确标记Upstream Conflict / stale candidate。
 9. Old v0.20 A2/prompt继续Paused；new A2-v024与最终prompt现已Ready。
-10. 下一步直接上第一台服务器执行A2；本轮Codex未操作服务器。
+10. 下一步直接执行No-NPU Phase A；完成后STOP。Phase B等待完整free valid pair。
 
 ## 状态标签
 

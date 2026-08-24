@@ -48,7 +48,8 @@ v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V02
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
-| Official v0.24 carrier FL-only environment smoke | **Ready / not executed** | exact network/provider/pair均为task内PASS/STOP gate |
+| A2 Phase A No-NPU environment preparation | **Ready / not executed** | carrier/package/provider/FL静态闭环；无free pair不阻塞 |
+| A2 Phase B NPU runtime smoke | Waiting for valid free pair | Phase A accepted后用新NPU container重放并执行runtime smoke |
 | Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred on-demand | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace在Eager Correctness后按需触发，不阻塞Baseline Benchmark |
 | FlagTree profile | Ready experiment / runtime Unknown | A2卸载carrier compiler后安装rc1并审计ownership |
 | Dense MLA | Missing | placeholder |
