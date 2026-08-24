@@ -33,7 +33,8 @@ Code primary integration branch固定为`project/glm52-w8a8-v024`。代码任务
 - `artifacts/`保存wheel、bundle、source archive等可复用下载物并记录SHA256。
 - `work/`保存可删除的build、editable staging和临时解包目录。
 - Container只使用`repos/`中的明确源码，或复制到`work/`后使用。
-- `/root/vllm-plugin-FL/`保持不动，视为legacy/unknown provenance；长期working tree验证前不得归档、删除或覆盖。
+- `/root/vllm-plugin-FL/`保持不动，视为legacy/unknown provenance；`legacy/`只保存索引/路径登记，不复制旧源码。
+- Run `A3-HOST-DIR-INIT/20260824T030000Z`已偏离上述规则并创建`legacy/root-vllm-plugin-FL/`副本；原目录未改。现有副本保持不动，未经独立任务批准不得删除、覆盖、继续同步或作为正式源码。
 
 ## Codex与DeepSeek写入规则
 

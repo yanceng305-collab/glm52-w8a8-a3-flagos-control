@@ -1,6 +1,6 @@
 # DeepSeek Prompt — A3 Host Directory Initialization
 
-状态：**Ready after user dispatch；不包含FlagOS/A2实验**
+状态：**COMPLETED / Do not rerun unless separately authorized**
 
 ## 目标
 

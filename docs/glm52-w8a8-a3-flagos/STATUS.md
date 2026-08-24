@@ -1,7 +1,7 @@
 # 项目状态
 
 更新时间：2026-08-24
-总体状态：**New FlagOS/A2 experiments PAUSED**；latest A2 run STOP at FlagTree gate；当前只整理GitHub、Host working tree与Evidence职责
+总体状态：A3 Host目录初始化**ACCEPTED with deviation**；下一技术任务聚焦vLLM0.24 Python3.12 carrier × FlagTree ascend3.5 integration gap
 
 ## 当前快照
 
@@ -13,7 +13,8 @@
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
 | A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
 | Formal A3 code repository | Migration PASS | existing main不变；v0.2.1 anchor、v0.24 anchor、project branch exact |
-| Repository/Evidence governance | **Control rules implemented；server initialization not executed** | `REPOSITORY-AND-EVIDENCE-RULES.md` + `results/INDEX.md`；本轮未连接服务器 |
+| Repository/Evidence governance | **Implemented** | `REPOSITORY-AND-EVIDENCE-RULES.md` + `results/INDEX.md` |
+| A3 Host directory initialization | **ACCEPTED with deviation** | Result `A3-HOST-DIR-INIT/20260824T030000Z`；两个长期repo identity PASS；legacy复制偏差已记录，原目录未改且现有副本不处理 |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
 | A2 environment gate | **STOP at FlagTree (Phase A) / execution paused** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；Codex technical acceptance PENDING |
@@ -79,11 +80,9 @@
 
 ## 下一门禁
 
-当前不执行A2、FlagOS实验、container或NPU任务。下一项可下发任务仅为[`tasks/DEEPSEEK-A3-HOST-DIRECTORY-INITIALIZATION-PROMPT.md`](tasks/DEEPSEEK-A3-HOST-DIRECTORY-INITIALIZATION-PROMPT.md)：
+Host目录初始化已验收。下一项Ready task仅调查并解决vLLM0.24 Python3.12 carrier × FlagTree ascend3.5 integration gap：
 
-- 初始化`/data/tiankuan/zyg/{repos,evidence,artifacts,work,legacy}`；
-- 建立/验证两个长期Git working tree；
-- 保持`/root/vllm-plugin-FL/`与现有Evidence原位不动；
-- 不安装package、不创建container、不访问NPU。
+- Task：[`tasks/STAGE-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP.md`](tasks/STAGE-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP.md)
+- Prompt：[`tasks/DEEPSEEK-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP-PROMPT.md`](tasks/DEEPSEEK-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP-PROMPT.md)
 
-完成目录初始化并回流一任务三指针后，再由Codex验收；A2是否恢复仍需用户另行授权。
+该任务不预选Python3.11/3.12路线，允许合理联网、build/debug依赖和disposable container排障；完整A2、模型加载、serve、HCCL/TP和性能工作仍不在范围内。

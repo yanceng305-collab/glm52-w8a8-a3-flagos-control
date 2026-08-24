@@ -22,7 +22,9 @@
 - `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE-DRAFT.md`：v0.24 A2历史draft；已被final contract取代。
 - `tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：A2合同；当前Paused。
 - `tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`：A2执行提示词；当前Paused，不得下发。
-- `tasks/DEEPSEEK-A3-HOST-DIRECTORY-INITIALIZATION-PROMPT.md`：下一项仅目录/repo初始化任务，不含实验。
+- `tasks/DEEPSEEK-A3-HOST-DIRECTORY-INITIALIZATION-PROMPT.md`：Host目录/repo初始化prompt；latest run已ACCEPTED with deviation。
+- `tasks/STAGE-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP.md`：当前Ready的FlagTree Python3.12 integration-gap task。
+- `tasks/DEEPSEEK-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP-PROMPT.md`：下一条DeepSeek执行提示词。
 - `tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`：旧Phase-A-only提示词；已Superseded，不得执行。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
@@ -40,7 +42,7 @@
 7. A2按实际compiler inventory安装exact FlagTree并证明single coherent provider；环境PASS后共享NPU 12+13执行tiny torch_npu与Dispatch op，状态恶化立即STOP。
 8. Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，明确标记Upstream Conflict / stale candidate。
 9. A2 run `20260824T025250Z`已形成immutable result snapshot；Experiment STOP、Control Sync和Codex Acceptance分开记录。
-10. New FlagOS/A2实验暂停；下一步只初始化A3 Host目录与两个长期Git working tree，不运行container/NPU。
+10. Host目录初始化已ACCEPTED with deviation；下一步只处理Python3.12 carrier × FlagTree ascend3.5 integration gap，不恢复完整A2或模型实验。
 
 ## 状态标签
 
@@ -50,4 +52,4 @@
 - Missing：当前目标基线明确无实现、显式报错或缺必需接口。
 - Conflicting：可信来源在版本/路线/行为上不一致，尚未由实验消解。
 
-本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库已按`CODE-REPOSITORY-BASELINE.md`落地；当前实验暂停，服务器目录整理尚未执行。
+本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库和Host长期working tree已建立；当前下一门禁是FlagTree Python3.12 integration gap。
