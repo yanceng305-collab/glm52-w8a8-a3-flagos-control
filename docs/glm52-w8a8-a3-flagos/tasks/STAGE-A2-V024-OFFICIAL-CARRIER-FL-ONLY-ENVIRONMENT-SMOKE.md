@@ -1,8 +1,9 @@
 # A3-CP-A2-v024 — Official v0.24 Release-Branch Nightly + FlagOS FL-only Environment Smoke
 
-状态：**Ready — ordered environment preflight then shared-NPU tiny smoke**
+状态：**STOP at Phase A FlagTree gate (2026-08-24T02:52Z)**
 执行对象：第一台Ascend A3/910C服务器
 第二台服务器：不使用
+Evidence目录：`/data/tiankuan/zyg/evidence-a2-v024-20260824T025250Z`
 
 ## Phase split
 
@@ -172,3 +173,49 @@ Phase B范围仅包括：
 ## Evidence minimum
 
 必须保存：`REPORT.md`（Confirmed/Unknown/Conflict/Potential Blocker）、command manifest、raw stdout/stderr、checksums、exact image digest/container identity、实际runtime inventory、package pre/post diff、vllm-ascend negative check、compiler ownership、FlagGems/FL source/install、bundle SHA256与Git identity、NPU 12+13 pre/post状态、tiny tensor与Dispatch selected impl/device/result，以及明确的A2 PASS/STOP。
+
+---
+
+## 2026-08-24 Execution Results — A2-V024 STOP
+
+**Decision:** STOP at Phase A — FlagTree install gate
+
+**Evidence:** `/data/tiankuan/zyg/evidence-a2-v024-20260824T025250Z`
+
+### PASS
+
+| Gate | Detail |
+|---|---|
+| Carrier digest | `sha256:1c36469fe1cd2335850eb2318bd3562471c34d5fd8f9f2affb0afc745ce39585` exact match |
+| FL Git identity | HEAD=`a9435a34dcd7d0a38e3a853535947371a6c62205` MATCH; tree=`e5e073edf4b65c053e954d78d20365aab0e1f46b` MATCH; worktree CLEAN |
+| FL source | GitHub direct clone `yanceng305-collab/vllm-plugin-FL-a3-flagos` branch=`project/glm52-w8a8-v024` |
+| FlagGems identity | HEAD=`f7c55cb2fe1fb90fc713eafa6f63d7cbb73453a9` MATCH; tree=`87e4e1e98c80dfd31d923bd726795f385aa28ffd` MATCH |
+| vllm-ascend negative | distribution=NOT FOUND; find_spec=NOT FOUND; entry-point=NOT FOUND; import=NOT FOUND (all fresh Python process) |
+| Runtime inventory | OS=Ubuntu 22.04.5; Python=3.12.13; CANN=9.0.1; torch=2.10.0+cpu; torch_npu=2.10.0.post2; vllm=0.24.0+empty; triton=3.5.0(pip)/3.2.0(runtime); triton-ascend=3.2.1(uninstalled); transformers=5.13.0 |
+
+### STOP
+
+| Gate | Detail |
+|---|---|
+| **FlagTree install** | 0.6.1rc1+ascend3.5 cannot be installed for Python 3.12.13 |
+
+**Blocker analysis:**
+1. FlagOS official resource index unreachable (HTTP 503)
+2. FlagTree source build (tag 0.6.1rc1+ascend3.5) fails: cmake 4.4.0 > <4.0 constraint; missing CUDA NVCC for offline build; nvidia-toolchain-version.json bug (missing `ptxas-blackwell` key)
+3. FlagTree 0.6.1+ascend3.5 pre-built from FlagOS Docker image is Python 3.11.15 only; pybind11 Python version mismatch prevents loading in Python 3.12
+4. All FlagOS Docker images (harbor.baai.ac.cn/flagos-inner-models-release) use Python 3.11; no Python 3.12 flagtree exists
+
+**Python 3.12 status: Unresolved.** This STOP does NOT conclude "FlagTree does not support Python 3.12." The official FlagTree Python 3.11 pre-built path exists and works. The Python 3.12 blocker is due to the carrier's Python version, not a FlagTree limitation.
+
+### Not Reached
+
+- NPU 12+13 pre/post state (not collected)
+- Tiny torch_npu tensor smoke
+- FlagOS Dispatch operator smoke
+- Phase B container creation
+
+### Next Steps
+
+1. Obtain FlagTree for Python 3.12 (pre-built wheel or buildable source)
+2. Or user-approved Python 3.11 carrier variant
+3. Re-run A2-v024 with updated FlagTree availability

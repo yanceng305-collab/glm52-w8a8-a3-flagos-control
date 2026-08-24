@@ -1,7 +1,7 @@
 # 项目状态
 
 更新时间：2026-08-24
-总体状态：A3-CP-A2-v024 Ready；等待exact carrier/source identity preflight后连续执行environment与shared-NPU tiny smoke
+总体状态：A2-v024 **STOP at Phase A FlagTree gate**；carrier/FL/FlagGems identity PASS；FlagTree Python 3.12 install blocked；py312 Unresolved
 
 ## 当前快照
 
@@ -15,8 +15,8 @@
 | Formal A3 code repository | Migration PASS | existing main不变；v0.2.1 anchor、v0.24 anchor、project branch exact |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
-| A2 environment gate | **Ready / previous attempt STOP before container** | exact digest、Git bundle、实际runtime inventory、compiler/FlagGems/FL与静态验证 |
-| A2 shared-NPU tiny smoke | **Ready after environment PASS** | 仅共享NPU 12+13执行极小torch_npu tensor与FlagOS Dispatch operator；无需再次确认 |
+| A2 environment gate | **STOP at FlagTree (Phase A)** | carrier digest PASS；FL Git identity PASS；FlagGems v5.3.4 identity PASS；vllm-ascend negative PASS；**FlagTree 0.6.1rc1+ascend3.5 install blocked**（carrier Python 3.12.13，FlagOS官方仅提供Python 3.11 pre-built；py312状态Unresolved）；Evidence: `/data/tiankuan/zyg/evidence-a2-v024-20260824T025250Z` |
+| A2 shared-NPU tiny smoke | **Not reached (Phase A STOP)** | 未进入Phase B；NPU 12+13状态未采集 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -78,10 +78,15 @@
 
 ## 下一门禁
 
-当前Ready服务器任务是完整A2有序执行：[`tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`](tasks/STAGE-A2-V024-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md)。唯一执行提示词：[`tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md`](tasks/DEEPSEEK-A3-CP-A2-V024-EXECUTION-PROMPT.md)。旧Phase-A-only prompt已Superseded。
+A2-v024已于2026-08-24T02:52Z执行，Phase A STOP at FlagTree gate。当前blocker：carrier Python 3.12.13与FlagTree（FlagOS仅提供Python 3.11 pre-built）不兼容；py312 support状态Unresolved。完整Evidence在`/data/tiankuan/zyg/evidence-a2-v024-20260824T025250Z`。
 
-Old v0.20 task/prompt继续Paused，不得下发。
+已PASS：
+- Carrier digest exact match
+- FL Git identity (HEAD/tree/clean) exact match
+- FlagGems v5.3.4 identity exact match
+- vllm-ascend negative check (distribution/find_spec/entry-point/import all NOT FOUND)
+- Runtime inventory collected
 
-原完整trace设计已后置到[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，定义为Eager Correctness后的Deferred / On-demand审计支线，不是Baseline Benchmark硬门禁。
+需要解决：FlagTree Python 3.12 build or pre-built availability。FlagOS official resource index unreachable (503)；FlagTree 0.6.1rc1+ascend3.5 source build尝试失败（cmake版本约束、缺失CUDA NVCC、离线构建支持不完整）。FlagTree 0.6.1+ascend3.5 pre-built（Python 3.11）从FlagOS Docker image提取后因pybind11 Python version mismatch无法在Python 3.12使用。
 
-本轮未操作服务器。上次A2-v024在container创建前因carrier tag与formal source获取失败正确STOP；当前control已允许exact nightly digest与Git bundle relay，下一步按新prompt重试完整A2。
+下一A2-v024重试条件：FlagTree for Python 3.12可用（pre-built wheel or buildable source），或用户批准使用Python 3.11 carrier variant。
