@@ -1,6 +1,6 @@
 # GLM-5.2-W8A8 × FlagOS × Ascend A3/910C 项目计划
 
-状态：CANN9.0.0 clean-room execution PASS / Codex1 NEEDS-FOLLOWUP；final verification Ready after user dispatch
+状态：CANN9.0.0 clean-room original + final verification **ACCEPTED（A2 scope-limited）**；next-stage selection unlocked；当前无下一task被创建/Ready/dispatch
 基线调查日期：2026-08-21
 正式代码repo existing `main@92a6f767...`保持v0.2.1 maintenance/reference；immutable 0.24 baseline与`project/glm52-w8a8-v024`已创建于`a9435a34...`/tree`e5e073ed...`。
 
@@ -15,7 +15,7 @@
 - vllm-ascend image/package的**存在性不再自动判违规**。official同款A3 image可以作为环境carrier；是否存在不可接受依赖必须依据runtime import/call、entry-point activation、operator/backend ownership和loaded-library trace判定。
 - 正式模型执行必须由FlagOS runtime/dispatch/backend ownership闭合。若trace发现`vllm_ascend`实际参与执行，先记录调用点、作用和必要性，再由control判断客户边界与是否替换；不得用“package已安装”或“未发现静态import”替代运行时证据。
 - A3-CP-A2允许只在新建的一次性实验container内卸载`vllm-ascend`，用于降低FL-only bring-up变量；这不是package-presence合规门禁，也不否定official coexistence路线。不得修改原始image或其他carrier runtime组件。
-- `118c314`中的old v0.20 A2/prompt继续Paused；copied-runtime PY311 smoke不作formal acceptance。D-075 clean-room已报告PASS；当前按D-076只执行一次final minimal verification。
+- `118c314`中的old v0.20 A2/prompt继续Paused；copied-runtime PY311 smoke只作feasibility。D-075 original + D-076 final verification已联合ACCEPTED；无新实质反证时禁止再开启A2 Evidence循环。
 - Repository、角色、immutable result、Control Sync和正式Evidence identity规则以`REPOSITORY-AND-EVIDENCE-RULES.md`为准。
 - README、代码、Docker/CI、模型卡冲突必须保留；Unknown 不补猜测版本。
 - eager correctness 在先；graph、MTP、multistream、FlagCX、多机和组合优化在后。
@@ -36,10 +36,9 @@
 A3 Host directory / long-term Git working tree initialization (ACCEPTED)
   -> copied-runtime PY311 smoke (Feasibility only)
   -> official CANN9.0.0 clean-room reproduction (Execution PASS reported)
-  -> final no-copy + four-tiny explicit verification (Ready after user dispatch)
-  -> Codex joint Evidence acceptance / route decision
-  -> A3-CP-A2-v024 environment identity/preparation
-  -> shared NPU tiny smoke
+  -> final no-copy + four-tiny explicit verification (PASS / ACCEPTED)
+  -> Codex joint Evidence acceptance (ACCEPTED)
+  -> next technical-stage selection + contract + separate User authorization (unlocked; none Ready)
   -> 910C Canary (v0.24 control-approved model TBD)
   -> GLM Contract Gate (vLLM语义 + quant format + Minimal Eager Execution Closure)
   -> Capability Microgates / Gap Confirmation
@@ -67,10 +66,10 @@ Deferred / on-demand side branch after Eager Correctness:
 | **Formal Code Repository Migration** | 不改existing main，新增0.24 immutable baseline与project branch | 用户批准 | **PASS**；三个refs exact，existing main/default/legacy零变化 | refs/SHA/tree/legacy hashes | Codex | 不需要 |
 | **A3 Host directory initialization** | 建立两个长期Git working tree和repos/evidence/artifacts/work/legacy边界 | **ACCEPTED with deviation** | repo identity/clean PASS；legacy复制偏差记录，原目录未改 | immutable result + acceptance index | DeepSeek执行；Codex验收 | 未访问NPU |
 | **Copied-runtime PY311 smoke** | Qwen image复制runtime与临时patch验证方向 | **Feasibility proven / not formally accepted** | 不解锁正式A2 | immutable result + copied/patch provenance | DeepSeek执行；Codex returned | tiny NPU已PASS |
-| **CANN9.0.0 A3 clean-room reproduction** | 从official py311 devel base独立安装torch/vLLM/FlagTree/FlagGems/FL/Dispatch | **Execution PASS / Codex1 NEEDS-FOLLOWUP**；[final verification](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md) Ready after user dispatch | 联合original、supplemental与final-verification Evidence完成限定范围Acceptance | base/runtime/source/patch provenance、explicit NPU assertions、reconstruction、Code/Control/Evidence三指针 | Codex2执行final verification；Codex1联合验收 | 仅existing tiny NPU范围 |
-| **A3-CP-A2-v024 environment gate** | 无NPU映射完成carrier/source/package/compiler/FlagGems/FL准备与静态验证 | **PAUSED**；等待integration-gap结果 | gap accepted且用户授权后重试 | immutable result + Server Evidence | DeepSeek未来执行；Codex验收 | 不需要NPU |
-| **A3-CP-A2-v024 shared-NPU tiny smoke** | 在受限新container完成最小NPU/Dispatch验证 | **Not Ready**；environment gate未通过且A2暂停 | tiny torch_npu与一个Dispatch op PASS | environment引用 + NPU pre/post + Dispatch/device result | DeepSeek未来执行；Codex验收 | 第一台NPU 12+13 |
-| **910C Canary** | 用new v0.24 stack上的control-approved小模型隔离验证基础链 | A3-CP-A2-v024 accepted；canary模型/权重重新冻结 | eager offline + serving正确；FL/dense attention/HCCL dispatch可追溯 | prompts/outputs、tolerance、dispatch trace、峰值内存 | DeepSeek；Codex验收 | 不需要 |
+| **CANN9.0.0 A3 clean-room reproduction** | 从official py311 devel base独立安装torch/vLLM/FlagTree/FlagGems/FL/Dispatch | **ACCEPTED（A2 scope-limited）**；original + supplement + [final verification](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md)联合闭合 | clean runtime/compiler/provider、exact FL与四项explicit NPU tiny path已验收；residual debt非阻塞 | base/runtime/source/patch provenance、explicit NPU assertions、reconstruction、Code/Control/Evidence三指针 | Codex2执行；Codex1已验收 | 仅tiny NPU范围 |
+| **A3-CP-A2-v024 environment gate** | 历史carrier/source/package准备拆分 | **Satisfied / superseded by accepted D-075 clean-room** | 不单独重跑；其环境目标已由accepted clean-room覆盖 | historical immutable result + accepted joint Evidence | Historical only | 不需要NPU |
+| **A3-CP-A2-v024 shared-NPU tiny smoke** | 历史tiny-smoke拆分 | **Satisfied / superseded by accepted final verification** | 四项explicit NPU tiny path已ACCEPTED；不得重跑旧task | accepted final-verification Evidence | Historical only | NPU 12+13已验证 |
+| **910C Canary** | 用new v0.24 stack上的control-approved小模型隔离验证基础链 | **Unlocked for task design / Not Ready for execution**；A2已ACCEPTED，canary模型/权重/config仍须另行冻结和User授权 | eager offline + serving正确；FL/dense attention/HCCL dispatch可追溯 | prompts/outputs、tolerance、dispatch trace、峰值内存 | Codex1设计；Codex2未来执行；User授权 | 不需要 |
 | **GLM Contract Gate** | 冻结`FlagOS new main + vLLM0.24 + GLM-5.2-W8A8`模型与artifact contract | Canary accepted；真实checkpoint manifest齐全 | 验证current-main GLM contract、W8A8 artifact、MLA/DSA/Indexer/W8A8 Linear/MoE、MLA cache ops与910C A/B/C closure；0.20.2仅fallback evidence | current-main code map、manifest/layout、gap contracts、closure证据 | Codex决策；DeepSeek仅做未来授权spike | 不需要 |
 | **Capability Microgates / Gap Confirmation** | 对每个mandatory capability按`FlagGems -> vendor.ascend -> Reference/PyTorch`依次审查，确认现有合法路径或形成gap contract | 两项contract ADR和Minimal Eager Execution Closure批准 | 路径在FlagOS Dispatch内可达、910C可执行、microgate correctness通过、接口支撑GLM forward；Reference须证明tensor留在NPU且无静默CPU fallback；任何`vllm_ascend`实际调用须可追踪并进入边界审查；三路都失败才标Missing/Unwired | path audit、gap contract、reference/tolerance、device/backend/import trace、failure signature | Codex定义/审查；DeepSeek仅在未来授权后执行repro | 不需要 |
 | **Minimal Capability Implementation** | 只补齐A/B/C三条现有路径全部不可用且属于首次eager mandatory closure的能力 | 对应gap contract证明三路均失败并获批准 | MLA、DSA/SFA、Indexer、W8A8等原则上独立小任务、独立branch、独立Draft PR；按FlagOS架构spec-first重新实现；不为FlagGems覆盖率或性能提前开发 | implementation contract、path audit、PR diff、license/reference disclosure、focused tests | DeepSeek未来实现；Codex contract/PR review | 不需要 |
@@ -90,7 +89,7 @@ Deferred / on-demand side branch after Eager Correctness:
 
 `c70aa4b`的neutral-base-only门禁继续保持Superseded，不因本轮版本迁移恢复。`118c314`中的v0.20.2 A2及其prompt现为**Superseded / Paused by upstream branch migration**，不得执行。
 
-Copied-runtime PY311结果保留为immutable feasibility evidence，原task/prompt不得重跑。D-075 clean-room execution已报告PASS并有supplement；当前唯一Ready task是[`tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md)，prompt见[`tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`](tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md)。下一Stage仍未解锁。
+Copied-runtime PY311结果保留为immutable feasibility evidence，原task/prompt不得重跑。D-075 clean-room与D-076 final verification已范围受限地ACCEPTED。A2不再阻塞下一Stage选择、contract设计与另行User授权；当前没有下一task被创建、Ready或dispatch，也不得恢复任何historical/paused A2 task。
 
 完整coexistence/dynamic provenance不再阻塞Qwen、GLM mandatory closure、first eager或Baseline Benchmark；原trace设计移至[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，作为Eager Correctness后的Deferred / On-demand支线，按客户证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发。A/B仍比较“保留package + FL selectors”和“同carrier卸载package”。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
 

@@ -1,14 +1,14 @@
 # 项目状态
 
 更新时间：2026-08-25
-总体状态：clean-room execution **PASS**与Codex2 supplemental Evidence均已同步；**Codex1 Acceptance NEEDS-FOLLOWUP**，最后一次最小verification已Ready，下一正式技术阶段尚未解锁
+总体状态：A2 CANN9.0.0/Python3.11 clean-room runtime/compiler/FlagOS Dispatch tiny gate **ACCEPTED**；original与final-verification均ACCEPTED；下一Stage选择已解锁，但当前无下一task被创建、Ready或下发
 
 ## 当前快照
 
 | 工作项 | 状态 | 证据边界 |
 |---|---|---|
 | Official branch migration | PASS | Code repo `main@92a6f767`是v0.2.1维护线；official new-main freeze `a9435a34`/tree`e5e073ed`已成为0.24 baseline与project branch |
-| Runtime ownership | Static chain confirmed；tiny Dispatch smoke PASS reported / Acceptance NEEDS-FOLLOWUP | source与provider identity已有supplemental映射；最后补显式device/backend/no-fallback assertion |
+| Runtime ownership | **A2 tiny gate ACCEPTED** | FlagTree-owned Ascend provider与FL/Dispatch vendor.ascend tiny path已显式NPU验证；完整模型runtime仍未验证 |
 | 910C maturity | Complete for public evidence | v0.2.1-era仅Qwen3.6 TP2；new v0.24 stack无FL A3 E2E |
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
 | A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
@@ -18,9 +18,9 @@
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
 | Historical v0.24 Python3.12 A2 | **STOP at FlagTree (Phase A)** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；由后续Python3.11路线取代，不得当作当前task |
-| Clean-room shared-NPU tiny smoke | **PASS reported / final verification Ready** | 只重复四项tiny路径，补NPU device/backend/no-fallback/assertion/exit；不扩张实验 |
+| Clean-room shared-NPU tiny smoke | **ACCEPTED** | torch_npu、FlagTree、FlagGems direct、FL/Dispatch均显式NPU input/output、backend、no-fallback、同步、correctness与exit=0 |
 | PY311 copied-runtime smoke | **Feasibility proven / not formally accepted** | Qwen image复制Python/FlagTree/vLLM并使用3处临时patch；immutable PASS保留，但不能作为正式环境acceptance |
-| CANN 9.0.0 A3 clean-room | **Execution PASS / supplement SYNCED / Acceptance NEEDS-FOLLOWUP** | `cdb586a...`已索引inventory/checksum；剩余no-copy corroboration与四项tiny显式断言 |
+| CANN 9.0.0 A3 clean-room | **ACCEPTED（A2 scope-limited）** | original `20260824T080753Z` + supplement `cdb586a...` + final verification `20260825T030520Z`联合审查无实质反证 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -35,8 +35,8 @@
 - official `v0.2.1`与new `main`已diverged，不能fast-forward或merge成伪升级。
 - `bb439d...`在NVIDIA A800上完成GLM-5.2-Slim TP16双机init和weight loading后因MLA cache op缺失而PARTIAL；不是Ascend/W8A8 E2E。
 - Historical v0.24 carrier研究中的`v0.24.0rc1-a3` tag与provisional nightly digest只保留reference，不是当前clean-room run的base。
-- 最新clean-room run报告使用official CANN9.0.0 A3 py311 exact digest，并实测冻结Python/CANN/torch/torch_npu/vLLM/FlagTree/FlagGems/FL tuple；该报告仍待Codex1独立审查。
-- 最新run报告使用FlagGems v5.3.4与FlagTree`0.6.1+ascend3.5`，最终`triton`namespace由FlagTree拥有；不得把这条执行报告先行写成formal acceptance。
+- Clean-room original与final verification已完成Codex1联合审查；official CANN9.0.0 A3 py311 digest、Python/CANN/torch/torch_npu/vLLM/FlagTree/FlagGems/FL tuple在A2边界内ACCEPTED。
+- FlagGems v5.3.4与FlagTree`0.6.1+ascend3.5`provider identity已复核；`triton`namespace由FlagTree拥有，无mixed provider反证。
 - current main Ascend Dockerfile仍为0.19/CANN8.5/old compiler tuple，标记Upstream Conflict / stale candidate。
 - `VLLM_PLUGINS=fl`使实际platform为FL；静态链路继续到`WorkerFL`、`ModelRunnerFL`与FlagOS Dispatch。
 - official `ascend.yaml`按operator选择FlagGems、`vendor.ascend`或Reference；`vendor.ascend`位于`vllm_fl` ownership并直接调用torch_npu/CANN，不是vllm-ascend backend wrapper。
@@ -54,8 +54,10 @@
 - 当前 FL Ascend 不构建自身 native extension；`VLLM_VENDOR` 必须 unset，设置 `ascend` 会失败。
 - Codex2 supplemental Evidence commit `cdb586af...`已闭合original Evidence、retained Work与supplement的inventory/checksum/verification入口；它明确把剩余缺口缩小为no-copy negative audit和四项tiny显式device/backend assertion。
 - D-076冻结A2时间边界：只再执行一次final minimal verification；没有实质技术反证时，余留历史审计不完整转为residual risk/evidence debt，不再追加A2验证。
+- Final verification run `20260825T030520Z` PASS并闭合四项explicit NPU assertion；original与final-verification两行均已ACCEPTED，D-076已满足。
+- Runtime snapshot `flagos-glm52-a3-runtime:v024-cann900-py311` / image ID `sha256:e1a89dca...`是当前server后续另行授权任务的默认runtime起点；它是host-local image且依赖`/data`下exact clean FL checkout，不是model-ready或portable registry artifact。
 
-## 最新执行与Codex1审查
+## A2 Final Acceptance
 
 - Task / Run：`A2-V024-CLEANROOM-CANN900-PY311` / `20260824T080753Z`。
 - Immutable result：[`results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md`](results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md)；Server Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z`。
@@ -64,7 +66,10 @@
 - Reported issue handling：Triton circular import与FlagGems DSA package-init问题复现并保存third-party patch；FL `patch_mamba_config` / `cbor2`问题未复现。
 - Code/source复核：formal project branch仍为`a9435a34...`/tree`e5e073ed...`，无本task远端branch或PR；official vLLM/FlagTree/FlagGems身份和两个patch target均与result一致。
 - Supplemental Evidence：[`results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z-evidence-supplement-codex2.md`](results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z-evidence-supplement-codex2.md)，Control commit `cdb586af...`；original、Work与supplement checksum verification均报告成功。
-- Codex1 Acceptance：**NEEDS-FOLLOWUP**。没有实质性反证；当前只剩clean-room/no-copy有边界独立佐证，以及四项tiny smoke的显式NPU device/backend/no-fallback/assertion/exit。
+- Final verification：[`results/A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION/20260825T030520Z.md`](results/A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION/20260825T030520Z.md)，Execution PASS；Control result `2ff374f...`、index sync `6f369d8...`。
+- Final verification确认：live container匹配frozen digest；未发现old-runtime reuse、错误Code、mixed provider、CPU fallback、NPU失败或FL修改；四项tiny均显式在NPU执行并exit=0。
+- Codex1 Acceptance：original `20260824T080753Z`与final verification `20260825T030520Z`均为**ACCEPTED**。Acceptance只覆盖A2 clean-room environment/runtime/compiler/FlagOS Dispatch tiny gate。
+- Residual Evidence debt（D-076下非阻塞）：无法证明绝对历史never-copy；original旧日志未统一保存numeric exit/no-fallback assertion；final manifest/checksum未在Control逐项复述；snapshot仅host-local，部分torch wheel与patch replay字段仍是重建文档债。没有一项构成错误runtime、mixed provider、CPU fallback、NPU failure或FL修改的正向证据，不得再启动A2 Evidence循环。
 
 当前“FlagOS原生”工作边界按实际模型执行ownership判定，不按carrier image/package存在性判定。若trace发现`vllm_ascend`实际参与，只对具体调用进入客户边界/替换判断；只有客户以后明确扩大到official FL历史adapted来源时才另行重审源码合规。
 
@@ -82,22 +87,12 @@
 - Legacy未执行rename、transfer、detach、fork sync、push或settings修改；branches/tags/PR #1哈希前后相同。
 - Existing `main`禁止直接开发或同步覆盖；v0.24 migration已完成，后续代码task从`project/glm52-w8a8-v024`派生并按合同提交PR。
 
-## 下一门禁
+## 下一Stage
 
-唯一Ready任务：
+**A2不再阻塞项目推进，下一技术Stage选择正式解锁。** 这只表示可按当前PLAN选择Stage、冻结contract并另行请求User授权；本轮没有创建、Ready或下发任何下一task，也不恢复historical/paused task。
 
-- Task：[`tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md)
-- Codex2 prompt：[`tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`](tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md)
-- Reconstruction baseline：[`A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`](A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md)
-- Decision：[`DECISIONS.md`](DECISIONS.md) D-076
+按当前PLAN，下一阶段候选为910C Canary的contract/model/weight选择，但仍须Codex1单独设计、User另行批准后才能Ready/dispatch。A2 ACCEPTED不表示GLM工作已经开始。
 
-本task只使用现有`flagos-cann900-py311-test`：不重建、不重装、不修改runtime/FL/old result；新Evidence单独保存。它补no-copy有边界核查、四项tiny显式NPU assertion，并从live inspect恢复可重建Docker/runtime脚本。Original run + supplemental Evidence + follow-up Evidence联合供Codex1最终Acceptance。
+以下仍全部未完成且不在本Acceptance内：GLM-5.2-W8A8模型构造/加载、W8A8 artifact与correctness、MLA、DSA/SFA、Indexer、KV/MLA cache、完整Worker/ModelRunner模型路径、首个正确token、E2E、serve、多卡/collective、benchmark、profile和性能优化。
 
-若未发现错误base/runtime、旧runtime复用、错误Code、mixed provider、CPU fallback、NPU failure或未记录FL修改等实质反证，剩余纯Evidence债按D-076记录为residual risk/evidence debt并结束A2验证循环；真实技术失败仍按事实处理。
-
-在final verification执行、Codex1联合审查并更新Acceptance前：
-
-- 不创建或下发下一技术Stage task；
-- 不开始GLM-5.2-W8A8模型适配、模型运行或性能实验；
-- 不把历史Ready task/prompt重新下发；
-- 下一正式技术阶段保持未解锁。
+默认复用环境见[`A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`](A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md)。Snapshot launch前仍须核对image ID/runtime tuple、task-specific devices/Docker参数，以及`/data` bind下formal FL branch/HEAD/tree/clean状态。

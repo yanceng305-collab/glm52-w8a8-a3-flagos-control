@@ -1,8 +1,8 @@
 # A2 clean-room container/environment reconstruction
 
-状态：**Final verification captured；replay parameters and live deviations recorded**
+状态：**A2 scope-limited ACCEPTED；default local runtime snapshot recorded；reconstruction debt explicit**
 
-目标：当现有container丢失时，使新的Codex2能够从frozen base和可审计artifact重建当前A2 runtime。本文只记录正式仓库已确认的事实；实际`docker run`和缺失artifact replay字段必须由final verification从现场metadata/Evidence恢复，不得猜测。
+目标：优先复用已验收的local runtime snapshot；若snapshot丢失，则使新的Codex2能够从frozen base和可审计artifact重建当前A2 runtime。本文区分现场已捕获事实、broader User-confirmed recipe与尚未落入Control的replay文档债，不得猜测。
 
 ## Frozen identity
 
@@ -28,6 +28,13 @@ skip the Python/CANN/torch/vLLM/FlagTree/FlagGems/FL installation path.
 | Parent image | `sha256:5ce84286426c403bab680e81d24f448463dde49ac67a10ed3cf67f1a632fdf3a` |
 | Parent container | `flagos-cann900-py311-test` / `edf0abc861e64fa811f1a4c9b089471611ec2bddc9f7e4a8157c427dc38b03b5` |
 
+该snapshot是后续**另行授权任务**在当前server上的默认复用起点，但有以下硬边界：
+
+- launch前核对snapshot image ID、runtime tuple及task-specific device/Docker配置；
+- 必须bind `/data`并验证formal editable FL checkout仍为`project/glm52-w8a8-v024@a9435a34...`、tree`e5e073ed...`、clean；snapshot本身不包含独立Code freeze；
+- 它是host-local tag/image ID，不是registry-pinned digest或portable archive；若本地不存在，按frozen base与checksum-bound Evidence重建，不得替换为未验证image；
+- snapshot只继承已验收的A2 tiny runtime gate，不代表模型ready或独立clean rebuild已验收。
+
 User-confirmed pull方式：
 
 ```bash
@@ -40,7 +47,7 @@ docker pull swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.0.0-a3-ubuntu22.04
 
 User-confirmed container creation command is recorded below. Live `docker inspect` confirmed the running container uses the frozen base digest and the expected device class; it also showed smaller deviations from the user-confirmed example (`privileged=false`, `ShmSize=64MiB`, and a reduced bind set). Those live facts are documented here and do not alter the confirmed baseline command.
 
-| 参数组 | 当前状态 | Final verification必须恢复 |
+| 参数组 | 当前状态 | 已捕获值 / 边界 |
 |---|---|---|
 | Image/container ID | Captured | image ID `sha256:5ce84286426c403bab680e81d24f448463dde49ac67a10ed3cf67f1a632fdf3a`, container ID `edf0abc861e64fa811f1a4c9b089471611ec2bddc9f7e4a8157c427dc38b03b5`, created `2026-08-24T08:18:21.67827892Z`, RepoDigest `sha256:5f20011b2c5509ca4716393e66fc7aa07016629bce36a7f6c32c1bf31f30433f` |
 | Device | Captured | `/dev/davinci12`, `/dev/davinci13`, `/dev/davinci_manager`, `/dev/devmm_svm`, `/dev/hisi_hdc` |
@@ -52,7 +59,7 @@ User-confirmed container creation command is recorded below. Live `docker inspec
 | Environment | Captured | runtime bootstrap from `set_env.sh`, `ascendnpu-ir`, `atb`; no secret material recorded |
 | Other non-defaults | Captured | explicit `PATH`, `LD_LIBRARY_PATH`, `PYTHONPATH`, `ASCEND_*`, `ATB_*` values recovered; no `/root/.cache` mount present |
 
-标准进入候选为：
+已验证的标准进入方式为：
 
 ```bash
 docker exec -it flagos-cann900-py311-test /bin/bash
@@ -121,9 +128,10 @@ flagos-glm52-a3-runtime:v024-cann900-py311 \
 docker exec -it flagos-glm52-a3-runtime-v024 /bin/bash
 ```
 
-Later consumers that need more visible NPUs only add the corresponding
-`--device /dev/davinciN` entries and keep the rest of the container parameters
-unchanged.
+Later consumers must derive device mappings, mounts, privilege, SHM and every
+other launch parameter from their own authorized task plus this reconstruction
+record. The snapshot tag alone does not authorize “only add devices” or any
+other inferred launch change.
 
 ## Final runtime tuple
 
@@ -156,7 +164,7 @@ Final provider facts captured in this run:
 
 - Final versions：`torch==2.10.0+cpu`、`torch_npu==2.10.0.post2`，CPython 3.11 / aarch64。
 - Original install使用`pip --no-deps`以保持CANN 9.0.0兼容tuple。
-- Exact wheel filename、URL、SHA256和retained artifact path：**Pending final verification recovery from supplemental/Work manifests**。
+- Exact wheel filename、URL、SHA256和retained artifact path尚未落入Control；只能从已捕获的supplemental/Work/final-verification Evidence补索引。它属于frozen-base重建文档债，不阻塞snapshot复用或A2 Acceptance，也不得触发新A2 run。
 
 ### vLLM empty
 
@@ -213,15 +221,15 @@ python -m pip install --no-deps --no-build-isolation -e .
 
 | Patch | Formal pointer | Known identity | Replay status |
 |---|---|---|---|
-| FlagTree `do_bench_npu` lazy import | Original Evidence `patches/flagtree-do-bench-npu-lazy-import.patch` | Patch SHA256 `b812a72728f008d8f6296311a44a5b444076e6764ccc5276c5554b9c5fa6f9fe` | exact target/cwd/strip level、input/output hash和canonical replay command待final verification恢复 |
-| FlagGems DSA package init | Original Evidence `patches/flaggems-dsa-package-init.patch` | Patched wheel SHA256见上；patch-file hash待恢复 | exact target/cwd/strip level、input/output hash和canonical replay command待final verification恢复 |
+| FlagTree `do_bench_npu` lazy import | Original Evidence `patches/flagtree-do-bench-npu-lazy-import.patch` | Patch SHA256 `b812a72728f008d8f6296311a44a5b444076e6764ccc5276c5554b9c5fa6f9fe` | exact target/cwd/strip level、input/output hash和canonical replay尚未落入Control；只可从既有checksum-bound Evidence补索引 |
+| FlagGems DSA package init | Original Evidence `patches/flaggems-dsa-package-init.patch` | Patched wheel SHA256见上；patch-file hash待补索引 | exact target/cwd/strip level、input/output hash和canonical replay尚未落入Control；只可从既有checksum-bound Evidence补索引 |
 
 Replay入口来自：
 
 - Original Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z/`
 - Supplemental mapping：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z-supplemental-codex2/acceptance-evidence-index.md`
 
-Final verification须输出checksum-bound的patch replay script/command；不得靠本文猜测`patch -pN`、working directory或target path。
+Final verification已完成。上述exact replay字段若后续整理，只能回读既有checksum-bound Evidence；不得靠本文猜测`patch -pN`、working directory或target path，也不得为文档完整性再启动A2验证。
 
 ## Rebuild order
 
@@ -247,4 +255,4 @@ Final verification须输出checksum-bound的patch replay script/command；不得
 - Final verification Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION/20260825T030520Z/`
 - Result index：[`results/INDEX.md`](results/INDEX.md)
 
-Original run + supplemental Evidence + final verification Evidence联合用于A2最终Acceptance。本文建立rebuild baseline，不代表现有runtime已重建验证，也不改变当前`NEEDS-FOLLOWUP`。
+Original run + supplemental Evidence + final verification Evidence已完成联合审查；original与final-verification均为范围受限的`ACCEPTED`。无法形成绝对历史never-copy证明、local snapshot未持久化到registry/archive及上述replay索引缺口均为D-076下非阻塞residual debt，不得触发新的A2 Evidence循环。

@@ -41,7 +41,7 @@ Triton API → FlagTree              PyTorch / torch_npu
                     Ascend A3 / 910C
 ```
 
-冻结源码已静态确认到 Platform/Worker/ModelRunner/Dispatch 的链路。最新 clean-room 报告只动态验证了 tiny torch_npu、一个 FlagTree kernel、FlagGems op 和 FL/Dispatch op；它没有运行模型、服务、collective、benchmark 或 profile。Codex2 supplement已索引既有Evidence；最后只补no-copy佐证与四项tiny的显式NPU断言，Acceptance仍为`NEEDS-FOLLOWUP`。
+冻结源码已静态确认到 Platform/Worker/ModelRunner/Dispatch 的链路。Original + supplement + final verification联合审查已确认tiny torch_npu、FlagTree kernel、FlagGems direct和FL/Dispatch四条路径显式在NPU执行、backend正确且无silent CPU fallback；A2 scope-limited Acceptance为`ACCEPTED`。它仍未运行模型、服务、collective、benchmark或profile。
 
 ## Repositories
 
@@ -56,21 +56,22 @@ Code 修改遵循 `project integration branch → task branch → edit/test → 
 
 ## Current Phase
 
-当前门禁是 **在现有container上执行一次final minimal verification**；不重建、不重装、不修改runtime/FL，下一正式技术阶段尚未解锁。
+**A2 clean-room environment/runtime/compiler/Dispatch tiny gate已ACCEPTED。** A2不再阻塞下一Stage选择；当前未创建、Ready或下发任何下一task。
 
 | 字段 | 当前记录 |
 |---|---|
 | Task | `A2-V024-CLEANROOM-CANN900-PY311` |
 | Run | `20260824T080753Z` |
 | Codex2 execution | **PASS reported** |
-| Control | result 已同步；sync marker commit 为 `31d20df0d3dfa0462d596a015cd553cdcda98550` |
-| Codex1 Acceptance | **NEEDS-FOLLOWUP**；final no-copy/tiny explicit verification待执行 |
+| Control | original sync `31d20df...`；supplement `cdb586af...`；final pointer `6f369d8a...`；snapshot record `031a2db...` |
+| Codex1 Acceptance | **ACCEPTED（A2 scope-limited）** |
 | FL change / PR | 无 FL 修改；`N/A` |
-| Final verification | [Task](docs/glm52-w8a8-a3-flagos/tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md) Ready after User dispatch |
+| Final verification | `20260825T030520Z` PASS / **ACCEPTED**；Control `6f369d8a...` |
+| Default runtime | `flagos-glm52-a3-runtime:v024-cann900-py311` / image ID `sha256:e1a89dca...`（host-local） |
 
-该执行报告记录的 tuple 是：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。Code/官方source复核未发现反证；supplement commit `cdb586af...`已记录既有inventory/checksum。剩余两项是clean-room/no-copy有边界核查，以及四项tiny smoke的device/backend/no-fallback/assertion/exit。
+Accepted tuple：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。未发现错误base/runtime、old-runtime reuse、mixed provider、CPU fallback、NPU失败或FL未记录修改。
 
-阶段边界：baseline research 与 Code repo v0.24 migration 已完成；Host 长期目录初始化已 ACCEPTED with deviation；旧 v0.24 Python 3.12 A2 在 FlagTree gate STOP；copied-runtime Python 3.11 run 只证明 feasibility；当前 clean-room execution 已报告 PASS 并同步，Codex1 Acceptance为NEEDS-FOLLOWUP。
+阶段边界：baseline research、Code repo v0.24 migration与A2 clean-room gate已完成；旧v0.24 Python3.12 A2和copied-runtime Python3.11只保留历史/feasibility价值。下一Stage可被选择、设计并另行请求User授权，但没有task自动Ready或dispatch。
 
 ## What Is NOT Done
 
@@ -82,7 +83,7 @@ Tiny runtime/operator/Dispatch smoke PASS **不等于**“GLM-5.2-W8A8 已可运
 - GLM-5.2-W8A8 离线 E2E inference、serve、目标多卡/collective 和稳定性验收；
 - baseline benchmark、profiling、性能优化、组合优化与按需 scale-out。
 
-现有Evidence补证完成并正式ACCEPTED前，不得把 clean-room PASS 用来解锁上述工作。后续大致路线仍是环境门禁 → control-approved canary → GLM contract/capability/capacity → first eager/eager correctness → benchmark/profile/optimize，具体 task 必须另行批准。
+A2已不再阻塞推进，但上述模型级工作仍必须分别经过control-approved canary、GLM contract/capability/capacity、first eager/eager correctness、benchmark/profile/optimize等独立合同与验收。本Acceptance不降低任何后续标准。
 
 ## Where to Find Information
 
@@ -119,6 +120,8 @@ Tiny runtime/operator/Dispatch smoke PASS **不等于**“GLM-5.2-W8A8 已可运
 ```
 
 服务器代理切换时优先继续已有 container、run-id、Evidence、work、Code branch 和安装状态；只有环境损坏或 task 明确要求 clean-room 才重建。
+
+后续另行授权任务默认优先复用[`A2 clean-room reconstruction`](docs/glm52-w8a8-a3-flagos/A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md)记录的local runtime snapshot。Launch前必须核对image ID/runtime tuple、task-specific device与Docker参数，并验证`/data` bind下formal FL checkout的branch/HEAD/tree/clean状态；snapshot不是registry-pinned、portable或model-ready artifact。
 
 ## Upstream References
 

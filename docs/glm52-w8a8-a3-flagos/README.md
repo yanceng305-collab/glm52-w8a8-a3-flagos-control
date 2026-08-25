@@ -15,7 +15,7 @@
 - `CODE-REPOSITORY-BASELINE.md`：正式standalone A3代码仓库、official冻结SHA/tree、remote与sync policy、legacy零变化验收。
 - `OFFICIAL-V024-BASELINE-RESEARCH.md`：official branch migration、new main/vLLM0.24、GLM partial、v0.24 carrier、双device与compiler证据。
 - `CODE-REPOSITORY-MIGRATION-V024.md`：不修改existing main的0.24 baseline/project branch迁移记录；已PASS。
-- `A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`：当前clean-room container/runtime的frozen事实、重建顺序与待final verification现场恢复的Docker参数。
+- `A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`：accepted runtime tuple、现场Docker参数、default local snapshot与明确的非阻塞replay文档债。
 - `R0-CONTAINER-TUPLE-RESOLUTION.md`：`c70aa4b`时期neutral-base tuple的兼容性研究；其强制路线已Superseded，仅保留reference evidence。
 - `tasks/STAGE-A-CLEAN-PROVENANCE.md`：因branch migration重开的v0.24 baseline/carrier/provider Stage A父合同。
 - `tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：historical v0.20.2 A2；已Paused，不得执行。
@@ -27,8 +27,8 @@
 - `tasks/STAGE-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP.md`与对应prompt：已被Python3.11-first路线Superseded。
 - `tasks/STAGE-A2-V024-PY311-FIRST-FLAGTREE-ENV.md`与对应prompt：feasibility run已完成；不作formal acceptance，不得重跑。
 - `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`与对应旧prompt：execution PASS reported，保留为原始合同，不得重跑。
-- `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`：当前唯一Ready的最后一次最小Evidence follow-up。
-- `tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`：Codex2 final verification执行入口。
+- `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`：Completed；run `20260825T030520Z` PASS / Codex1 ACCEPTED（A2 scope-limited）。
+- `tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`：已执行的Codex2入口；不得重新下发。
 - `tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`：旧Phase-A-only提示词；已Superseded，不得执行。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
@@ -41,12 +41,12 @@
 2. 正式repo迁移已PASS：existing main不变，v0.2.1 anchor、0.24 anchor与project branch精确创建。
 3. Primary GLM contract改为FlagOS new main + vLLM0.24 + GLM-5.2-W8A8；0.20.2只作fallback evidence。
 4. `bb439d...`已在NVIDIA TP16双机完成GLM-5.2-Slim init/weight load并暴露MLA cache gap，但不是Ascend/W8A8 E2E。
-5. `v0.24.0rc1-a3`只保留为official documented release tag，当前无可用artifact；A2使用exact digest `sha256:1c36469f...`的official `releases/v0.24.0rc` A3 nightly作provisional carrier，不称rc1 release image。
-6. Provisional carrier内部runtime tuple不预设，全部由container preflight实测；formal FL source在GitHub不可达时允许expected SHA256校验过的Git bundle relay。
-7. A2按实际compiler inventory安装exact FlagTree并证明single coherent provider；环境PASS后共享NPU 12+13执行tiny torch_npu与Dispatch op，状态恶化立即STOP。
+5. 当前A2正式base为official CANN9.0.0 A3 py311 exact digest `sha256:5f20011b...`；旧vLLM-Ascend carrier只保留history/reference。
+6. Accepted tuple为Python3.11.15 / CANN9.0.0 / torch2.10 / torch_npu2.10 / vLLM0.24 empty / FlagTree0.6.1+ascend3.5 / FlagGems5.3.4 / FL`a9435a34...`。
+7. FlagTree single-provider与torch_npu、FlagTree、FlagGems direct、FL/Dispatch四项explicit NPU tiny path均已ACCEPTED；这不是模型级E2E。
 8. Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，明确标记Upstream Conflict / stale candidate。
-9. A2 run `20260824T025250Z`已形成immutable result snapshot；Experiment STOP、Control Sync和Codex Acceptance分开记录。
-10. Copied-runtime PY311 smoke仅证明feasibility；下一步从官方CANN9.0.0 A3 py311 devel clean base独立复现，不复制上一轮runtime或预应用patch。
+9. Original run `20260824T080753Z`、supplement与final verification `20260825T030520Z`已联合ACCEPTED；Experiment Result、Control Sync与Codex Acceptance继续分开记录。
+10. A2不再阻塞下一Stage选择与contract设计；当前无下一task被创建、Ready或dispatch，GLM模型级工作仍未开始。
 
 ## 状态标签
 
@@ -56,4 +56,4 @@
 - Missing：当前目标基线明确无实现、显式报错或缺必需接口。
 - Conflicting：可信来源在版本/路线/行为上不一致，尚未由实验消解。
 
-本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库和Host长期working tree已建立；当前下一门禁是D-076限定的A2 final minimal verification，下一技术Stage未解锁。
+本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。A2 clean-room environment/runtime/compiler/Dispatch tiny gate已ACCEPTED。下一Stage选择与contract设计已解锁，但当前没有下一task被创建、Ready或dispatch。
