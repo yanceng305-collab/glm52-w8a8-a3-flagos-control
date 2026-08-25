@@ -1,6 +1,8 @@
 # CANARY-V024-QWEN36-27B-TP2
 
-状态：**Waiting User input / Not Ready**
+状态：**SUPERSEDED / CANCELLED UNEXECUTED by User Decision；historical contract only；never dispatched；must not be executed**
+
+本合同未被 User下发、没有 run/Evidence/Code change/Acceptance。不得通过填写旧占位符或复用历史 dispatch恢复执行；未来 GLM恢复必须经过新的 User Decision、vLLM 0.20.2 GLM contract review和新 Task。
 
 执行代理：Codex2
 

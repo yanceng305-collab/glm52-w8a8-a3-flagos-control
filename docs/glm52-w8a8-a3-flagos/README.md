@@ -29,8 +29,8 @@
 - `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`与对应旧prompt：execution PASS reported，保留为原始合同，不得重跑。
 - `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`：Completed；run `20260825T030520Z` PASS / Codex1 ACCEPTED（A2 scope-limited）。
 - `tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`：已执行的Codex2入口；不得重新下发。
-- `tasks/CANARY-V024-QWEN36-27B-TP2.md`：当前910C Canary正式合同；Waiting User input / Not Ready。
-- `tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md`：可交给新Codex2的简洁入口；User facts未填写/未dispatch前不得执行。
+- `tasks/CANARY-V024-QWEN36-27B-TP2.md`：**SUPERSEDED / CANCELLED UNEXECUTED**；historical contract，never dispatched，不得执行。
+- `tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md`：**SUPERSEDED / CANCELLED UNEXECUTED**；historical prompt，不得下发或通过旧占位符恢复。
 - `tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`：旧Phase-A-only提示词；已Superseded，不得执行。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
@@ -48,7 +48,7 @@
 7. FlagTree single-provider与torch_npu、FlagTree、FlagGems direct、FL/Dispatch四项explicit NPU tiny path均已ACCEPTED；这不是模型级E2E。
 8. Current main Ascend Dockerfile仍为0.19/CANN8.5 old tuple，明确标记Upstream Conflict / stale candidate。
 9. Original run `20260824T080753Z`、supplement与final verification `20260825T030520Z`已联合ACCEPTED；Experiment Result、Control Sync与Codex Acceptance继续分开记录。
-10. A2不再阻塞下一Stage选择与contract设计；当前无下一task被创建、Ready或dispatch，GLM模型级工作仍未开始。
+10. **PAUSED by User Decision**：当前 v0.24 route停止，未执行 Canary已取消；Active work转到独立 [Qwen3.6-35B-A3B A3 Validation Control](https://github.com/yanceng305-collab/qwen36-35b-a3b-a3-flagos-control)。恢复 GLM前必须做 fresh vLLM 0.20.2 GLM contract review，当前不批准新 baseline或 GLM port。
 
 ## 状态标签
 
@@ -58,4 +58,4 @@
 - Missing：当前目标基线明确无实现、显式报错或缺必需接口。
 - Conflicting：可信来源在版本/路线/行为上不一致，尚未由实验消解。
 
-本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。A2已ACCEPTED；当前Stage为`CANARY-V024-QWEN36-27B-TP2`，模型冻结为official Qwen3.6-27B BF16，但仍Waiting User input / Not Ready且未dispatch。
+本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。A2历史 Acceptance全部保留；项目当前 **PAUSED by User Decision**，`CANARY-V024-QWEN36-27B-TP2`为 **SUPERSEDED / CANCELLED UNEXECUTED**。未来恢复需要新的 User Decision与 vLLM 0.20.2 GLM contract review。

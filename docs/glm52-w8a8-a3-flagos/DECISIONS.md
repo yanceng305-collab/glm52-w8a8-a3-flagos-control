@@ -79,7 +79,8 @@
 | D-074 | Python3.11-first copied-runtime路线完成tiny smoke | **Feasibility proven / formal acceptance withheld；superseded by D-075** | Run `20260824T065902Z`复制Qwen image Python/FlagTree/vLLM并使用3处临时patch，证明方向可行但不足以证明正式环境clean、独立、可重复 | D-075 clean-room结果 |
 | D-075 | 正式A2基础环境固定为Ascend官方CANN9.0.0 A3 Python3.11 devel exact digest，并在clean-room独立安装全栈 | **Required / A2 scope-limited ACCEPTED** | Base=`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b...`；original + supplement + final verification联合审查无实质反证 | 后续真实runtime反证或User改变决定 |
 | D-076 | `A2-V024-CLEANROOM-CANN900-PY311`只再执行一次final minimal verification；无实质技术反证时，剩余历史审计缺口转为residual risk/evidence debt并结束A2验证循环 | **Required / User Decision / Satisfied** | final verification `20260825T030520Z` PASS并完成Codex1联合Acceptance；不再追加A2 Evidence循环 | 新的实质技术反证，或User改变决定 |
-| D-077 | 当前v0.24 910C Canary选择`Qwen/Qwen3.6-27B@cea40373...`完整official BF16 checkpoint，text-only、TP2/HCCL、eager offline；User负责权重与dispatch | **Required / selected；Waiting User input / Not Ready** | 保留same-model/TP/910C历史oracle并避免35B-A3B的MoE变量；Qwen3-4B不具同等级910C连续性且不消除共同attention风险 | User无法提供exact checkpoint，或真实first blocker与新的Control Decision要求换model/Code task |
+| D-077 | v0.24 910C Canary曾选择`Qwen/Qwen3.6-27B@cea40373...`完整official BF16 checkpoint，text-only、TP2/HCCL、eager offline；User负责权重与dispatch | **Superseded by D-078 as future execution selection；historical unexecuted contract** | 保留当时same-model/TP/910C oracle与选择理由；合同never dispatched | 仅作历史；未来恢复由新contract review与Task决定 |
+| D-078 | GLM项目由User决定暂停；停止当前v0.24 execution route；取消未下发的Qwen Canary；保留全部A2 v0.24历史/Evidence/runtime记录；跟踪独立Qwen3.6-35B-A3B A3 Validation项目；恢复前重新做vLLM 0.20.2 GLM contract review | **Required / User Decision / Implemented in Control** | 当前优先级转到Qwen A3真实验证；没有GLM execution授权 | 新User恢复决定 + contract review完成 |
 
 ## D-076 — A2 final follow-up时间边界
 
@@ -96,6 +97,14 @@
 - Eager offline是mandatory；minimal serving只在offline PASS后且Control明确需要service-entry proof时才作为bounded sub-gate，不是默认PASS条件。
 - Frozen v0.24 code已具architecture/config/loader静态路径，但存在`ASCEND_FL` attention enum mismatch和GDN patch-binding等known first-blocker risks。真实触发时Canary STOP；任何FL修改必须进入独立Code task/branch/PR。
 - Canary Acceptance只证明exact Qwen3.6-27B在accepted snapshot上闭合`PlatformFL → WorkerFL → ModelRunnerFL → FlagOS Dispatch → NPU`并通过TP2 eager smoke；不覆盖GLM/W8A8 capability、production serving、graph/MTP、performance或multi-node。
+
+## D-078 — GLM暂停与恢复边界
+
+- GLM总体状态改为 `PAUSED by User Decision`，当前 v0.24 execution route停止；没有新的 server/model/Code/benchmark/optimization task获得授权。
+- D-077只在“future execution selection”意义上被 supersede。`CANARY-V024-QWEN36-27B-TP2` never dispatched、never executed，现为 `SUPERSEDED / CANCELLED UNEXECUTED`；旧合同和prompt保留为历史且不得执行。
+- D-065及 v0.24 baseline、A2 Acceptance、immutable Result、Evidence pointer、reconstruction、source identity、host-local runtime-image记录保持历史事实，不被删除或静默重写。
+- Active work转到独立 [Qwen3.6-35B-A3B × FlagOS × Ascend A3/910C Validation Control](https://github.com/yanceng305-collab/qwen36-35b-a3b-a3-flagos-control)。Qwen A3 Acceptance只能在 handoff明确范围内提供通用 runtime/container/build/evidence候选，不能证明 GLM/W8A8/model correctness。
+- 恢复 GLM需要新的 User Decision和 fresh vLLM 0.20.2 GLM contract review。该 review是 resume gate，不等于当前已批准新的 GLM baseline/version/Code branch，也不授权现在开始 GLM port。
 
 ## Reclassified execution record
 

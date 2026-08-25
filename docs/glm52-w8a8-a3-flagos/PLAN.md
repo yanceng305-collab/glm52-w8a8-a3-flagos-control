@@ -1,6 +1,6 @@
 # GLM-5.2-W8A8 × FlagOS × Ascend A3/910C 项目计划
 
-状态：A2 **ACCEPTED**；`CANARY-V024-QWEN36-27B-TP2`已选定并Draft；**Waiting User input / Not Ready**
+状态：**PAUSED by User Decision**；当前 v0.24 GLM execution route停止；`CANARY-V024-QWEN36-27B-TP2`为 **SUPERSEDED / CANCELLED UNEXECUTED**
 基线调查日期：2026-08-21
 正式代码repo existing `main@92a6f767...`保持v0.2.1 maintenance/reference；immutable 0.24 baseline与`project/glm52-w8a8-v024`已创建于`a9435a34...`/tree`e5e073ed...`。
 
@@ -33,33 +33,17 @@
 ## 当前关键路径
 
 ```text
-A3 Host directory / long-term Git working tree initialization (ACCEPTED)
-  -> copied-runtime PY311 smoke (Feasibility only)
-  -> official CANN9.0.0 clean-room reproduction (Execution PASS reported)
-  -> final no-copy + four-tiny explicit verification (PASS / ACCEPTED)
-  -> Codex joint Evidence acceptance (ACCEPTED)
-  -> 910C Canary model/contract selection (Qwen3.6-27B selected)
-  -> User model placement + TP2 resource confirmation + explicit dispatch (Waiting / Not Ready)
-  -> CANARY-V024-QWEN36-27B-TP2 eager offline
-  -> GLM Contract Gate (vLLM语义 + quant format + Minimal Eager Execution Closure)
-  -> Capability Microgates / Gap Confirmation
-  -> Minimal Capability Implementation
-  -> Corresponding Microgate PASS
-  -> Capacity & Placement
-  -> First Eager Load
-  -> Minimal Compatibility
-  -> Eager Correctness
-  -> Baseline Benchmark
-  -> Profile & Bottleneck
-  -> Single-variable Optimize
-  -> Advanced Composition
-  -> Scale-out Acceptance（仅被触发时）
-
-Deferred / on-demand side branch after Eager Correctness:
-  -> Post-Eager Runtime Provenance Audit
+Historical accepted A2 v0.24 foundation (preserved)
+  -> User Decision: PAUSE GLM / stop v0.24 execution route
+  -> separate Qwen3.6-35B-A3B A3 Validation Control project
+  -> future User resume decision
+  -> fresh vLLM 0.20.2 GLM contract review
+  -> new GLM plan/task contracts only after review
 ```
 
 ## 阶段计划
+
+**Pause banner：下表保留历史设计与既有 Acceptance；当前没有任何未完成 row是 Ready或获得执行授权。未来恢复必须先通过 User resume decision与 vLLM 0.20.2 GLM contract review，再创建新计划/Task；不得从旧 row直接续跑。**
 
 | Stage | 目标 | Ready gate | Exit / 验收 | 必存证据 | Owner | 第二台 A3 |
 |---|---|---|---|---|---|---|
@@ -70,8 +54,8 @@ Deferred / on-demand side branch after Eager Correctness:
 | **CANN9.0.0 A3 clean-room reproduction** | 从official py311 devel base独立安装torch/vLLM/FlagTree/FlagGems/FL/Dispatch | **ACCEPTED（A2 scope-limited）**；original + supplement + [final verification](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md)联合闭合 | clean runtime/compiler/provider、exact FL与四项explicit NPU tiny path已验收；residual debt非阻塞 | base/runtime/source/patch provenance、explicit NPU assertions、reconstruction、Code/Control/Evidence三指针 | Codex2执行；Codex1已验收 | 仅tiny NPU范围 |
 | **A3-CP-A2-v024 environment gate** | 历史carrier/source/package准备拆分 | **Satisfied / superseded by accepted D-075 clean-room** | 不单独重跑；其环境目标已由accepted clean-room覆盖 | historical immutable result + accepted joint Evidence | Historical only | 不需要NPU |
 | **A3-CP-A2-v024 shared-NPU tiny smoke** | 历史tiny-smoke拆分 | **Satisfied / superseded by accepted final verification** | 四项explicit NPU tiny path已ACCEPTED；不得重跑旧task | accepted final-verification Evidence | Historical only | NPU 12+13已验证 |
-| **910C Canary** | `Qwen/Qwen3.6-27B@cea40373...` complete BF16，text-only、TP2/HCCL、eager offline验证完整FL模型链 | **Waiting User input / Not Ready**；User须确认exact complete model path、safe two-device resources与dispatch，snapshot/Code identity须复核 | mandatory eager offline完成recognize/construct/load/prefill/decode与`Paris` oracle，或在一个可归因first blocker处STOP；minimal serving只在offline PASS后且Control明确需要时可选 | model manifest/revision、runtime/Code三指针、Platform/Worker/Runner、TP/HCCL、weight load、GDN+full-attention Dispatch/NPU trace、prompt/output/assertion、raw logs/checksum | Codex2执行；Codex1 Acceptance；User提供weights/dispatch | 单机TP2，不需要第二台 |
-| **GLM Contract Gate** | 冻结`FlagOS new main + vLLM0.24 + GLM-5.2-W8A8`模型与artifact contract | Canary accepted；真实checkpoint manifest齐全 | 验证current-main GLM contract、W8A8 artifact、MLA/DSA/Indexer/W8A8 Linear/MoE、MLA cache ops与910C A/B/C closure；0.20.2仅fallback evidence | current-main code map、manifest/layout、gap contracts、closure证据 | Codex决策；DeepSeek仅做未来授权spike | 不需要 |
+| **910C Canary** | Historical `Qwen/Qwen3.6-27B@cea40373...` BF16 TP2 eager contract | **SUPERSEDED / CANCELLED UNEXECUTED**；never dispatched；old task/prompt不得执行 | N/A；无run/Evidence/Code change/Acceptance | historical task/prompt only | Historical only | 不需要 |
+| **GLM Contract Gate** | Historical v0.24设计；恢复时重新定义为 vLLM 0.20.2 GLM contract review | **PAUSED / Not Ready**；需要新 User resume decision | 由 future review与新 Task重新定义；本次暂停不批准 baseline | preserved historical research + future review Evidence | Codex/User future decision | 不需要 |
 | **Capability Microgates / Gap Confirmation** | 对每个mandatory capability按`FlagGems -> vendor.ascend -> Reference/PyTorch`依次审查，确认现有合法路径或形成gap contract | 两项contract ADR和Minimal Eager Execution Closure批准 | 路径在FlagOS Dispatch内可达、910C可执行、microgate correctness通过、接口支撑GLM forward；Reference须证明tensor留在NPU且无静默CPU fallback；任何`vllm_ascend`实际调用须可追踪并进入边界审查；三路都失败才标Missing/Unwired | path audit、gap contract、reference/tolerance、device/backend/import trace、failure signature | Codex定义/审查；DeepSeek仅在未来授权后执行repro | 不需要 |
 | **Minimal Capability Implementation** | 只补齐A/B/C三条现有路径全部不可用且属于首次eager mandatory closure的能力 | 对应gap contract证明三路均失败并获批准 | MLA、DSA/SFA、Indexer、W8A8等原则上独立小任务、独立branch、独立Draft PR；按FlagOS架构spec-first重新实现；不为FlagGems覆盖率或性能提前开发 | implementation contract、path audit、PR diff、license/reference disclosure、focused tests | DeepSeek未来实现；Codex contract/PR review | 不需要 |
 | **Corresponding Microgate PASS** | 对选定现有路径或最小新实现使用同一contract验收 | 对应合法路径可测试或独立Draft PR可测试 | backend可达、小shape correctness、checkpoint/runtime contract、GLM forward接口全部PASS；device/backend trace证明NPU执行且无静默CPU fallback；全部mandatory项PASS后才解锁Capacity | raw test、reference/tolerance、dispatch/device trace、contract audit | DeepSeek未来测试；Codex逐项验收 | 不需要 |
@@ -90,11 +74,13 @@ Deferred / on-demand side branch after Eager Correctness:
 
 `c70aa4b`的neutral-base-only门禁继续保持Superseded，不因本轮版本迁移恢复。`118c314`中的v0.20.2 A2及其prompt现为**Superseded / Paused by upstream branch migration**，不得执行。
 
-Copied-runtime PY311结果保留为immutable feasibility evidence，原task/prompt不得重跑。D-075/D-076 A2已范围受限地ACCEPTED。Current Canary task为[`tasks/CANARY-V024-QWEN36-27B-TP2.md`](tasks/CANARY-V024-QWEN36-27B-TP2.md)，prompt见[`tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md`](tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md)；在User确认weights/path、TP2 resource和dispatch前保持Waiting User input / Not Ready。
+Copied-runtime PY311结果保留为immutable feasibility evidence，原task/prompt不得重跑。D-075/D-076 A2已范围受限地ACCEPTED。Canary task [`tasks/CANARY-V024-QWEN36-27B-TP2.md`](tasks/CANARY-V024-QWEN36-27B-TP2.md)及其 [prompt](tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md) 从未 dispatch，现为 **SUPERSEDED / CANCELLED UNEXECUTED**，不得执行。Active work转到独立 [Qwen3.6-35B-A3B A3 Validation Control](https://github.com/yanceng305-collab/qwen36-35b-a3b-a3-flagos-control)。
 
 完整coexistence/dynamic provenance不再阻塞Qwen、GLM mandatory closure、first eager或Baseline Benchmark；原trace设计移至[`tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`](tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md)，作为Eager Correctness后的Deferred / On-demand支线，按客户证明要求、正式方案保留distribution、A/B行为差异或最终交付provenance需求触发。A/B仍比较“保留package + FL selectors”和“同carrier卸载package”。Host/Container边界仍有效；Host CANN不参与tuple选择，除非显式bind-mount Host Toolkit。
 
-## GLM Contract Gate — v0.24 primary
+## GLM Contract Gate — historical v0.24 design / paused
+
+以下内容保留为历史设计，不是当前 approved route。恢复 GLM时必须先进行 fresh vLLM 0.20.2 GLM contract review，并由新 User Decision/Control Task重建 baseline与 capability边界。
 
 旧问题“0.20.2 backport还是0.23/0.24 uplift”已被branch migration Superseded。Primary contract固定为：
 

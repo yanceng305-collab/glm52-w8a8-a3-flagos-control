@@ -1,6 +1,6 @@
 # Codex2 Prompt — CANARY-V024-QWEN36-27B-TP2
 
-状态：**Waiting User input / Not Ready；以下User-confirmed facts填写并由User明确下发前不得执行。**
+状态：**SUPERSEDED / CANCELLED UNEXECUTED by User Decision；historical prompt only；never dispatched。不得下发或执行；不得通过填写旧占位符恢复。**
 
 先同步并读取最新正式Control `AGENTS.md`、`README.md`、`STATUS.md`，然后只执行合同：
 
