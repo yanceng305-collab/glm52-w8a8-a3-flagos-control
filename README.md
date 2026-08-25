@@ -41,7 +41,7 @@ Triton API → FlagTree              PyTorch / torch_npu
                     Ascend A3 / 910C
 ```
 
-冻结源码已静态确认到 Platform/Worker/ModelRunner/Dispatch 的链路。最新 clean-room 报告只动态验证了 tiny torch_npu、一个 FlagTree kernel、FlagGems op 和 FL/Dispatch op；它没有运行模型、服务、collective、benchmark 或 profile。Codex1已审查其Control与官方source，但原始Evidence尚未独立闭合，Acceptance为 `NEEDS-FOLLOWUP`。
+冻结源码已静态确认到 Platform/Worker/ModelRunner/Dispatch 的链路。最新 clean-room 报告只动态验证了 tiny torch_npu、一个 FlagTree kernel、FlagGems op 和 FL/Dispatch op；它没有运行模型、服务、collective、benchmark 或 profile。Codex2 supplement已索引既有Evidence；最后只补no-copy佐证与四项tiny的显式NPU断言，Acceptance仍为`NEEDS-FOLLOWUP`。
 
 ## Repositories
 
@@ -56,7 +56,7 @@ Code 修改遵循 `project integration branch → task branch → edit/test → 
 
 ## Current Phase
 
-当前门禁是 **只读补充并独立校验最新 clean-room run 的既有Evidence**；不重跑、不重建，下一正式技术阶段尚未解锁。
+当前门禁是 **在现有container上执行一次final minimal verification**；不重建、不重装、不修改runtime/FL，下一正式技术阶段尚未解锁。
 
 | 字段 | 当前记录 |
 |---|---|
@@ -64,10 +64,11 @@ Code 修改遵循 `project integration branch → task branch → edit/test → 
 | Run | `20260824T080753Z` |
 | Codex2 execution | **PASS reported** |
 | Control | result 已同步；sync marker commit 为 `31d20df0d3dfa0462d596a015cd553cdcda98550` |
-| Codex1 Acceptance | **NEEDS-FOLLOWUP**；manifest/checksum索引和关键raw-log映射待补 |
+| Codex1 Acceptance | **NEEDS-FOLLOWUP**；final no-copy/tiny explicit verification待执行 |
 | FL change / PR | 无 FL 修改；`N/A` |
+| Final verification | [Task](docs/glm52-w8a8-a3-flagos/tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md) Ready after User dispatch |
 
-该执行报告记录的 tuple 是：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。报告还记录了两个 third-party patch 和一个未复现的 FL 问题；Code/官方source复核未发现反证，但raw Evidence当前不可访问且manifest/checksum未在Control索引，因此只需从现有run补充inventory、checksum验证和验收项到既有日志的映射。
+该执行报告记录的 tuple 是：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。Code/官方source复核未发现反证；supplement commit `cdb586af...`已记录既有inventory/checksum。剩余两项是clean-room/no-copy有边界核查，以及四项tiny smoke的device/backend/no-fallback/assertion/exit。
 
 阶段边界：baseline research 与 Code repo v0.24 migration 已完成；Host 长期目录初始化已 ACCEPTED with deviation；旧 v0.24 Python 3.12 A2 在 FlagTree gate STOP；copied-runtime Python 3.11 run 只证明 feasibility；当前 clean-room execution 已报告 PASS 并同步，Codex1 Acceptance为NEEDS-FOLLOWUP。
 
@@ -95,6 +96,7 @@ Tiny runtime/operator/Dispatch smoke PASS **不等于**“GLM-5.2-W8A8 已可运
 | Runtime ownership / architecture | [FLAGOS-RUNTIME-MAP.md](docs/glm52-w8a8-a3-flagos/FLAGOS-RUNTIME-MAP.md) |
 | Compatibility 与未闭合能力 | [COMPATIBILITY-MATRIX.md](docs/glm52-w8a8-a3-flagos/COMPATIBILITY-MATRIX.md) |
 | Environment / official baseline research | [ENVIRONMENT-RESEARCH.md](docs/glm52-w8a8-a3-flagos/ENVIRONMENT-RESEARCH.md)、[OFFICIAL-V024-BASELINE-RESEARCH.md](docs/glm52-w8a8-a3-flagos/OFFICIAL-V024-BASELINE-RESEARCH.md) |
+| Clean-room environment reconstruction | [A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md](docs/glm52-w8a8-a3-flagos/A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md) |
 | 首次 eager 的能力边界 | [MINIMAL-EAGER-EXECUTION-CLOSURE.md](docs/glm52-w8a8-a3-flagos/MINIMAL-EAGER-EXECUTION-CLOSURE.md) |
 | Task contracts / prompts | [`tasks/`](docs/glm52-w8a8-a3-flagos/tasks/) |
 | Result 索引 / Acceptance | [results/INDEX.md](docs/glm52-w8a8-a3-flagos/results/INDEX.md) |

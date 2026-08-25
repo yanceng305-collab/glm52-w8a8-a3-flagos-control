@@ -15,6 +15,7 @@
 - `CODE-REPOSITORY-BASELINE.md`：正式standalone A3代码仓库、official冻结SHA/tree、remote与sync policy、legacy零变化验收。
 - `OFFICIAL-V024-BASELINE-RESEARCH.md`：official branch migration、new main/vLLM0.24、GLM partial、v0.24 carrier、双device与compiler证据。
 - `CODE-REPOSITORY-MIGRATION-V024.md`：不修改existing main的0.24 baseline/project branch迁移记录；已PASS。
+- `A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`：当前clean-room container/runtime的frozen事实、重建顺序与待final verification现场恢复的Docker参数。
 - `R0-CONTAINER-TUPLE-RESOLUTION.md`：`c70aa4b`时期neutral-base tuple的兼容性研究；其强制路线已Superseded，仅保留reference evidence。
 - `tasks/STAGE-A-CLEAN-PROVENANCE.md`：因branch migration重开的v0.24 baseline/carrier/provider Stage A父合同。
 - `tasks/STAGE-A2-OFFICIAL-CARRIER-FL-ONLY-ENVIRONMENT-SMOKE.md`：historical v0.20.2 A2；已Paused，不得执行。
@@ -25,8 +26,9 @@
 - `tasks/DEEPSEEK-A3-HOST-DIRECTORY-INITIALIZATION-PROMPT.md`：Host目录/repo初始化prompt；latest run已ACCEPTED with deviation。
 - `tasks/STAGE-A2-V024-FLAGTREE-PY312-INTEGRATION-GAP.md`与对应prompt：已被Python3.11-first路线Superseded。
 - `tasks/STAGE-A2-V024-PY311-FIRST-FLAGTREE-ENV.md`与对应prompt：feasibility run已完成；不作formal acceptance，不得重跑。
-- `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`：当前Ready的官方CANN9.0.0 clean-room task。
-- `tasks/DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md`：下一条DeepSeek执行提示词。
+- `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`与对应旧prompt：execution PASS reported，保留为原始合同，不得重跑。
+- `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`：当前唯一Ready的最后一次最小Evidence follow-up。
+- `tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`：Codex2 final verification执行入口。
 - `tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`：旧Phase-A-only提示词；已Superseded，不得执行。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
@@ -54,4 +56,4 @@
 - Missing：当前目标基线明确无实现、显式报错或缺必需接口。
 - Conflicting：可信来源在版本/路线/行为上不一致，尚未由实验消解。
 
-本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库和Host长期working tree已建立；当前下一门禁是CANN9.0.0 A3 clean-room复现。
+本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。正式A3代码仓库和Host长期working tree已建立；当前下一门禁是D-076限定的A2 final minimal verification，下一技术Stage未解锁。

@@ -1,14 +1,14 @@
 # 项目状态
 
 更新时间：2026-08-25
-总体状态：`A2-V024-CLEANROOM-CANN900-PY311`已由服务器执行代理报告**PASS**并同步Control；**Codex1 Acceptance NEEDS-FOLLOWUP**（仅补现有run Evidence索引/校验），下一正式技术阶段尚未解锁
+总体状态：clean-room execution **PASS**与Codex2 supplemental Evidence均已同步；**Codex1 Acceptance NEEDS-FOLLOWUP**，最后一次最小verification已Ready，下一正式技术阶段尚未解锁
 
 ## 当前快照
 
 | 工作项 | 状态 | 证据边界 |
 |---|---|---|
 | Official branch migration | PASS | Code repo `main@92a6f767`是v0.2.1维护线；official new-main freeze `a9435a34`/tree`e5e073ed`已成为0.24 baseline与project branch |
-| Runtime ownership | Static chain confirmed；tiny Dispatch smoke PASS reported / Acceptance NEEDS-FOLLOWUP | frozen v0.24 source与官方source一致；动态backend/device/no-fallback仍须从原始Evidence独立校验 |
+| Runtime ownership | Static chain confirmed；tiny Dispatch smoke PASS reported / Acceptance NEEDS-FOLLOWUP | source与provider identity已有supplemental映射；最后补显式device/backend/no-fallback assertion |
 | 910C maturity | Complete for public evidence | v0.2.1-era仅Qwen3.6 TP2；new v0.24 stack无FL A3 E2E |
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
 | A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
@@ -18,9 +18,9 @@
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
 | Historical v0.24 Python3.12 A2 | **STOP at FlagTree (Phase A)** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；由后续Python3.11路线取代，不得当作当前task |
-| Clean-room shared-NPU tiny smoke | **PASS reported / Acceptance NEEDS-FOLLOWUP** | 结果叙述一致；原始device/backend/exit-status/no-fallback日志尚未形成可审计索引 |
+| Clean-room shared-NPU tiny smoke | **PASS reported / final verification Ready** | 只重复四项tiny路径，补NPU device/backend/no-fallback/assertion/exit；不扩张实验 |
 | PY311 copied-runtime smoke | **Feasibility proven / not formally accepted** | Qwen image复制Python/FlagTree/vLLM并使用3处临时patch；immutable PASS保留，但不能作为正式环境acceptance |
-| CANN 9.0.0 A3 clean-room | **Execution PASS / Control SYNCED / Codex1 Acceptance NEEDS-FOLLOWUP** | 无实质性反证；Evidence manifest/checksum与关键raw logs尚未独立闭合 |
+| CANN 9.0.0 A3 clean-room | **Execution PASS / supplement SYNCED / Acceptance NEEDS-FOLLOWUP** | `cdb586a...`已索引inventory/checksum；剩余no-copy corroboration与四项tiny显式断言 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -52,6 +52,8 @@
 - Current-main FL Ascend上MLA、DSA/SFA、wired Indexer与MLA cache closure仍Missing/Unwired；W8A8 Linear必须基于vLLM0.24重新gap confirmation，当前无910C PASS。
 - 默认通信 backend 是 HCCL；FlagCX optional。
 - 当前 FL Ascend 不构建自身 native extension；`VLLM_VENDOR` 必须 unset，设置 `ascend` 会失败。
+- Codex2 supplemental Evidence commit `cdb586af...`已闭合original Evidence、retained Work与supplement的inventory/checksum/verification入口；它明确把剩余缺口缩小为no-copy negative audit和四项tiny显式device/backend assertion。
+- D-076冻结A2时间边界：只再执行一次final minimal verification；没有实质技术反证时，余留历史审计不完整转为residual risk/evidence debt，不再追加A2验证。
 
 ## 最新执行与Codex1审查
 
@@ -61,7 +63,8 @@
 - Reported validation：tiny torch_npu、FlagTree kernel、FlagGems op、FL/Dispatch op PASS；FL未修改，Code PR=`N/A`。
 - Reported issue handling：Triton circular import与FlagGems DSA package-init问题复现并保存third-party patch；FL `patch_mamba_config` / `cbor2`问题未复现。
 - Code/source复核：formal project branch仍为`a9435a34...`/tree`e5e073ed...`，无本task远端branch或PR；official vLLM/FlagTree/FlagGems身份和两个patch target均与result一致。
-- Codex1 Acceptance：**NEEDS-FOLLOWUP**。Immutable result内部一致且未发现运行失败、错误image、混合provider或FL修改反证；但当前无法只读访问Server Evidence，Control也未索引manifest/checksum，故不能从摘要替代raw Evidence完成正式验收。
+- Supplemental Evidence：[`results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z-evidence-supplement-codex2.md`](results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z-evidence-supplement-codex2.md)，Control commit `cdb586af...`；original、Work与supplement checksum verification均报告成功。
+- Codex1 Acceptance：**NEEDS-FOLLOWUP**。没有实质性反证；当前只剩clean-room/no-copy有边界独立佐证，以及四项tiny smoke的显式NPU device/backend/no-fallback/assertion/exit。
 
 当前“FlagOS原生”工作边界按实际模型执行ownership判定，不按carrier image/package存在性判定。若trace发现`vllm_ascend`实际参与，只对具体调用进入客户边界/替换判断；只有客户以后明确扩大到official FL历史adapted来源时才另行重审源码合规。
 
@@ -81,17 +84,20 @@
 
 ## 下一门禁
 
-当前唯一门禁是对**现有run**完成最小只读Evidence补充与独立校验；不需要重跑、重建或重新安装：
+唯一Ready任务：
 
-1. 导出现有Evidence的相对文件清单、manifest/checksum文件名与SHA256，并保存成功的checksum验证输出。
-2. 建立“验收项 → 既有文件/行号”映射，覆盖image/container clean/no-copy与replay artifact、最终package/import/provider、两个patch的原始/patch/产物hash与重放方法、FL HEAD/tree/clean/import realpath、三个历史问题以及四个tiny NPU smoke的device/backend/exit status/no-fallback。
-3. 补全三指针：Code repo + frozen branch/commit/tree + PR=`N/A`；immutable result + result commit `56b580e...` + sync marker `31d20df...`；Evidence path + manifest/checksum。
+- Task：[`tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md)
+- Codex2 prompt：[`tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`](tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md)
+- Reconstruction baseline：[`A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`](A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md)
+- Decision：[`DECISIONS.md`](DECISIONS.md) D-076
 
-补充只能从`20260824T080753Z`已保留的artifact/log提取或计算hash；不得修改closed run或immutable result。若原Evidence目录不可变，使用单独的immutable supplemental Evidence并明确回链。
+本task只使用现有`flagos-cann900-py311-test`：不重建、不重装、不修改runtime/FL/old result；新Evidence单独保存。它补no-copy有边界核查、四项tiny显式NPU assertion，并从live inspect恢复可重建Docker/runtime脚本。Original run + supplemental Evidence + follow-up Evidence联合供Codex1最终Acceptance。
 
-在补证完成、Codex1独立校验并更新Acceptance前：
+若未发现错误base/runtime、旧runtime复用、错误Code、mixed provider、CPU fallback、NPU failure或未记录FL修改等实质反证，剩余纯Evidence债按D-076记录为residual risk/evidence debt并结束A2验证循环；真实技术失败仍按事实处理。
 
-- 不创建或下发下一技术task；
+在final verification执行、Codex1联合审查并更新Acceptance前：
+
+- 不创建或下发下一技术Stage task；
 - 不开始GLM-5.2-W8A8模型适配、模型运行或性能实验；
 - 不把历史Ready task/prompt重新下发；
 - 下一正式技术阶段保持未解锁。

@@ -1,6 +1,6 @@
 # 技术决策记录
 
-更新时间：2026-08-24
+更新时间：2026-08-25
 
 | ID | 决策 | 状态 | 理由 / 证据 | 重审条件 |
 |---|---|---|---|---|
@@ -77,7 +77,15 @@
 | D-071 | 服务器缺formal FL source时，允许direct clone唯一formal repo/project branch；GitHub不可达时允许使用经SHA256校验的Git bundle relay到Evidence `source/` | Required scoped source relay | 最终必须验证branch=`project/glm52-w8a8-v024`、HEAD=`a9435a34dcd7d0a38e3a853535947371a6c62205`、tree=`e5e073edf4b65c053e954d78d20365aab0e1f46b`、worktree clean；禁止普通目录拷贝、无校验archive及其他repo/branch | bundle SHA256缺失/不匹配或任一Git identity失败则STOP |
 | D-072 | A2保留“environment preflight → tiny NPU smoke”的顺序门禁，但允许在同一执行任务中连续完成 | Contract retained / execution paused | Carrier/source/compiler/FlagGems/FL全部PASS后，获授权的任务可直接进入D-063 tiny smoke；当前latest run在环境gate STOP | 用户重新授权A2且环境gate blocker有新事实 |
 | D-074 | Python3.11-first copied-runtime路线完成tiny smoke | **Feasibility proven / formal acceptance withheld；superseded by D-075** | Run `20260824T065902Z`复制Qwen image Python/FlagTree/vLLM并使用3处临时patch，证明方向可行但不足以证明正式环境clean、独立、可重复 | D-075 clean-room结果 |
-| D-075 | 正式A2基础环境固定为Ascend官方CANN9.0.0 A3 Python3.11 devel exact digest，并在clean-room独立安装全栈 | Required / clean-room task Ready | Base=`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b...`；用户已现场pull成功。Registry发现与Dockerfile fallback退出执行路径，仅保留历史source背景；禁止Qwen/runtime复制、上一轮环境复用和预应用patch | Clean-room tiny torch_npu + FlagTree kernel + Dispatch结果 |
+| D-075 | 正式A2基础环境固定为Ascend官方CANN9.0.0 A3 Python3.11 devel exact digest，并在clean-room独立安装全栈 | Required / execution PASS reported；Acceptance pending D-076 | Base=`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b...`；用户已现场pull成功。Registry发现与Dockerfile fallback退出执行路径，仅保留历史source背景；禁止Qwen/runtime复制、上一轮环境复用和预应用patch | D-076 final verification与Codex1联合Acceptance |
+| D-076 | `A2-V024-CLEANROOM-CANN900-PY311`只再执行一次final minimal verification；无实质技术反证时，剩余历史审计缺口转为residual risk/evidence debt并结束A2验证循环 | **Required / User Decision** | 防止environment bring-up因旧Evidence格式债务无限阻塞，同时保留实质技术门禁 | follow-up发现实质技术反证，或User改变决定 |
+
+## D-076 — A2 final follow-up时间边界
+
+- 唯一follow-up范围固定为：现有container的clean-room/no-copy有边界核查，以及torch_npu、FlagTree kernel、FlagGems direct、FL/Dispatch四项tiny smoke的显式device/backend/no-silent-CPU-fallback验证。
+- 实质技术反证包括但不限于：错误base image/runtime、复用旧container/runtime的正向证据、错误Code identity、mixed compiler/provider ownership、实际CPU fallback、NPU执行失败或FL存在未记录修改。发现真实失败必须按事实STOP/处理，不能依据本Decision强行PASS。
+- 如果follow-up没有发现上述反证，剩余不可恢复的历史Evidence、无法形成完美negative audit、旧命令缺少exit-code或类似格式债务只记录为residual risk/evidence debt；不得继续追加A2验证。Codex1应在clean-room runtime/compiler/Dispatch tiny-smoke限定范围内完成`ACCEPTED`。
+- 本Decision不降低后续GLM-5.2-W8A8模型加载、W8A8 correctness、E2E、serve、稳定性或性能阶段的任何标准；后续发现实际问题时按真实问题处理。
 
 ## Reclassified execution record
 
