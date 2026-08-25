@@ -56,6 +56,14 @@ User 的明确最终决定高于其他代理意见。ChatGPT 可独立复核，�
 
 没有 User 下发的 ready task 时，服务器执行代理不得把计划或历史 prompt 当作执行授权。
 
+## Prompt / Task Conventions
+
+- Prompt / task contract只规定目标、执行与风险边界、验收条件，以及完成任务必需的User-confirmed事实。
+- 不无必要冻结具体命令、命令顺序或普通排障步骤；Codex1定义结果与Acceptance边界，Codex2自主选择边界内的普通执行和排障方法。
+- 只有正式边界、可重现性或验收本身依赖某条命令时，才冻结该命令，并说明原因。
+- 已在本`AGENTS.md`定义的长期角色、仓库、Evidence、续接与禁止规则不重复写入prompt；prompt只引用本文件并补充本任务差异。
+- 下发或执行前先同步并核对最新正式GitHub状态；GitHub正式记录优先于本地旧副本、旧prompt和聊天摘录。
+
 ## 工作规则
 
 ### Codex1

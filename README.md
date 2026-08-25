@@ -41,7 +41,7 @@ Triton API → FlagTree              PyTorch / torch_npu
                     Ascend A3 / 910C
 ```
 
-冻结源码已静态确认到 Platform/Worker/ModelRunner/Dispatch 的链路。最新 clean-room 报告只动态验证了 tiny torch_npu、一个 FlagTree kernel、FlagGems op 和 FL/Dispatch op；它没有运行模型、服务、collective、benchmark 或 profile，且该 run 的 Codex1 Acceptance 仍为 PENDING。
+冻结源码已静态确认到 Platform/Worker/ModelRunner/Dispatch 的链路。最新 clean-room 报告只动态验证了 tiny torch_npu、一个 FlagTree kernel、FlagGems op 和 FL/Dispatch op；它没有运行模型、服务、collective、benchmark 或 profile。Codex1已审查其Control与官方source，但原始Evidence尚未独立闭合，Acceptance为 `NEEDS-FOLLOWUP`。
 
 ## Repositories
 
@@ -56,7 +56,7 @@ Code 修改遵循 `project integration branch → task branch → edit/test → 
 
 ## Current Phase
 
-当前门禁是 **等待 Codex1 对最新 clean-room run 做独立 Acceptance 审查**；下一正式技术阶段尚未解锁。
+当前门禁是 **只读补充并独立校验最新 clean-room run 的既有Evidence**；不重跑、不重建，下一正式技术阶段尚未解锁。
 
 | 字段 | 当前记录 |
 |---|---|
@@ -64,12 +64,12 @@ Code 修改遵循 `project integration branch → task branch → edit/test → 
 | Run | `20260824T080753Z` |
 | Codex2 execution | **PASS reported** |
 | Control | result 已同步；sync marker commit 为 `31d20df0d3dfa0462d596a015cd553cdcda98550` |
-| Codex1 Acceptance | **PENDING** |
+| Codex1 Acceptance | **NEEDS-FOLLOWUP**；manifest/checksum索引和关键raw-log映射待补 |
 | FL change / PR | 无 FL 修改；`N/A` |
 
-该执行报告记录的 tuple 是：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。报告还记录了两个 third-party patch 和一个未复现的 FL 问题；这些均是“服务器报告事实”，本 README 不评价其可接受性或 Evidence 完整性。
+该执行报告记录的 tuple 是：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。报告还记录了两个 third-party patch 和一个未复现的 FL 问题；Code/官方source复核未发现反证，但raw Evidence当前不可访问且manifest/checksum未在Control索引，因此只需从现有run补充inventory、checksum验证和验收项到既有日志的映射。
 
-阶段边界：baseline research 与 Code repo v0.24 migration 已完成；Host 长期目录初始化已 ACCEPTED with deviation；旧 v0.24 Python 3.12 A2 在 FlagTree gate STOP；copied-runtime Python 3.11 run 只证明 feasibility；当前 clean-room execution 已报告 PASS 并同步，但尚未正式 Acceptance。
+阶段边界：baseline research 与 Code repo v0.24 migration 已完成；Host 长期目录初始化已 ACCEPTED with deviation；旧 v0.24 Python 3.12 A2 在 FlagTree gate STOP；copied-runtime Python 3.11 run 只证明 feasibility；当前 clean-room execution 已报告 PASS 并同步，Codex1 Acceptance为NEEDS-FOLLOWUP。
 
 ## What Is NOT Done
 
@@ -81,7 +81,7 @@ Tiny runtime/operator/Dispatch smoke PASS **不等于**“GLM-5.2-W8A8 已可运
 - GLM-5.2-W8A8 离线 E2E inference、serve、目标多卡/collective 和稳定性验收；
 - baseline benchmark、profiling、性能优化、组合优化与按需 scale-out。
 
-Acceptance 完成前不得把 clean-room PASS 用来正式解锁上述工作。后续大致路线仍是环境门禁 → control-approved canary → GLM contract/capability/capacity → first eager/eager correctness → benchmark/profile/optimize，具体 task 必须另行批准。
+现有Evidence补证完成并正式ACCEPTED前，不得把 clean-room PASS 用来解锁上述工作。后续大致路线仍是环境门禁 → control-approved canary → GLM contract/capability/capacity → first eager/eager correctness → benchmark/profile/optimize，具体 task 必须另行批准。
 
 ## Where to Find Information
 

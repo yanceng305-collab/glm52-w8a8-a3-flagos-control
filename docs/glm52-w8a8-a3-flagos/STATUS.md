@@ -1,14 +1,14 @@
 # 项目状态
 
 更新时间：2026-08-25
-总体状态：`A2-V024-CLEANROOM-CANN900-PY311`已由服务器执行代理报告**PASS**并同步Control；**Codex1 Acceptance PENDING**，下一正式技术阶段尚未解锁
+总体状态：`A2-V024-CLEANROOM-CANN900-PY311`已由服务器执行代理报告**PASS**并同步Control；**Codex1 Acceptance NEEDS-FOLLOWUP**（仅补现有run Evidence索引/校验），下一正式技术阶段尚未解锁
 
 ## 当前快照
 
 | 工作项 | 状态 | 证据边界 |
 |---|---|---|
 | Official branch migration | PASS | Code repo `main@92a6f767`是v0.2.1维护线；official new-main freeze `a9435a34`/tree`e5e073ed`已成为0.24 baseline与project branch |
-| Runtime ownership | Static chain confirmed；tiny Dispatch smoke PASS reported / Acceptance PENDING | frozen v0.24 source注册PlatformFL/WorkerFL/ModelRunnerFL/Dispatch；未验证GLM完整模型路径 |
+| Runtime ownership | Static chain confirmed；tiny Dispatch smoke PASS reported / Acceptance NEEDS-FOLLOWUP | frozen v0.24 source与官方source一致；动态backend/device/no-fallback仍须从原始Evidence独立校验 |
 | 910C maturity | Complete for public evidence | v0.2.1-era仅Qwen3.6 TP2；new v0.24 stack无FL A3 E2E |
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
 | A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
@@ -18,9 +18,9 @@
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
 | Historical v0.24 Python3.12 A2 | **STOP at FlagTree (Phase A)** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；由后续Python3.11路线取代，不得当作当前task |
-| Clean-room shared-NPU tiny smoke | **PASS reported / Acceptance PENDING** | 最新run报告只使用映射到physical NPU 12+13的tiny tensor/kernel/operator；未运行模型、collective、benchmark或profile |
+| Clean-room shared-NPU tiny smoke | **PASS reported / Acceptance NEEDS-FOLLOWUP** | 结果叙述一致；原始device/backend/exit-status/no-fallback日志尚未形成可审计索引 |
 | PY311 copied-runtime smoke | **Feasibility proven / not formally accepted** | Qwen image复制Python/FlagTree/vLLM并使用3处临时patch；immutable PASS保留，但不能作为正式环境acceptance |
-| CANN 9.0.0 A3 clean-room | **Execution PASS / Control SYNCED / Codex1 Acceptance PENDING** | Task `A2-V024-CLEANROOM-CANN900-PY311`；run `20260824T080753Z`；sync marker commit `31d20df...` |
+| CANN 9.0.0 A3 clean-room | **Execution PASS / Control SYNCED / Codex1 Acceptance NEEDS-FOLLOWUP** | 无实质性反证；Evidence manifest/checksum与关键raw logs尚未独立闭合 |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -53,14 +53,15 @@
 - 默认通信 backend 是 HCCL；FlagCX optional。
 - 当前 FL Ascend 不构建自身 native extension；`VLLM_VENDOR` 必须 unset，设置 `ascend` 会失败。
 
-## 最新执行报告边界（尚未Acceptance）
+## 最新执行与Codex1审查
 
 - Task / Run：`A2-V024-CLEANROOM-CANN900-PY311` / `20260824T080753Z`。
 - Immutable result：[`results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md`](results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md)；Server Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z`。
 - Reported tuple：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。
 - Reported validation：tiny torch_npu、FlagTree kernel、FlagGems op、FL/Dispatch op PASS；FL未修改，Code PR=`N/A`。
 - Reported issue handling：Triton circular import与FlagGems DSA package-init问题复现并保存third-party patch；FL `patch_mamba_config` / `cbor2`问题未复现。
-- 本节只登记服务器报告与同步状态，不判断patch可接受性、Evidence完整性或技术Acceptance。
+- Code/source复核：formal project branch仍为`a9435a34...`/tree`e5e073ed...`，无本task远端branch或PR；official vLLM/FlagTree/FlagGems身份和两个patch target均与result一致。
+- Codex1 Acceptance：**NEEDS-FOLLOWUP**。Immutable result内部一致且未发现运行失败、错误image、混合provider或FL修改反证；但当前无法只读访问Server Evidence，Control也未索引manifest/checksum，故不能从摘要替代raw Evidence完成正式验收。
 
 当前“FlagOS原生”工作边界按实际模型执行ownership判定，不按carrier image/package存在性判定。若trace发现`vllm_ascend`实际参与，只对具体调用进入客户边界/替换判断；只有客户以后明确扩大到official FL历史adapted来源时才另行重审源码合规。
 
@@ -80,9 +81,15 @@
 
 ## 下一门禁
 
-当前唯一门禁是Codex1对clean-room run `20260824T080753Z`的独立Acceptance审查。服务器执行PASS与Control同步均不自动等于`ACCEPTED`。
+当前唯一门禁是对**现有run**完成最小只读Evidence补充与独立校验；不需要重跑、重建或重新安装：
 
-在该审查完成并由User/Codex1正式解锁前：
+1. 导出现有Evidence的相对文件清单、manifest/checksum文件名与SHA256，并保存成功的checksum验证输出。
+2. 建立“验收项 → 既有文件/行号”映射，覆盖image/container clean/no-copy与replay artifact、最终package/import/provider、两个patch的原始/patch/产物hash与重放方法、FL HEAD/tree/clean/import realpath、三个历史问题以及四个tiny NPU smoke的device/backend/exit status/no-fallback。
+3. 补全三指针：Code repo + frozen branch/commit/tree + PR=`N/A`；immutable result + result commit `56b580e...` + sync marker `31d20df...`；Evidence path + manifest/checksum。
+
+补充只能从`20260824T080753Z`已保留的artifact/log提取或计算hash；不得修改closed run或immutable result。若原Evidence目录不可变，使用单独的immutable supplemental Evidence并明确回链。
+
+在补证完成、Codex1独立校验并更新Acceptance前：
 
 - 不创建或下发下一技术task；
 - 不开始GLM-5.2-W8A8模型适配、模型运行或性能实验；
