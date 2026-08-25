@@ -56,7 +56,7 @@ Code 修改遵循 `project integration branch → task branch → edit/test → 
 
 ## Current Phase
 
-**A2 clean-room environment/runtime/compiler/Dispatch tiny gate已ACCEPTED。** A2不再阻塞下一Stage选择；当前未创建、Ready或下发任何下一task。
+**A2 clean-room environment/runtime/compiler/Dispatch tiny gate已ACCEPTED。** 下一Stage已选择为910C Canary；Task `CANARY-V024-QWEN36-27B-TP2`已Draft，但仍是**Waiting User input / Not Ready**，未执行、未修改Code。
 
 | 字段 | 当前记录 |
 |---|---|
@@ -68,15 +68,18 @@ Code 修改遵循 `project integration branch → task branch → edit/test → 
 | FL change / PR | 无 FL 修改；`N/A` |
 | Final verification | `20260825T030520Z` PASS / **ACCEPTED**；Control `6f369d8a...` |
 | Default runtime | `flagos-glm52-a3-runtime:v024-cann900-py311` / image ID `sha256:e1a89dca...`（host-local） |
+| Next Stage | 910C Canary：`Qwen/Qwen3.6-27B@cea40373...` complete BF16，TP2 eager offline |
+| Canary status | **Waiting User input / Not Ready**；exact model path、two-device resources与dispatch待确认 |
 
 Accepted tuple：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。未发现错误base/runtime、old-runtime reuse、mixed provider、CPU fallback、NPU失败或FL未记录修改。
 
-阶段边界：baseline research、Code repo v0.24 migration与A2 clean-room gate已完成；旧v0.24 Python3.12 A2和copied-runtime Python3.11只保留历史/feasibility价值。下一Stage可被选择、设计并另行请求User授权，但没有task自动Ready或dispatch。
+阶段边界：baseline research、Code repo v0.24 migration与A2 clean-room gate已完成；旧v0.24 Python3.12 A2和copied-runtime Python3.11只保留历史/feasibility价值。Canary contract已完成，但User必须手动提供/确认官方ModelScope完整权重，Codex1/Codex2不得下载或silent substitute。
 
 ## What Is NOT Done
 
 Tiny runtime/operator/Dispatch smoke PASS **不等于**“GLM-5.2-W8A8 已可运行”。当前仍未完成：
 
+- `CANARY-V024-QWEN36-27B-TP2`的model construction、real weight load、TP2 eager generation与Codex1 Acceptance；
 - 真实 GLM-5.2-W8A8 checkpoint manifest、quantization/layout contract 与容量/placement 闭合；
 - 目标模型级 MLA、DSA/SFA、Indexer、MLA KV/cache ops、W8A8 Linear/MoE 的 Ascend 可达性、correctness 与缺口闭合；
 - 完整 WorkerFL / ModelRunnerFL 模型路径、目标模型构造、权重加载、首个正确 eager token；
@@ -98,6 +101,8 @@ A2已不再阻塞推进，但上述模型级工作仍必须分别经过control-a
 | Compatibility 与未闭合能力 | [COMPATIBILITY-MATRIX.md](docs/glm52-w8a8-a3-flagos/COMPATIBILITY-MATRIX.md) |
 | Environment / official baseline research | [ENVIRONMENT-RESEARCH.md](docs/glm52-w8a8-a3-flagos/ENVIRONMENT-RESEARCH.md)、[OFFICIAL-V024-BASELINE-RESEARCH.md](docs/glm52-w8a8-a3-flagos/OFFICIAL-V024-BASELINE-RESEARCH.md) |
 | Clean-room environment reconstruction | [A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md](docs/glm52-w8a8-a3-flagos/A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md) |
+| Current 910C Canary contract | [CANARY-V024-QWEN36-27B-TP2.md](docs/glm52-w8a8-a3-flagos/tasks/CANARY-V024-QWEN36-27B-TP2.md) |
+| Canary Codex2 prompt | [CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md](docs/glm52-w8a8-a3-flagos/tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md) |
 | 首次 eager 的能力边界 | [MINIMAL-EAGER-EXECUTION-CLOSURE.md](docs/glm52-w8a8-a3-flagos/MINIMAL-EAGER-EXECUTION-CLOSURE.md) |
 | Task contracts / prompts | [`tasks/`](docs/glm52-w8a8-a3-flagos/tasks/) |
 | Result 索引 / Acceptance | [results/INDEX.md](docs/glm52-w8a8-a3-flagos/results/INDEX.md) |

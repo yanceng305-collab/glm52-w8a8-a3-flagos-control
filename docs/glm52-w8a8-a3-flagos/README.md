@@ -29,6 +29,8 @@
 - `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`与对应旧prompt：execution PASS reported，保留为原始合同，不得重跑。
 - `tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`：Completed；run `20260825T030520Z` PASS / Codex1 ACCEPTED（A2 scope-limited）。
 - `tasks/CODEX2-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION-PROMPT.md`：已执行的Codex2入口；不得重新下发。
+- `tasks/CANARY-V024-QWEN36-27B-TP2.md`：当前910C Canary正式合同；Waiting User input / Not Ready。
+- `tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md`：可交给新Codex2的简洁入口；User facts未填写/未dispatch前不得执行。
 - `tasks/DEEPSEEK-A3-CP-A2-V024-PHASE-A-EXECUTION-PROMPT.md`：旧Phase-A-only提示词；已Superseded，不得执行。
 - `tasks/STAGE-A2-FLAGOS-RUNTIME-PROVENANCE-TRACE.md`：原pre-canary A2的历史指针，已Superseded为后置审计。
 - `tasks/POST-EAGER-RUNTIME-PROVENANCE-AUDIT.md`：保留完整dynamic provenance A/B设计；Eager Correctness后的Deferred / On-demand支线，不阻塞Baseline Benchmark。
@@ -56,4 +58,4 @@
 - Missing：当前目标基线明确无实现、显式报错或缺必需接口。
 - Conflicting：可信来源在版本/路线/行为上不一致，尚未由实验消解。
 
-本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。A2 clean-room environment/runtime/compiler/Dispatch tiny gate已ACCEPTED。下一Stage选择与contract设计已解锁，但当前没有下一task被创建、Ready或dispatch。
+本目录位于项目唯一控制仓库`yanceng305-collab/glm52-w8a8-a3-flagos-control`。A2已ACCEPTED；当前Stage为`CANARY-V024-QWEN36-27B-TP2`，模型冻结为official Qwen3.6-27B BF16，但仍Waiting User input / Not Ready且未dispatch。

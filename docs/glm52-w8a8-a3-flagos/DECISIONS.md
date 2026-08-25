@@ -9,7 +9,7 @@
 | D-003 | 第一 clean-room 候选为 `R0-clean = CI tuple - vllm-ascend`，从零构建且从未安装 vllm-ascend | **Superseded by D-044～D-049** | “package必须缺席”前提已撤销；neutral tuple只保留为reference candidate | 不再作为当前决策 |
 | D-004 | `R0-clean` compiler profile 先使用 actual CI 的 `triton-ascend==3.2.1`；FlagTree 作为独立 `R1-compiler` candidate | **Partially superseded by D-047** | 版本冲突证据仍有效，但compiler owner必须由runtime provider trace决定，不能由预选neutral tuple冻结 | provider trace或official tuple变化 |
 | D-005 | baseline communication 使用 HCCL；FlagCX 后置为独立变量 | Evidence-backed proposed | current 910C CI 走 HCCL；FlagCX未安装/未E2E | 客户明确强制FlagCX或独立验证通过 |
-| D-006 | 首个strict 910C-backed canary使用Qwen3.6-27B TP2 eager | **Reference-only after branch migration** | 该证据来自v0.2.1-era CI；new v0.24 stack需重新冻结canary模型与证据 | v0.24 A2通过后决定 |
+| D-006 | 首个strict 910C-backed canary使用Qwen3.6-27B TP2 eager | **Historical reference；current selection superseded by D-077** | v0.2.1-era CI只作same-model/TP/910C oracle；不替代v0.24 Canary | 保留历史，不再单独重审 |
 | D-007 | GLM vLLM路线在0.20.2 backport与0.23/0.24 uplift间选择 | **Superseded by D-065** | official branch migration已把primary main固定到vLLM0.24；0.20.2只保留maintenance/reference | 不再作为primary二选一 |
 | D-008 | AscendV1 与 compressed-tensors 的runtime artifact contract不在本轮猜测选择 | Required | FL compressed-tensors W8A8 contract和packed loading/glue已Implemented；但AscendV1 reader、OOT/NPU INT8 Linear kernel与真实checkpoint格式仍未闭合 | manifest/layout审计和spike完成 |
 | D-009 | “FlagOS原生”按package/runtime/environment independence定义 | **Superseded by D-044** | package/image存在性不能证明实际backend ownership；历史adapted来源与动态runtime调用必须分开判断 | 不再作为当前决策 |
@@ -79,6 +79,7 @@
 | D-074 | Python3.11-first copied-runtime路线完成tiny smoke | **Feasibility proven / formal acceptance withheld；superseded by D-075** | Run `20260824T065902Z`复制Qwen image Python/FlagTree/vLLM并使用3处临时patch，证明方向可行但不足以证明正式环境clean、独立、可重复 | D-075 clean-room结果 |
 | D-075 | 正式A2基础环境固定为Ascend官方CANN9.0.0 A3 Python3.11 devel exact digest，并在clean-room独立安装全栈 | **Required / A2 scope-limited ACCEPTED** | Base=`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b...`；original + supplement + final verification联合审查无实质反证 | 后续真实runtime反证或User改变决定 |
 | D-076 | `A2-V024-CLEANROOM-CANN900-PY311`只再执行一次final minimal verification；无实质技术反证时，剩余历史审计缺口转为residual risk/evidence debt并结束A2验证循环 | **Required / User Decision / Satisfied** | final verification `20260825T030520Z` PASS并完成Codex1联合Acceptance；不再追加A2 Evidence循环 | 新的实质技术反证，或User改变决定 |
+| D-077 | 当前v0.24 910C Canary选择`Qwen/Qwen3.6-27B@cea40373...`完整official BF16 checkpoint，text-only、TP2/HCCL、eager offline；User负责权重与dispatch | **Required / selected；Waiting User input / Not Ready** | 保留same-model/TP/910C历史oracle并避免35B-A3B的MoE变量；Qwen3-4B不具同等级910C连续性且不消除共同attention风险 | User无法提供exact checkpoint，或真实first blocker与新的Control Decision要求换model/Code task |
 
 ## D-076 — A2 final follow-up时间边界
 
@@ -87,6 +88,14 @@
 - 如果follow-up没有发现上述反证，剩余不可恢复的历史Evidence、无法形成完美negative audit、旧命令缺少exit-code或类似格式债务只记录为residual risk/evidence debt；不得继续追加A2验证。Codex1应在clean-room runtime/compiler/Dispatch tiny-smoke限定范围内完成`ACCEPTED`。
 - 本Decision不降低后续GLM-5.2-W8A8模型加载、W8A8 correctness、E2E、serve、稳定性或性能阶段的任何标准；后续发现实际问题时按真实问题处理。
 - Final verification `20260825T030520Z`与original/supplement联合审查未发现实质技术反证；original A2与final verification均已范围受限地`ACCEPTED`。D-076的时间边界已满足。
+
+## D-077 — v0.24 910C Canary边界
+
+- Current Task ID：`CANARY-V024-QWEN36-27B-TP2`。Official ModelScope：<https://www.modelscope.cn/models/Qwen/Qwen3.6-27B>；complete revision `cea40373b9214dd387123e68841890af30dcd469`。
+- 只使用完整standard BF16 repository；Codex1/Codex2不得download、repair、convert、quantize或silent substitute。Exact local path、完整性、两device资源与User dispatch是Ready gate。
+- Eager offline是mandatory；minimal serving只在offline PASS后且Control明确需要service-entry proof时才作为bounded sub-gate，不是默认PASS条件。
+- Frozen v0.24 code已具architecture/config/loader静态路径，但存在`ASCEND_FL` attention enum mismatch和GDN patch-binding等known first-blocker risks。真实触发时Canary STOP；任何FL修改必须进入独立Code task/branch/PR。
+- Canary Acceptance只证明exact Qwen3.6-27B在accepted snapshot上闭合`PlatformFL → WorkerFL → ModelRunnerFL → FlagOS Dispatch → NPU`并通过TP2 eager smoke；不覆盖GLM/W8A8 capability、production serving、graph/MTP、performance或multi-node。
 
 ## Reclassified execution record
 

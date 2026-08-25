@@ -1,6 +1,6 @@
 # 组件、910C 与 GLM-5.2-W8A8 兼容矩阵
 
-调查日期：2026-08-24
+调查日期：2026-08-24；当前gate更新：2026-08-25
 
 ## 组件版本矩阵
 
@@ -42,18 +42,19 @@ v0.24 tuple与冲突证据见[`OFFICIAL-V024-BASELINE-RESEARCH.md`](OFFICIAL-V02
 | 功能域 | 状态 | 边界 |
 |---|---|---|
 | FL platform/NPU init | Confirmed | 公开CI多日成功 |
-| Qwen3.6-27B dense TP2 inference/serve | Confirmed on v0.2.1-era stack | 单节点2 logical devices；new v0.24 canary待重冻 |
+| Qwen3.6-27B dense TP2 inference/serve | Confirmed on v0.2.1-era stack | 历史reference；current v0.24 Canary已按D-077冻结但Waiting User input / Not Ready |
 | Qwen3.6-35B-A3B BF16 MoE TP2 | Confirmed on v0.2.1-era stack | 不能自动外推new main/provider tuple |
+| Current v0.24 Canary | **Selected / Waiting User input / Not Ready** | `Qwen/Qwen3.6-27B@cea40373...` complete BF16，TP2 eager offline；User model path/device/dispatch待确认 |
 | Benchmark | Confirmed smoke only | 非性能baseline |
 | Unit/functional | Confirmed with exclusion | `ops/test_ops_correctness.py`排除 |
 | HCCL TP2 | Confirmed | 单节点 |
 | Exact 910C SoC dispatch | Missing | FL无910B/910C guard |
 | Previous A2 Python3.12 environment | **STOP at FlagTree** | exact digest、FL/FlagGems identity与negative check PASS；immutable result indexed |
 | Copied-runtime Python3.11 smoke | **Feasibility PASS / not formally accepted** | Qwen image/runtime复制与临时patch；不能证明可重复 |
-| CANN9.0.0 clean-room closure | **Ready after user dispatch** | Official base + independent installs + patch baseline + tiny smoke |
-| A2 shared-NPU tiny smoke | Clean-room pending | D-075仅执行tiny tensor/kernel/Dispatch，不恢复完整A2 |
+| CANN9.0.0 clean-room closure | **ACCEPTED（A2 scope-limited）** | original + supplement + final verification闭合runtime/compiler/Dispatch tiny gate |
+| A2 shared-NPU tiny smoke | **ACCEPTED** | 四项explicit NPU tiny path已验证；不等于模型级E2E |
 | Official coexistence runtime provenance | Partially Confirmed / dynamic audit deferred on-demand | static ownership与CI platform activation有证据；完整operator/import/native/compiler trace在Eager Correctness后按需触发，不阻塞Baseline Benchmark |
-| FlagTree profile | CANN9.0.0 clean-room / runtime Unknown | 目标`0.6.1+ascend3.5`，独立安装并审计ownership |
+| FlagTree profile | **A2 provider ACCEPTED / model-level unverified** | `0.6.1+ascend3.5` single provider已闭合tiny gate；Canary需验证full model path |
 | Dense MLA | Missing | placeholder |
 | Sparse MLA/DSA/SFA | Missing | 显式NotImplemented |
 | GLM-5 on 910C | Unknown/Missing backend | README非交叉矩阵 |

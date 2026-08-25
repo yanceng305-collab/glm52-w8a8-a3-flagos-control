@@ -78,4 +78,4 @@ PR #1仍为：[Freeze W8A8 Ascend gap and eager repro](https://github.com/yancen
 
 ## 当前停止点
 
-Repository migration已PASS，existing main和legacy零变化。Latest A2-v024 run在FlagTree gate STOP，immutable result见`results/A2-v024/20260824T025250Z.md`；当前实验暂停，GLM适配、mandatory capability实现和性能测试尚未开始。
+Repository migration保持PASS，existing main、immutable baselines、project branch和legacy关系未变。A2 original/final verification已范围受限地ACCEPTED；当前Canary `CANARY-V024-QWEN36-27B-TP2`仍Waiting User input / Not Ready，尚无Canary Code branch/change/PR。若Canary暴露需要修改FL的真实blocker，必须另立Code task并从`project/glm52-w8a8-v024`派生branch；不得在Canary task内直接修改。

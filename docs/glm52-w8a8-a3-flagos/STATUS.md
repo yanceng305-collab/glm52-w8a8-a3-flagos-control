@@ -1,7 +1,7 @@
 # 项目状态
 
 更新时间：2026-08-25
-总体状态：A2 CANN9.0.0/Python3.11 clean-room runtime/compiler/FlagOS Dispatch tiny gate **ACCEPTED**；original与final-verification均ACCEPTED；下一Stage选择已解锁，但当前无下一task被创建、Ready或下发
+总体状态：A2 **ACCEPTED**；下一正式Stage选择为910C Canary，Task `CANARY-V024-QWEN36-27B-TP2`已Draft；**Waiting User input / Not Ready**（模型路径、两device资源与dispatch未确认）
 
 ## 当前快照
 
@@ -21,6 +21,7 @@
 | Clean-room shared-NPU tiny smoke | **ACCEPTED** | torch_npu、FlagTree、FlagGems direct、FL/Dispatch均显式NPU input/output、backend、no-fallback、同步、correctness与exit=0 |
 | PY311 copied-runtime smoke | **Feasibility proven / not formally accepted** | Qwen image复制Python/FlagTree/vLLM并使用3处临时patch；immutable PASS保留，但不能作为正式环境acceptance |
 | CANN 9.0.0 A3 clean-room | **ACCEPTED（A2 scope-limited）** | original `20260824T080753Z` + supplement `cdb586a...` + final verification `20260825T030520Z`联合审查无实质反证 |
+| 910C Canary | **Selected / Waiting User input / Not Ready** | `Qwen/Qwen3.6-27B@cea40373...` complete BF16，text-only、TP2/HCCL、eager offline；未执行、无Code change |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -44,7 +45,7 @@
 - A2中的container内卸载只用于减少FL-only bring-up变量，不构成对official coexistence路线的合规否定。
 - FL editable安装不得直接写readonly正式repo；如确有需要，必须在container内复制含`.git`的writable staging，安装前验证exact HEAD/tree/clean状态，生成artifact只留副本。
 - 卸载后的distribution、`find_spec`和entry-point negative check必须由新的Python process执行。
-- v0.2.1-era 910C成功证据是Qwen3.6-27B/35B-A3B TP2；frozen v0.24 stack现在只有待Acceptance的tiny runtime/operator/Dispatch smoke，仍无对应FL A3模型E2E，canary需重冻。
+- v0.2.1-era 910C成功证据是Qwen3.6-27B/35B-A3B TP2，只作reference；当前v0.24 Canary已重新冻结为Qwen3.6-27B BF16 TP2，但尚未执行，仍无frozen v0.24 FL A3模型E2E。
 - FL new main使用vLLM0.24并已包含GLM model/Indexer结构；v0.2.1维护线仍是0.20.2。Target Ascend/W8A8 closure仍未验证。
 - v0.2.1-era FL compressed-tensors validator与packed W8A8 glue不在observed new main；0.24 W8A8 loading owner必须从upstream/runtime与真实artifact重审。
 - Old A2 FlagGems`no-deps`/禁止bootstrap限制不适用于D-075 clean-room；允许clean container内安装对齐依赖、build wheel和保存patch provenance。
@@ -56,6 +57,9 @@
 - D-076冻结A2时间边界：只再执行一次final minimal verification；没有实质技术反证时，余留历史审计不完整转为residual risk/evidence debt，不再追加A2验证。
 - Final verification run `20260825T030520Z` PASS并闭合四项explicit NPU assertion；original与final-verification两行均已ACCEPTED，D-076已满足。
 - Runtime snapshot `flagos-glm52-a3-runtime:v024-cann900-py311` / image ID `sha256:e1a89dca...`是当前server后续另行授权任务的默认runtime起点；它是host-local image且依赖`/data`下exact clean FL checkout，不是model-ready或portable registry artifact。
+- Current Canary model冻结为official ModelScope `Qwen/Qwen3.6-27B@cea40373b9214dd387123e68841890af30dcd469`完整standard BF16 repository。权重由User手动提供；Codex1/Codex2不得download、convert、quantize、repair或substitute。
+- 选择27B dense是为了保留same-model/TP2/910C历史oracle且避开35B-A3B的256-expert MoE变量。Qwen3-4B虽更小，但frozen matrix只指向910B serving且不消除共同attention construction风险，不是automatic fallback。
+- vLLM0.24具`Qwen3_5ForConditionalGeneration`内置registry/config/loader路径；frozen FL存在高置信`ASCEND_FL` attention enum mismatch与后续GDN patch-binding风险。它们是Canary应收敛的first-blocker候选，不授权Canary内patch FL。
 
 ## A2 Final Acceptance
 
@@ -87,12 +91,16 @@
 - Legacy未执行rename、transfer、detach、fork sync、push或settings修改；branches/tags/PR #1哈希前后相同。
 - Existing `main`禁止直接开发或同步覆盖；v0.24 migration已完成，后续代码task从`project/glm52-w8a8-v024`派生并按合同提交PR。
 
-## 下一Stage
+## 当前Stage — 910C Canary
 
-**A2不再阻塞项目推进，下一技术Stage选择正式解锁。** 这只表示可按当前PLAN选择Stage、冻结contract并另行请求User授权；本轮没有创建、Ready或下发任何下一task，也不恢复historical/paused task。
+- Task：[`tasks/CANARY-V024-QWEN36-27B-TP2.md`](tasks/CANARY-V024-QWEN36-27B-TP2.md)
+- Codex2 prompt：[`tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md`](tasks/CODEX2-CANARY-V024-QWEN36-27B-TP2-PROMPT.md)
+- Model：[`Qwen/Qwen3.6-27B`](https://www.modelscope.cn/models/Qwen/Qwen3.6-27B)，revision `cea40373b9214dd387123e68841890af30dcd469`，complete BF16 / 15 shards。
+- Preferred path：`/data/tiankuan/zyg/artifacts/models/Qwen/Qwen3.6-27B/cea40373b9214dd387123e68841890af30dcd469/`。如复用`/data/models/Qwen/Qwen3.6-27B`，User必须冻结该path并确认identity匹配。
+- Default runtime：[`A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`](A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md)中的accepted local snapshot。
 
-按当前PLAN，下一阶段候选为910C Canary的contract/model/weight选择，但仍须Codex1单独设计、User另行批准后才能Ready/dispatch。A2 ACCEPTED不表示GLM工作已经开始。
+Ready仍缺：User确认exact complete model path/revision；User确认或授权安全TP2 logical-device pair；snapshot/runtime与formal FL identity复核；User明确dispatch。缺权重时只能等待User手动下载，Codex2不得联网下载或自行换模型。
 
-以下仍全部未完成且不在本Acceptance内：GLM-5.2-W8A8模型构造/加载、W8A8 artifact与correctness、MLA、DSA/SFA、Indexer、KV/MLA cache、完整Worker/ModelRunner模型路径、首个正确token、E2E、serve、多卡/collective、benchmark、profile和性能优化。
+Mandatory goal是TP2/HCCL、text-only、eager offline deterministic smoke，证明`PlatformFL → WorkerFL → ModelRunnerFL → FlagOS Dispatch → Ascend NPU`完整模型链；minimal serving默认`N/A`，只在offline PASS后且Control明确需要时才做bounded sub-gate。
 
-默认复用环境见[`A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md`](A2-V024-CLEANROOM-CANN900-PY311-RECONSTRUCTION.md)。Snapshot launch前仍须核对image ID/runtime tuple、task-specific devices/Docker参数，以及`/data` bind下formal FL branch/HEAD/tree/clean状态。
+Canary只验证Qwen3.6-27B的model recognition/construction/real weight load/eager output与FlagOS/NPU ownership。GLM-5.2-W8A8、W8A8、MLA/DSA/Indexer/KV cache capability、广义model correctness、production serve、多卡扩展、benchmark/profile/performance均不在范围内。
