@@ -14,6 +14,20 @@
 | Original task/run | `A2-V024-CLEANROOM-CANN900-PY311` / `20260824T080753Z` |
 | Final verification task | [`A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md) |
 
+## Runtime snapshot image
+
+The verified container was captured as a local reuse image so later runs can
+skip the Python/CANN/torch/vLLM/FlagTree/FlagGems/FL installation path.
+
+| Item | Value |
+|---|---|
+| Snapshot tag | `flagos-glm52-a3-runtime:v024-cann900-py311` |
+| Snapshot image ID | `sha256:e1a89dca8f2580298842d5de3745cc674feea348ab272fd1ab94779542afbd20` |
+| Created time | `2026-08-25T03:35:13.09634539Z` |
+| Size | `27188271312` bytes (`27.2GB` from `docker image ls`) |
+| Parent image | `sha256:5ce84286426c403bab680e81d24f448463dde49ac67a10ed3cf67f1a632fdf3a` |
+| Parent container | `flagos-cann900-py311-test` / `edf0abc861e64fa811f1a4c9b089471611ec2bddc9f7e4a8157c427dc38b03b5` |
+
 User-confirmed pull方式：
 
 ```bash
@@ -78,6 +92,39 @@ docker exec -it flagos-cann900-py311-test /bin/bash
 
 The live container observed in final verification used a smaller mount set and `privileged=false`; that is a runtime fact for this execution, not the user-confirmed baseline command.
 
+The snapshot image can be started directly with the same boundary class, then entered
+with `docker exec`:
+
+```bash
+docker run -itd \
+--name=flagos-glm52-a3-runtime-v024 \
+--privileged=true \
+--net=host \
+--shm-size=512g \
+--device /dev/davinci12 \
+--device /dev/davinci13 \
+--device /dev/davinci_manager \
+--device /dev/devmm_svm \
+--device /dev/hisi_hdc \
+-v /usr/local/dcmi:/usr/local/dcmi \
+-v /usr/local/Ascend/driver/tools/hccn_tool:/usr/local/Ascend/driver/tools/hccn_tool \
+-v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
+-v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ \
+-v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
+-v /etc/ascend_install.info:/etc/ascend_install.info \
+-v /etc/hccn.conf:/etc/hccn.conf \
+-v /data:/data \
+-v /home:/home \
+flagos-glm52-a3-runtime:v024-cann900-py311 \
+/bin/bash
+
+docker exec -it flagos-glm52-a3-runtime-v024 /bin/bash
+```
+
+Later consumers that need more visible NPUs only add the corresponding
+`--device /dev/davinciN` entries and keep the rest of the container parameters
+unchanged.
+
 ## Final runtime tuple
 
 以下为run `20260824T080753Z`报告并由Control索引的最终tuple；final verification只核对，不修改：
@@ -101,6 +148,7 @@ Final provider facts captured in this run:
 - `flag_gems.runtime.device.vendor_name == ascend`.
 - `flag_gems.runtime.device.dispatch_key == PrivateUse1`.
 - `vllm_fl` resolves to the formal Code repo checkout and remains clean on `project/glm52-w8a8-v024`.
+- `vllm_fl` import/source path is under `/data/tiankuan/zyg/repos/vllm-plugin-FL-a3-flagos`, so the snapshot still depends on the host `/data` bind mount for editable FL source. `/home` is retained as part of the reusable runtime recipe even though the observed FL import path does not currently point there.
 
 ## Sources and replay inputs
 
