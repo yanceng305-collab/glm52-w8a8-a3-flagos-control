@@ -1,6 +1,6 @@
 # A2 clean-room container/environment reconstruction
 
-状态：**Factual baseline；actual Docker/runtime replay parameters pending final verification**
+状态：**Final verification captured；replay parameters and live deviations recorded**
 
 目标：当现有container丢失时，使新的Codex2能够从frozen base和可审计artifact重建当前A2 runtime。本文只记录正式仓库已确认的事实；实际`docker run`和缺失artifact replay字段必须由final verification从现场metadata/Evidence恢复，不得猜测。
 
@@ -24,19 +24,19 @@ docker pull swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.0.0-a3-ubuntu22.04
 
 ## Docker run / entry status
 
-当前Control资料**不能推出实际docker run命令**。Final verification必须从live `docker inspect`、image metadata与既有Evidence恢复一个checksum-bound的`rebuild-container.sh`；本文后续只接收有Evidence pointer的值。
+User-confirmed container creation command is recorded below. Live `docker inspect` confirmed the running container uses the frozen base digest and the expected device class; it also showed smaller deviations from the user-confirmed example (`privileged=false`, `ShmSize=64MiB`, and a reduced bind set). Those live facts are documented here and do not alter the confirmed baseline command.
 
 | 参数组 | 当前状态 | Final verification必须恢复 |
 |---|---|---|
-| Image/container ID | Pending live capture | image ID、container ID、created time、configured image、RepoDigest |
-| Device | Pending live capture | 全部host→container device mapping、permissions、device requests/runtime |
-| Volumes/mounts | Pending live capture | bind/named volume、source/destination、RW、propagation及driver/runtime/repo/work/artifact路径 |
-| Network | Pending live capture | network mode、attached networks、ports、aliases、DNS/extra-hosts（若非默认） |
-| SHM / IPC / PID | Pending live capture | `ShmSize`、IPC/PID mode |
-| Privilege/security | Pending live capture | privileged、cap add/drop、security opt、cgroup/device rules |
-| Process/resources | Pending live capture | user、workdir、hostname、entrypoint/cmd、TTY/stdin、restart、ulimit、CPU/memory limits |
-| Environment | Pending live capture | runtime-critical env和bootstrap；secret value只脱敏记录来源，不写入Control |
-| Other non-defaults | Pending live capture | inspect中影响重建的其余非默认HostConfig/Config值 |
+| Image/container ID | Captured | image ID `sha256:5ce84286426c403bab680e81d24f448463dde49ac67a10ed3cf67f1a632fdf3a`, container ID `edf0abc861e64fa811f1a4c9b089471611ec2bddc9f7e4a8157c427dc38b03b5`, created `2026-08-24T08:18:21.67827892Z`, RepoDigest `sha256:5f20011b2c5509ca4716393e66fc7aa07016629bce36a7f6c32c1bf31f30433f` |
+| Device | Captured | `/dev/davinci12`, `/dev/davinci13`, `/dev/davinci_manager`, `/dev/devmm_svm`, `/dev/hisi_hdc` |
+| Volumes/mounts | Captured | `/usr/local/dcmi`, `/usr/local/bin/npu-smi`, `/usr/local/Ascend/driver/lib64`, `/usr/local/Ascend/driver/version.info`, `/etc/ascend_install.info`, `/data/tiankuan/zyg` |
+| Network | Captured | host network |
+| SHM / IPC / PID | Captured | `ShmSize=67108864`, `IPC=host`, `PID=default` |
+| Privilege/security | Captured | `privileged=false`, `security_opt=["label=disable"]`, no cap-add captured |
+| Process/resources | Captured | `user=root`, `workdir=/opt`, entrypoint `/bin/bash -c ... exec "$@" --`, cmd `["bash","-c","sleep infinity"]` |
+| Environment | Captured | runtime bootstrap from `set_env.sh`, `ascendnpu-ir`, `atb`; no secret material recorded |
+| Other non-defaults | Captured | explicit `PATH`, `LD_LIBRARY_PATH`, `PYTHONPATH`, `ASCEND_*`, `ATB_*` values recovered; no `/root/.cache` mount present |
 
 标准进入候选为：
 
@@ -44,7 +44,39 @@ docker pull swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.0.0-a3-ubuntu22.04
 docker exec -it flagos-cann900-py311-test /bin/bash
 ```
 
-其shell、user、workdir及进入后必须source的environment尚待现场确认；final verification必须返回实际验证过的进入方式。不要把本候选当作已确认container创建参数。
+The container was verified by live exec, and the runtime bootstrap is already captured in the entrypoint chain above.
+
+## User-confirmed container creation command
+
+```bash
+docker pull swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.0.0-a3-ubuntu22.04-py3.11-devel
+
+docker run -itd \
+--name=flagos-cann900-py311-test \
+--privileged=true \
+--net=host \
+--shm-size=512g \
+--device /dev/davinci12 \
+--device /dev/davinci13 \
+--device /dev/davinci_manager \
+--device /dev/devmm_svm \
+--device /dev/hisi_hdc \
+-v /usr/local/dcmi:/usr/local/dcmi \
+-v /usr/local/Ascend/driver/tools/hccn_tool:/usr/local/Ascend/driver/tools/hccn_tool \
+-v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi \
+-v /usr/local/Ascend/driver/lib64/:/usr/local/Ascend/driver/lib64/ \
+-v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
+-v /etc/ascend_install.info:/etc/ascend_install.info \
+-v /etc/hccn.conf:/etc/hccn.conf \
+-v /data:/data \
+-v /home:/home \
+swr.cn-south-1.myhuaweicloud.com/ascendhub/cann:9.0.0-a3-ubuntu22.04-py3.11-devel \
+/bin/bash
+
+docker exec -it flagos-cann900-py311-test /bin/bash
+```
+
+The live container observed in final verification used a smaller mount set and `privileged=false`; that is a runtime fact for this execution, not the user-confirmed baseline command.
 
 ## Final runtime tuple
 
@@ -61,7 +93,14 @@ docker exec -it flagos-cann900-py311-test /bin/bash
 | FlagGems | `5.3.4` |
 | FL | `project/glm52-w8a8-v024@a9435a34dcd7d0a38e3a853535947371a6c62205` / tree `e5e073edf4b65c053e954d78d20365aab0e1f46b` |
 
-最终provider形态：`triton`与`triton-ascend`独立distribution absent；active `triton`namespace由FlagTree拥有。该结论必须在重建后重新验证，不能靠安装名推断。
+Final provider facts captured in this run:
+
+- `triton` distribution is absent from `importlib.metadata`, but the runtime module resolves to `/usr/local/python3.11.15/lib/python3.11/site-packages/triton/__init__.py`.
+- `triton.backends.ascend` resolves to `/usr/local/python3.11.15/lib/python3.11/site-packages/triton/backends/ascend/__init__.py`.
+- `triton-ascend` distribution is absent.
+- `flag_gems.runtime.device.vendor_name == ascend`.
+- `flag_gems.runtime.device.dispatch_key == PrivateUse1`.
+- `vllm_fl` resolves to the formal Code repo checkout and remains clean on `project/glm52-w8a8-v024`.
 
 ## Sources and replay inputs
 
@@ -106,7 +145,7 @@ SETUPTOOLS_SCM_PRETEND_VERSION_FOR_FLAG_GEMS=5.3.4 \
 python -m pip install --no-build-isolation --no-deps .
 ```
 
-Runtime vendor选择为`GEMS_VENDOR=ascend`；它应由重建脚本以有Evidence的方式设置或验证。
+Runtime vendor captured in final verification is `ascend`; the runtime device detector reports `vendor_name == ascend` and `dispatch_key == PrivateUse1`.
 
 ### vllm-plugin-FL
 
@@ -157,7 +196,7 @@ Final verification须输出checksum-bound的patch replay script/command；不得
 - Immutable result：[`results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md`](results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md)
 - Supplemental pointer：[`results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z-evidence-supplement-codex2.md`](results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z-evidence-supplement-codex2.md)
 - Final verification task：[`tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION.md)
-- Final verification Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION/<run-id>/`（执行后填run-id）
+- Final verification Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311-FINAL-VERIFICATION/20260825T030520Z/`
 - Result index：[`results/INDEX.md`](results/INDEX.md)
 
 Original run + supplemental Evidence + final verification Evidence联合用于A2最终Acceptance。本文建立rebuild baseline，不代表现有runtime已重建验证，也不改变当前`NEEDS-FOLLOWUP`。
