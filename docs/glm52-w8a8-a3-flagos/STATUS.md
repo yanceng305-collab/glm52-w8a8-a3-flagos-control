@@ -1,14 +1,14 @@
 # 项目状态
 
-更新时间：2026-08-24
-总体状态：上一轮PY311 smoke为**feasibility proven / formal clean-room validation required**；当前Ready任务为Ascend官方CANN 9.0.0 A3 clean-room复现
+更新时间：2026-08-25
+总体状态：`A2-V024-CLEANROOM-CANN900-PY311`已由服务器执行代理报告**PASS**并同步Control；**Codex1 Acceptance PENDING**，下一正式技术阶段尚未解锁
 
 ## 当前快照
 
 | 工作项 | 状态 | 证据边界 |
 |---|---|---|
-| Official branch migration | PASS | `v0.2.1@92a6f767`维护线；`main@a9435a34`/tree`e5e073ed`冻结为0.24 baseline |
-| Runtime ownership | Static architecture retained；new-main dynamic unverified | current main仍注册PlatformFL/WorkerFL/ModelRunnerFL/Dispatch；server未执行 |
+| Official branch migration | PASS | Code repo `main@92a6f767`是v0.2.1维护线；official new-main freeze `a9435a34`/tree`e5e073ed`已成为0.24 baseline与project branch |
+| Runtime ownership | Static chain confirmed；tiny Dispatch smoke PASS reported / Acceptance PENDING | frozen v0.24 source注册PlatformFL/WorkerFL/ModelRunnerFL/Dispatch；未验证GLM完整模型路径 |
 | 910C maturity | Complete for public evidence | v0.2.1-era仅Qwen3.6 TP2；new v0.24 stack无FL A3 E2E |
 | GLM-5.2-W8A8 compatibility | Complete static assessment | 当前多个 Missing；没有目标 E2E |
 | A3 capacity/topology | User-confirmed boundary | 16×64GB logical devices / 1024GB aggregate；runtime reservation与full-model余量Unknown |
@@ -17,10 +17,10 @@
 | A3 Host directory initialization | **ACCEPTED with deviation** | Result `A3-HOST-DIR-INIT/20260824T030000Z`；两个长期repo identity PASS；legacy复制偏差已记录，原目录未改且现有副本不处理 |
 | Legacy preservation | Verified unchanged | 12 branches、5 tags、PR #1和settings前后快照一致 |
 | Old v0.20.2 A2/prompt | **Superseded / Paused / not executed** | `118c314` prompt不得下发服务器 |
-| A2 environment gate | **STOP at FlagTree (Phase A) / execution paused** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；Codex technical acceptance PENDING |
-| A2 shared-NPU tiny smoke | **Not reached (Phase A STOP)** | 未进入Phase B；NPU 12+13状态未采集 |
+| Historical v0.24 Python3.12 A2 | **STOP at FlagTree (Phase A)** | Immutable result：[`results/A2-v024/20260824T025250Z.md`](results/A2-v024/20260824T025250Z.md)；由后续Python3.11路线取代，不得当作当前task |
+| Clean-room shared-NPU tiny smoke | **PASS reported / Acceptance PENDING** | 最新run报告只使用映射到physical NPU 12+13的tiny tensor/kernel/operator；未运行模型、collective、benchmark或profile |
 | PY311 copied-runtime smoke | **Feasibility proven / not formally accepted** | Qwen image复制Python/FlagTree/vLLM并使用3处临时patch；immutable PASS保留，但不能作为正式环境acceptance |
-| CANN 9.0.0 A3 clean-room | **Ready after user dispatch** | Frozen base digest`sha256:5f20011b...`已现场pull；禁止复用上一轮runtime |
+| CANN 9.0.0 A3 clean-room | **Execution PASS / Control SYNCED / Codex1 Acceptance PENDING** | Task `A2-V024-CLEANROOM-CANN900-PY311`；run `20260824T080753Z`；sync marker commit `31d20df...` |
 | GLM migration code | Not started | 按用户要求 |
 | Performance optimization | Not started | 必须在 correctness/baseline 后 |
 | Host facts for container boundary | User-confirmed | 16×64GB topology、Driver25.5.0、Firmware7.8.0.5.216及container runtime约束；未由Codex现场验证 |
@@ -31,14 +31,12 @@
 
 - Historical v0.2.1 evidence：当时official FL Ascend路线使用`v0.20.2rc1-a3` carrier且未卸载package；该证据仍支撑runtime-ownership原则，但不再定义primary tuple。
 - 上述`92a6f767`路线现在属于official `v0.2.1`/vLLM0.20.2 maintenance line，不再是GLM primary。
-- official current `main`本轮冻结为`a9435a34...`/tree`e5e073ed...`，pyproject/README固定vLLM0.24；`main`未来可能前进。
+- 2026-08-21 official new-main snapshot冻结为`a9435a34...`/tree`e5e073ed...`，pyproject/README固定vLLM0.24；它是项目baseline，不等于未来持续前进的upstream HEAD。
 - official `v0.2.1`与new `main`已diverged，不能fast-forward或merge成伪升级。
 - `bb439d...`在NVIDIA A800上完成GLM-5.2-Slim TP16双机init和weight loading后因MLA cache op缺失而PARTIAL；不是Ascend/W8A8 E2E。
-- Official文档定义的A3 release tag仍为`quay.io/ascend/vllm-ascend:v0.24.0rc1-a3`，但当前未建立可用artifact；该tag不得用于本次A2。
-- A2唯一provisional carrier为`quay.io/ascend/vllm-ascend@sha256:1c36469fe1cd2335850eb2318bd3562471c34d5fd8f9f2affb0afc745ce39585`，身份仅为official `releases/v0.24.0rc` A3 nightly，不是rc1 release image。
-- 不预设该carrier内部CANN、torch-npu、vLLM、triton-ascend或其他runtime tuple；实际版本由container preflight冻结。
-- A2 tiny smoke允许共享NPU 12+13；现有任务继续运行，状态恶化或可能干扰时立即STOP。
-- current README选择FlagGems v5.3.4与FlagTree`0.6.1rc1+ascend3.5`；FlagTree与triton-ascend共享完整`triton`namespace，是替代provider而非clean coexistence。
+- Historical v0.24 carrier研究中的`v0.24.0rc1-a3` tag与provisional nightly digest只保留reference，不是当前clean-room run的base。
+- 最新clean-room run报告使用official CANN9.0.0 A3 py311 exact digest，并实测冻结Python/CANN/torch/torch_npu/vLLM/FlagTree/FlagGems/FL tuple；该报告仍待Codex1独立审查。
+- 最新run报告使用FlagGems v5.3.4与FlagTree`0.6.1+ascend3.5`，最终`triton`namespace由FlagTree拥有；不得把这条执行报告先行写成formal acceptance。
 - current main Ascend Dockerfile仍为0.19/CANN8.5/old compiler tuple，标记Upstream Conflict / stale candidate。
 - `VLLM_PLUGINS=fl`使实际platform为FL；静态链路继续到`WorkerFL`、`ModelRunnerFL`与FlagOS Dispatch。
 - official `ascend.yaml`按operator选择FlagGems、`vendor.ascend`或Reference；`vendor.ascend`位于`vllm_fl` ownership并直接调用torch_npu/CANN，不是vllm-ascend backend wrapper。
@@ -46,7 +44,7 @@
 - A2中的container内卸载只用于减少FL-only bring-up变量，不构成对official coexistence路线的合规否定。
 - FL editable安装不得直接写readonly正式repo；如确有需要，必须在container内复制含`.git`的writable staging，安装前验证exact HEAD/tree/clean状态，生成artifact只留副本。
 - 卸载后的distribution、`find_spec`和entry-point negative check必须由新的Python process执行。
-- v0.2.1-era 910C成功证据是Qwen3.6-27B/35B-A3B TP2；new main/v0.24 carrier/FlagTree profile尚无对应FL A3 E2E，canary需重冻。
+- v0.2.1-era 910C成功证据是Qwen3.6-27B/35B-A3B TP2；frozen v0.24 stack现在只有待Acceptance的tiny runtime/operator/Dispatch smoke，仍无对应FL A3模型E2E，canary需重冻。
 - FL new main使用vLLM0.24并已包含GLM model/Indexer结构；v0.2.1维护线仍是0.20.2。Target Ascend/W8A8 closure仍未验证。
 - v0.2.1-era FL compressed-tensors validator与packed W8A8 glue不在observed new main；0.24 W8A8 loading owner必须从upstream/runtime与真实artifact重审。
 - Old A2 FlagGems`no-deps`/禁止bootstrap限制不适用于D-075 clean-room；允许clean container内安装对齐依赖、build wheel和保存patch provenance。
@@ -55,14 +53,14 @@
 - 默认通信 backend 是 HCCL；FlagCX optional。
 - 当前 FL Ascend 不构建自身 native extension；`VLLM_VENDOR` 必须 unset，设置 `ascend` 会失败。
 
-## 执行时必须验证 / 后续待决策
+## 最新执行报告边界（尚未Acceptance）
 
-1. 验证本地image精确匹配frozen digest`sha256:5f20011b2c55...`并记录image ID/architecture/runtime inventory。
-2. 从frozen digest创建全新disposable container；registry与Dockerfile fallback不再是执行步骤。
-3. 全栈必须独立安装；禁止Qwen image/runtime复制、跨Python复制vLLM和复用上一轮container/work。
-4. 上一轮3处patch必须先在clean unmodified source中重现/未重现；FL patch需要task branch/commit/PR。
-5. FlagTree必须single coherent provider；环境闭合后仅用NPU 12+13执行tiny tensor/kernel/Dispatch。
-6. CANN9.0.0明确无法合理适配时STOP，不得自行切换到9.0.1。
+- Task / Run：`A2-V024-CLEANROOM-CANN900-PY311` / `20260824T080753Z`。
+- Immutable result：[`results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md`](results/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z.md)；Server Evidence：`/data/tiankuan/zyg/evidence/A2-V024-CLEANROOM-CANN900-PY311/20260824T080753Z`。
+- Reported tuple：Python 3.11.15、CANN 9.0.0、torch 2.10.0+cpu、torch_npu 2.10.0.post2、vLLM 0.24.0、FlagTree 0.6.1+ascend3.5 / Triton 3.5.1、FlagGems 5.3.4、FL `a9435a34...`。
+- Reported validation：tiny torch_npu、FlagTree kernel、FlagGems op、FL/Dispatch op PASS；FL未修改，Code PR=`N/A`。
+- Reported issue handling：Triton circular import与FlagGems DSA package-init问题复现并保存third-party patch；FL `patch_mamba_config` / `cbor2`问题未复现。
+- 本节只登记服务器报告与同步状态，不判断patch可接受性、Evidence完整性或技术Acceptance。
 
 当前“FlagOS原生”工作边界按实际模型执行ownership判定，不按carrier image/package存在性判定。若trace发现`vllm_ascend`实际参与，只对具体调用进入客户边界/替换判断；只有客户以后明确扩大到official FL历史adapted来源时才另行重审源码合规。
 
@@ -78,13 +76,15 @@
 - `project/glm52-w8a8-v024` -> `a9435a34...`。
 - Default branch仍为existing `main`；本轮未配置protection/PR规则。
 - Legacy未执行rename、transfer、detach、fork sync、push或settings修改；branches/tags/PR #1哈希前后相同。
-- Existing `main`禁止直接开发或同步覆盖；new-main migration只按`CODE-REPOSITORY-MIGRATION-V024.md`的新增branch方案，在用户另行批准后执行。
+- Existing `main`禁止直接开发或同步覆盖；v0.24 migration已完成，后续代码task从`project/glm52-w8a8-v024`派生并按合同提交PR。
 
 ## 下一门禁
 
-上一轮PY311 PASS只保留feasibility价值，不解锁正式A2。下一项Ready task：
+当前唯一门禁是Codex1对clean-room run `20260824T080753Z`的独立Acceptance审查。服务器执行PASS与Control同步均不自动等于`ACCEPTED`。
 
-- Task：[`tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md`](tasks/STAGE-A2-V024-CLEANROOM-CANN900-PY311.md)
-- Prompt：[`tasks/DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md`](tasks/DEEPSEEK-A2-V024-CLEANROOM-CANN900-PY311-PROMPT.md)
+在该审查完成并由User/Codex1正式解锁前：
 
-Clean-room base已冻结为`swr.cn-south-1.myhuaweicloud.com/ascendhub/cann@sha256:5f20011b2c5509ca4716393e66fc7aa07016629bce36a7f6c32c1bf31f30433f`。任务只验证本地identity并从零安装；不再做registry/Dockerfile fallback，不复制上一轮runtime，不预应用3处patch。
+- 不创建或下发下一技术task；
+- 不开始GLM-5.2-W8A8模型适配、模型运行或性能实验；
+- 不把历史Ready task/prompt重新下发；
+- 下一正式技术阶段保持未解锁。
